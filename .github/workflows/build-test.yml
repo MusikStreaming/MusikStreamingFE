@@ -2,9 +2,9 @@ name: NodeJS build
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "main" ]
 
 jobs:
   build:
@@ -21,8 +21,27 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    - name: Validate package.json
+      run: |
+        if [ ! -f "package.json" ]; then
+          echo "Error: package.json not found"
+          exit 1
+        fi
+        npm install -g npm@latest
 
-    - name: Build
+    - name: Build test
       run: |
         npm install
         npm run build
+
+    - name: Test
+      run: npm test
+
+    - name: Upload build artifacts
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+       name: build-output-${{ matrix.node-version }}
+       path: dist/
+       retention-days: 7
