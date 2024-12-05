@@ -8,8 +8,9 @@ import { SongDetails } from '@/app/model/song-details';
 import Skeleton from '@/app/components/loading/skeleton';
 import PlayButton from '@/app/components/buttons/play-button-main';
 import IconSmallButton from '@/app/components/buttons/icon-small-button';
-import ArtistLinks from './artist-link';
+import ArtistLinks from '@/app/components/info-links/artist-link';
 import ToggleIconButton from '@/app/components/buttons/toggle-button';
+import SongTable from '@/app/components/tables/song-table';
 
 function processTime(time: number): string {
   const minutes = Math.floor(time / 60);
@@ -70,6 +71,7 @@ export default function SongContent(params: { id: string; initialData: SongDetai
             <Skeleton className="w-[200px] h-[200px] rounded-lg" />
           }
           <div className="flex flex-col gap-3 w-full">
+            <p className='font-medium text-md'>Song</p>
             {song ? 
               <h1 className='font-bold text-2xl md:text-3xl'>{song.title}</h1> : 
               <Skeleton className='h-8 w-full' />
@@ -94,41 +96,16 @@ export default function SongContent(params: { id: string; initialData: SongDetai
         </div>
 
         {/* Song Details Table */}
-        <div className="w-full overflow-x-auto">
-          <table className="w-full">
-            <thead className="">
-              <tr>
-                <th className="text-left py-3 hidden md:table-cell">#</th>
-                <th className="text-left py-3">Title</th>
-                <th className="text-left py-3">Duration</th>
-                <th className="text-left py-3">Plays</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="hover:bg-[--md-sys-color-surface-container-highest]">
-                <td className="py-4 hidden md:table-cell">1</td>
-                <td className="py-4">
-                  {song ? 
-                    <p>{song.title}</p> :
-                    <Skeleton className='h-4 w-full' />
-                  }
-                </td>
-                <td className="py-4">
-                  {song ?
-                    <p>{processTime(song.duration)}</p> :
-                    <Skeleton className='h-4 w-full' />
-                  }
-                </td>
-                <td className="py-4">
-                  {song ?
-                    <p>{song.views.toLocaleString()}</p> :
-                    <Skeleton className='h-4 w-full' />
-                  }
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        {
+          song ?
+            <SongTable songs={[{ song: { 
+              id: song.id,
+              title: song.title,
+              duration: song.duration,
+              views: song.views,
+            }}]} /> :
+            <Skeleton className="w-full h-[200px]" />
+        }
 
         {/* Additional Info */}
         <div className="flex flex-col gap-3 w-full pt-6">

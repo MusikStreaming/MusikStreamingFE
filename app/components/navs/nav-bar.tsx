@@ -13,7 +13,7 @@ export default function NavBar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
   const [isManagerMode, setIsManagerMode] = useState(false);
-  const route = useRouter();
+  const router = useRouter();
   const pathname = usePathname();
   const searchFocus = useRef<HTMLInputElement>(null);
 
@@ -45,10 +45,16 @@ export default function NavBar() {
 
   const handleSearch = () => {
     if (isManagerMode) {
-      route.push('/manager/discography');
+      router.push('/manager/discography');
     } else {
-      route.push('/search');
+      router.push('/search');
     }
+  };
+
+  const handleLoginClick = () => {
+    const currentPath = pathname;
+    const loginPath = `/login?returnUrl=${encodeURIComponent(currentPath)}`;
+    router.push(loginPath);
   };
 
   return (
@@ -56,7 +62,7 @@ export default function NavBar() {
       <div className='flex mr-3'>
         <div className="nav-bar-button-container hidden md:flex md:p-3 md:gap-3 md:items-center">
           <IconSmallButton className="app-bar-button" onClick={() => {
-            route.back();
+            router.back();
           }}>
             <span className="material-symbols-outlined">
               arrow_back
@@ -64,7 +70,7 @@ export default function NavBar() {
           </IconSmallButton>
           <IconSmallButton onClick={
             () => {
-              route.forward();
+              router.forward();
             }
           }>
             <span className="material-symbols-outlined">
@@ -93,7 +99,7 @@ export default function NavBar() {
             <UserMenu onLogout={() => setIsLoggedIn(false)} />
           </>
         ) : (
-          <FilledButton onClick={() => route.push("/login")}>
+          <FilledButton onClick={handleLoginClick}>
             {"Đăng nhập/Đăng ký"}
           </FilledButton>
         )}

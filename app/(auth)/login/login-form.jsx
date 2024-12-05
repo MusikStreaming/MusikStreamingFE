@@ -5,12 +5,13 @@ import Link from 'next/link';
 // import { useRouter } from 'next/navigation';
 import { useReducer, useState } from 'react';
 import { getCookie } from 'cookies-next';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function LoginForm({
     onSubmit
 }) {
     const router = useRouter()
+    const searchParams = useSearchParams()
     if (getCookie("access_token")) {
         router.push("/")
     }
@@ -102,17 +103,19 @@ export default function LoginForm({
                     payload: { isLoading: false, errorMessage: result.error } 
                 });
             } else if (result?.success) {
-                // Small delay to ensure cookies are set before redirect
-                setTimeout(() => {
-                    const role = getCookie('role');
-                    // if (typeof window !== 'undefined') {
-                        if (role === 'Artist Manager') {
-                            router.push('/manager');
-                        } else {
-                            router.push('/');
-                        }
-                    // }
-                }, 100);
+                // Ensure cookies are set before navigation
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                const role = getCookie('role');
+                const returnUrl = new URLSearchParams(window.location.search).get('returnUrl');
+                
+                if (role === 'Artist Manager') {
+                    router.push('/manager');
+                } else if (returnUrl) {
+                    router.push(decodeURIComponent(returnUrl));
+                } else {
+                    router.push('/');
+                }
             }
         } catch (error) {
             dispatch({ 

@@ -1,3 +1,4 @@
+'use client';
 import axios from "axios";
 import z from "zod";
 import { SongDetails } from "../model/song-details";

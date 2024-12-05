@@ -3,6 +3,7 @@ import axios from 'axios';
 import z from 'zod';
 import { setCookie } from 'cookies-next/client';
 import { FileWithPath } from 'react-dropzone';
+import { redirect } from 'next/navigation';
 
 interface SignUpData {
     email: string;
@@ -182,5 +183,17 @@ export async function verifyEmail(token: string): Promise<void> {
     } catch (error) {
         console.error(error);
         throw new Error('Email verification failed');
+    }
+}
+
+export function redirectToLogin(returnUrl?: string) {
+    const loginPath = returnUrl 
+        ? `/login?returnUrl=${encodeURIComponent(returnUrl)}`
+        : '/login';
+        
+    if (typeof window === 'undefined') {
+        redirect(loginPath);
+    } else {
+        window.location.href = loginPath;
     }
 }
