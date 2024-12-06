@@ -59,7 +59,7 @@ export default async function fetchAllSongs() {
             }
         }
         else {
-            const res = await axios.get(`${process.env.API_URL}/v1/song?page=1&limit=30`, {
+            const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/v1/song?page=1&limit=30`, {
                 headers: {
                     'Cache-Control': 'max-age=3600000, stale-while-revalidate',
                 }
