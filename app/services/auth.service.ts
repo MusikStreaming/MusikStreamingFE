@@ -2,7 +2,6 @@
 import axios from 'axios';
 import z from 'zod';
 import { setCookie, deleteCookie } from 'cookies-next/client';
-import { FileWithPath } from 'react-dropzone';
 import { redirect } from 'next/navigation';
 
 interface SignUpData {

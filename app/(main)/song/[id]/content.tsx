@@ -3,6 +3,7 @@
 import { twMerge } from 'tailwind-merge';
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import fetchSongById from '@/app/api-fetch/song-by-id';
 import ErrorComponent from '@/app/components/api-fetch-container/fetch-error';
 import { SongDetails } from '@/app/model/song-details';
@@ -16,7 +17,7 @@ import SongTable from '@/app/components/tables/song-table';
 import { formatDuration } from '@/app/utils/time';
 import { useMedia } from '@/app/contexts/media-context';
 import { useLiked } from '@/app/contexts/liked-context';
-import { Song } from '@/app/model/song';
+import TextButton from '@/app/components/buttons/text-button';
 
 function processDatetime(ISODate: string): string {
   const date = new Date(ISODate);
@@ -26,6 +27,7 @@ function processDatetime(ISODate: string): string {
 export default function SongContent(params: { id: string; initialData: SongDetails | null }) {
   const [song, setSong] = useState<SongDetails | undefined>(params.initialData || undefined);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
   const {
     playSong,
     isPlaying,
@@ -115,7 +117,20 @@ export default function SongContent(params: { id: string; initialData: SongDetai
                 }}>
                   <span className="material-symbols-outlined">share</span>
                 </IconSmallButton>
-                <ToggleButtonFilled active={likedSongs.some(song => song.id === currentSong?.id)} onClick={() => likedSongs.some(song => song.id === currentSong?.id) ? removeLikedSong(currentSong as Song) : addLikedSong(currentSong as Song)}>
+                <ToggleButtonFilled 
+                  active={song && likedSongs.some(s => s.id === song.id)} 
+                  onClick={() => song && (likedSongs.some(s => s.id === song.id) 
+                    ? removeLikedSong({ 
+                        ...song, 
+                        thumbnailurl: song.thumbnailurl || '',
+                        artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
+                      }) 
+                    : addLikedSong({ 
+                        ...song, 
+                        thumbnailurl: song.thumbnailurl || '',
+                        artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
+                      })
+                  )}>
                   favorite
                 </ToggleButtonFilled>
                 <IconSmallButton>
@@ -134,8 +149,9 @@ export default function SongContent(params: { id: string; initialData: SongDetai
                   duration: song.duration,
                   views: song.views,
                   coverImage: song.thumbnailurl,
+                  artists: song.artists?.map(a => ({ name: a.name })) || []
                 }
-              }]} /> :
+              }]} showImage={false} /> :
               <Skeleton className="w-full h-[200px]" />
           }
           {/* Additional Info */}
@@ -151,6 +167,10 @@ export default function SongContent(params: { id: string; initialData: SongDetai
           </div>
         </div>
         <div className="mobile flex flex-col md:hidden">
+          <TextButton className="text-[--md-sys-color-primary] w-fit" onClick={() => router.back()}>
+            <span className="material-symbols-outlined">arrow_back</span>
+            Quay lại
+          </TextButton>
           <div className="song-info flex flex-col gap-[60px] w-full pt-6 items-center">
             <div className="cover-and-title flex flex-col w-full items-center">
               <div className={`img-large-rotate ${isPlaying && currentSong?.id === song?.id ? 'animate-spin-slow' : ''}`}>
@@ -172,7 +192,20 @@ export default function SongContent(params: { id: string; initialData: SongDetai
                   <ToggleIconButton alternateIcon={<span className="material-symbols-outlined">playlist_add_check</span>}>
                     <span className="material-symbols-outlined">playlist_add</span>
                   </ToggleIconButton>
-                  <ToggleButtonFilled active={likedSongs.some(song => song.id === currentSong?.id)} onClick={() => likedSongs.some(song => song.id === currentSong?.id) ? removeLikedSong(currentSong as Song) : addLikedSong(currentSong as Song)}>
+                  <ToggleButtonFilled 
+                    active={song && likedSongs.some(s => s.id === song.id)} 
+                    onClick={() => song && (likedSongs.some(s => s.id === song.id) 
+                      ? removeLikedSong({ 
+                          ...song, 
+                          thumbnailurl: song.thumbnailurl || '',
+                          artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
+                        }) 
+                      : addLikedSong({ 
+                          ...song, 
+                          thumbnailurl: song.thumbnailurl || '',
+                          artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
+                        })
+                    )}>
                     favorite
                   </ToggleButtonFilled>
                 </div>

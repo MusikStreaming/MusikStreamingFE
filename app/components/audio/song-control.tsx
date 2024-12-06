@@ -110,7 +110,7 @@ export default function SongControl() {
               </div>
             )}
           </div>
-          <ToggleButtonFilled className='hidden lg:flex' active={likedSongs.some(song => song.id === currentSong?.id)} onClick={() => likedSongs.some(song => song.id === currentSong?.id) ? removeLikedSong(currentSong as Song) : addLikedSong(currentSong as Song)}>
+          <ToggleButtonFilled className='hidden lg:flex' active={!!currentSong?.id && likedSongs.some(song => song.id === currentSong?.id)} onClick={() => !!currentSong?.id && likedSongs.some(song => song.id === currentSong?.id) ? removeLikedSong(currentSong as Song) : addLikedSong(currentSong as Song)}>
             favorite
           </ToggleButtonFilled>
         </div>

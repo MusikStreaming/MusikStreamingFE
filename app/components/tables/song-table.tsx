@@ -8,8 +8,9 @@ import { hasCookie } from "cookies-next";
 import { redirectToLogin } from "@/app/services/auth.service";
 import getSong from "@/app/api-fetch/get-song";
 import { twMerge } from "tailwind-merge";
+import Image from "next/image";
 
-export default function SongTable({ songs, className }: { 
+export default function SongTable({ songs, className, showImage }: {
   songs: {
     song: {
       title: string;
@@ -24,6 +25,7 @@ export default function SongTable({ songs, className }: {
     }
   }[];
   className?: string;
+  showImage?: boolean;
 }) {
   const { currentSong, isPlaying, playSong, pauseSong } = useMedia();
 
@@ -81,14 +83,14 @@ export default function SongTable({ songs, className }: {
         </thead>
         <tbody>
           {songs.map((song, index) => (
-            <tr 
-              className="hover:bg-[--md-sys-color-surface-container-highest] group cursor-pointer rounded-lg" 
+            <tr
+              className="hover:bg-[--md-sys-color-surface-container-highest] group cursor-pointer rounded-lg"
               key={song.song.id}
               onClick={() => handlePlayClick(song.song)}
             >
               <td className="px-4 py-4 hidden text-center md:table-cell rounded-l-lg">
                 <span className="group-hover:hidden">
-                  {currentSong?.id === song.song.id && isPlaying ? 
+                  {currentSong?.id === song.song.id && isPlaying ?
                     <p className="material-symbols-outlined-filled text-[--md-sys-color-primary]">pause</p> :
                     index + 1
                   }
@@ -96,22 +98,27 @@ export default function SongTable({ songs, className }: {
                 <PlayButton
                   isPlaying={currentSong?.id === song.song.id && isPlaying}
                   onClick={() => handlePlayClick(song.song)}
-                  className="hidden group-hover:block m-auto "
+                  className="hidden group-hover:block m-auto"
                 />
               </td>
-              <td className="px-4 py-4">
-                {song.song.title ? 
-                  <p className={currentSong?.id === song.song.id ? "text-[--md-sys-color-primary]" : ""}>
-                    {song.song.title}
-                  </p> :
-                  <Skeleton className='h-4 w-full' />
+              <td className="px-4 py-4 flex items-center gap-4">
+                {showImage && song.song.coverImage &&
+                  <Image src={song.song.coverImage} alt={song.song.title} className="w-10 h-10 rounded-lg" width={40} height={40} />
                 }
-                {
+                <div className="flex flex-col">
+                  {song.song.title ?
+                    <p className={currentSong?.id === song.song.id ? "text-[--md-sys-color-primary]" : ""}>
+                      {song.song.title}
+                    </p> :
+                    <Skeleton className='h-4 w-full' />
+                  }
+                  {
                     song.song.artists && song.song.artists.length > 0 &&
                     <p className="text-sm text-gray-500">
                       {song.song.artists.map((artist) => artist.name).join(', ')}
                     </p>
                   }
+                </div>
               </td>
               <td className="px-4 py-4">
                 {song.song.duration ?
