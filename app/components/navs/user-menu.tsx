@@ -5,6 +5,15 @@ import { deleteCookie, getCookie } from 'cookies-next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import fetchUserById from '@/app/api-fetch/user-by-id';
+
+interface User {
+  id: string;
+  username: string;
+  country: string;
+  role?: string;
+  avatarurl?: string;
+}
 
 interface UserMenuProps {
   onLogout: () => void;
@@ -16,6 +25,15 @@ export default function UserMenu({ onLogout }: UserMenuProps) {
   const [isManager, setIsManager] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const user = await fetchUserById(getCookie('access_token') as string);
+      setUser(user);
+    };
+    fetchUser();
+  }, []);
 
   useEffect(() => {
     const checkManagerStatus = () => {
@@ -63,7 +81,7 @@ export default function UserMenu({ onLogout }: UserMenuProps) {
         aria-label="Open user menu"
       >
         <Image
-          src="/assets/default-avatar.png"
+          src={user?.avatarurl || "/assets/default-avatar.png"}
           alt="User avatar"
           width={40}
           height={40}

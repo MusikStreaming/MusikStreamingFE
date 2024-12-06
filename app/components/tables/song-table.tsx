@@ -1,48 +1,75 @@
 'use client';
 
 import Skeleton from "@/app/components/loading/skeleton";
-import { processTime } from "@/app/utils/time";
+import { formatDuration } from "@/app/utils/time";
 import { useMedia } from "@/app/contexts/media-context";
 import PlayButton from "../buttons/play-button-main";
 import { hasCookie } from "cookies-next";
 import { redirectToLogin } from "@/app/services/auth.service";
+import getSong from "@/app/api-fetch/get-song";
+import { twMerge } from "tailwind-merge";
 
-export default function SongTable({ songs }: { songs: {
-  song:{
-    title: string;
-    duration?: number | null;
-    views?: number | null;
-    id: string;
-    url?: string;
-  }
-}[] }) {
+export default function SongTable({ songs, className }: { 
+  songs: {
+    song: {
+      title: string;
+      duration?: number | null;
+      views?: number | null;
+      id: string;
+      url?: string;
+      coverImage?: string;
+      artists?: {
+        name: string;
+      }[];
+    }
+  }[];
+  className?: string;
+}) {
   const { currentSong, isPlaying, playSong, pauseSong } = useMedia();
 
-  const handlePlayClick = (song: typeof songs[0]['song']) => {
-    if (!hasCookie('access_token')) {
-      redirectToLogin(window.location.pathname);
-      return;
-    }
-    
-    if (!song.url) {
-      console.error('No URL available for song');
-      return;
-    }
+  const getSongUrl = async (id: string) => {
+    const song = await getSong(id);
+    console.log(song);
+    return song.url;
+  };
 
-    if (currentSong?.id === song.id && isPlaying) {
-      pauseSong();
-    } else {
+  const handlePlayClick = async (song: typeof songs[0]['song']) => {
+    try {
+      if (!hasCookie('access_token')) {
+        redirectToLogin(window.location.pathname);
+        return;
+      }
+
+      if (currentSong?.id === song.id && isPlaying) {
+        pauseSong();
+        return;
+      }
+
+      const songUrl = await getSongUrl(song.id);
+      if (!songUrl) {
+        console.error('Failed to get song URL');
+        return;
+      }
+
       playSong({
         id: song.id,
         title: song.title,
-        url: song.url,
-        duration: song.duration || 0
+        url: songUrl,
+        duration: song.duration || 0,
+        coverImage: song.coverImage,
+        thumbnailurl: song.coverImage || '',
+        releasedate: "",
+        genre: '',
+        views: song.views || 0,
+        artists: song.artists?.map(a => ({ artist: { id: '', name: a.name } })) || []
       });
+    } catch (error) {
+      console.error('Error playing song:', error);
     }
   };
 
   return (
-    <div className="w-full overflow-x-auto">
+    <div className={twMerge("w-full overflow-x-auto", className)}>
       <table className="w-full">
         <thead>
           <tr>
@@ -79,10 +106,16 @@ export default function SongTable({ songs }: { songs: {
                   </p> :
                   <Skeleton className='h-4 w-full' />
                 }
+                {
+                    song.song.artists && song.song.artists.length > 0 &&
+                    <p className="text-sm text-gray-500">
+                      {song.song.artists.map((artist) => artist.name).join(', ')}
+                    </p>
+                  }
               </td>
               <td className="px-4 py-4">
                 {song.song.duration ?
-                  <p>{processTime(song.song.duration)}</p> :
+                  <p>{formatDuration(song.song.duration, true)}</p> :
                   <Skeleton className='h-4 w-full' />
                 }
               </td>

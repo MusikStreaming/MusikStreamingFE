@@ -1,5 +1,5 @@
 'use client'
-import React from 'react';
+import React, { Suspense } from 'react';
 import FilledButton from '@/app/components/buttons/filled-button';
 import Link from 'next/link';
 // import { useRouter } from 'next/navigation';
@@ -87,6 +87,14 @@ export default function LoginForm({
         })
     }
 
+    const waitForCookies = async (cookieName, maxAttempts = 10) => {
+        for (let i = 0; i < maxAttempts; i++) {
+            if (getCookie(cookieName)) return true;
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        return false;
+    }
+
     const handleFormSubmit = async (e) => {
         e.preventDefault();
         dispatch({ type: "setStatus", payload: { isLoading: true, errorMessage: null } });
@@ -104,17 +112,29 @@ export default function LoginForm({
                 });
             } else if (result?.success) {
                 // Ensure cookies are set before navigation
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                const role = getCookie('role');
-                const returnUrl = new URLSearchParams(window.location.search).get('returnUrl');
-                
-                if (role === 'Artist Manager') {
-                    router.push('/manager');
-                } else if (returnUrl) {
-                    router.push(decodeURIComponent(returnUrl));
+                // await new Promise(resolve => setTimeout(resolve, 1000));
+
+                if (!waitForCookies('access_token')) {
+                    dispatch({
+                        type: "setStatus",
+                        payload: { isLoading: false, errorMessage: "Không thể đăng nhập, vui lòng thử lại sau." }
+                    });
                 } else {
-                    router.push('/');
+                    const role = getCookie('role');
+                    let returnUrl = searchParams.get('returnUrl');
+                    // validate returnUrl to prevent open redirect attack
+                    const isValidReturnUrl = returnUrl && returnUrl.match(/^https?:\/\//);
+                    if (!isValidReturnUrl) {
+                        returnUrl = null;
+                    }
+                    
+                    if (role === 'Artist Manager') {
+                        router.push('/manager');
+                    } else if (returnUrl) {
+                        router.push(decodeURIComponent(returnUrl));
+                    } else {
+                        router.push('/');
+                    }
                 }
             }
         } catch (error) {
@@ -126,49 +146,51 @@ export default function LoginForm({
     };
 
     return (
-        <form onSubmit={handleFormSubmit} className="flex-col justify-start items-center gap-6 flex self-stretch">
-            <div className="flex-col justify-stretch items-start gap-3 flex">
-                <md-outlined-text-field
-                    error={state.errors.email || state.errors.general}
-                    className='max-w-[560px] w-[80vw]'
-                    label="Email của bạn"
-                    value={state.formData.email}
-                    placeholder='youremail@example.com'
-                    type='email'
-                    onInput={handleEmailChange}
-                    pattern="^\S+@\S+\.\S+$"
-                >
-                    <md-icon slot="leading-icon">email</md-icon>
-                </md-outlined-text-field>
-                <md-outlined-text-field
-                    error={state.errors.password || state.errors.general}
-                    label="Mật khẩu"
-                    placeholder="Nhập mật khẩu"
-                    value={state.formData.password}
-                    type={revealedPassword ? "text" : "password"}
-                    className="max-w-[560px] w-[80vw]"
-                    onInput={handlePasswordChange}
-                >
-                    <md-icon slot="leading-icon">password</md-icon>
-                    <md-icon slot="trailing-icon" onClick={() => setRevealedPassword(!revealedPassword)}>{revealedPassword ? "visibility" : "visibility_off"}</md-icon>
-                </md-outlined-text-field>
-                <Link className='text-center font-medium w-full block text-[--md-sys-color-primary]' href={"/forgot-password"}>Quên mật khẩu? Lấy lại mật khẩu tại đây</Link>
-            </div>
-            <div className="max-w-[560px] w-[80vw] flex flex-col gap-4 items-center justify-stretch">
-                <FilledButton
-                    disabled={state.status.isLoading}
-                    className='max-w-[560px] w-[80vw]'
-                    onClick={handleFormSubmit}
-                >
-                    {state.status.isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
-                </FilledButton>
-                {state.status.errorMessage && (
-                    <div className="text-[--md-sys-color-error] text-sm">
-                        {state.status.errorMessage}
-                    </div>
-                )}
-            </div>
-        </form>
+        // <Suspense fallback={<div>Loading...</div>}>
+            <form onSubmit={handleFormSubmit} className="flex-col justify-start items-center gap-6 flex self-stretch">
+                <div className="flex-col justify-stretch items-start gap-3 flex">
+                    <md-outlined-text-field
+                        error={state.errors.email || state.errors.general}
+                        className='max-w-[560px] w-[80vw]'
+                        label="Email của bạn"
+                        value={state.formData.email}
+                        placeholder='youremail@example.com'
+                        type='email'
+                        onInput={handleEmailChange}
+                        pattern="^\S+@\S+\.\S+$"
+                    >
+                        <md-icon slot="leading-icon">email</md-icon>
+                    </md-outlined-text-field>
+                    <md-outlined-text-field
+                        error={state.errors.password || state.errors.general}
+                        label="Mật khẩu"
+                        placeholder="Nhập mật khẩu"
+                        value={state.formData.password}
+                        type={revealedPassword ? "text" : "password"}
+                        className="max-w-[560px] w-[80vw]"
+                        onInput={handlePasswordChange}
+                    >
+                        <md-icon slot="leading-icon">password</md-icon>
+                        <md-icon slot="trailing-icon" onClick={() => setRevealedPassword(!revealedPassword)}>{revealedPassword ? "visibility" : "visibility_off"}</md-icon>
+                    </md-outlined-text-field>
+                    <Link className='text-center font-medium w-full block text-[--md-sys-color-primary]' href={"/forgot-password"}>Quên mật khẩu? Lấy lại mật khẩu tại đây</Link>
+                </div>
+                <div className="max-w-[560px] w-[80vw] flex flex-col gap-4 items-center justify-stretch">
+                    <FilledButton
+                        disabled={state.status.isLoading}
+                        className='max-w-[560px] w-[80vw]'
+                        onClick={handleFormSubmit}
+                    >
+                        {state.status.isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+                    </FilledButton>
+                    {state.status.errorMessage && (
+                        <div className="text-[--md-sys-color-error] text-sm">
+                            {state.status.errorMessage}
+                        </div>
+                    )}
+                </div>
+            </form>
+        // </Suspense>
     )
 
 }

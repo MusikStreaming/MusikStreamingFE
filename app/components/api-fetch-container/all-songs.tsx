@@ -48,7 +48,9 @@ export default function Songs() {
                         : undefined,
                     subItems: song.artists.length > 1 
                         ? song.artists.map(artist => artist.artist.name)
-                        : undefined
+                        : undefined,
+                    songID: song.id,
+                    duration: song.duration
                 }));
 
                 setSongs(cardData);

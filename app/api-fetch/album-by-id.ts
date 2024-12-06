@@ -22,6 +22,9 @@ const AlbumSchema = z.object({
                 thumbnailurl: z.string(),
                 duration: z.number().nullable().optional(),
                 views: z.number().nullable().optional(),
+                artists: z.array(z.object({
+                    name: z.string()
+                })).optional(),
             })
         })
     ).optional().nullable(),

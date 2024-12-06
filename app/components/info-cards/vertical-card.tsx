@@ -11,6 +11,10 @@ import TextButton from '../buttons/text-button';
 import Skeleton from '../loading/skeleton';
 
 import './cards.css';
+import getSong from '@/app/api-fetch/get-song';
+import { hasCookie } from 'cookies-next';
+import { redirectToLogin } from '@/app/services/auth.service';
+import { Song } from '@/app/model/song';
 
 /**
  * VerticalCard component displays content in a vertical card layout with an image, title, and subtitle.
@@ -39,6 +43,8 @@ export default function VerticalCard({
   subHrefItems,
   subItems,
   songID = undefined,
+  duration = undefined,
+  artists = undefined,
   onClick = () => { }
 }: CardProps) {
   const router = useRouter();
@@ -49,6 +55,47 @@ export default function VerticalCard({
   if (!isMultipleItemSub && subHrefItems) {
     subHref = subHrefItems[0];
   }
+
+  const getSongUrl = async (id: string) => {
+    const song = await getSong(id);
+    console.log(song);
+    return song.url;
+  };
+
+  const handlePlayClick = async (songID: string) => {
+    try {
+      if (!hasCookie('access_token')) {
+        redirectToLogin(window.location.pathname);
+        return;
+      }
+
+      if (currentSong?.id === songID && isPlaying) {
+        pauseSong();
+        return;
+      }
+
+      const songUrl = await getSongUrl(songID);
+      if (!songUrl) {
+        console.error('Failed to get song URL');
+        return;
+      }
+
+      playSong({
+        id: songID,
+        title: title,
+        url: songUrl,
+        coverImage: img.src,
+        duration: duration || 0,
+        thumbnailurl: img.src,
+        releasedate: "",
+        genre: '',
+        views: 0,
+        artists: artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
+      });
+    } catch (error) {
+      console.error('Error playing song:', error);
+    }
+  };
 
   return (
     <div 
@@ -77,14 +124,12 @@ export default function VerticalCard({
             <div className="w-12 h-12 bg-[--md-sys-color-primary] rounded-full overflow-hidden">
               <TextButton 
                 className="w-full h-full flex items-center justify-center bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary]" 
-                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                onClick={async (e: React.MouseEvent<HTMLButtonElement>) => {
                   e.stopPropagation();
-                  onClick();
-                  setPlay(!play);
-                  if (isLoading) return;
+                  handlePlayClick(songID || '');
                 }}
               >
-                <span className="material-symbols-outlined-filled">{play ? 'pause' : 'play_arrow'}</span>
+                <span className="material-symbols-outlined-filled">{songID && songID === currentSong?.id ? (isPlaying ? 'pause' : 'play_arrow') : 'play_arrow'}</span>
               </TextButton>
             </div>
           </div>

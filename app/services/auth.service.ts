@@ -1,7 +1,7 @@
 'use client';
 import axios from 'axios';
 import z from 'zod';
-import { setCookie } from 'cookies-next/client';
+import { setCookie, deleteCookie } from 'cookies-next/client';
 import { FileWithPath } from 'react-dropzone';
 import { redirect } from 'next/navigation';
 
@@ -10,7 +10,7 @@ interface SignUpData {
     password: string;
     name: string;
     country: string;
-    file: FileWithPath;
+    avatar?: File;
 }
 
 interface LoginData {
@@ -86,16 +86,28 @@ async function getCountryCode(): Promise<string> {
 }
 
 export async function signUp(data: SignUpData): Promise<AuthResponse> {
-    //get country code from ip address
     const country = await getCountryCode();
     data.country = country;
+    
     try {
+        const formData = new FormData();
+        formData.append('email', data.email);
+        formData.append('password', data.password);
+        formData.append('name', data.name);
+        formData.append('country', data.country);
+        
+        if (data.avatar) {
+            formData.append('avatar', data.avatar);
+        }
+
         const response = await axios.post(
             `${process.env.NEXT_PUBLIC_API_URL}/v1/auth/signup`,
-            data,
+            formData,
             {
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'multipart/form-data',
+                    'Accept-Encoding': 'gzip, deflate, br',
+                    'Connection': 'keep-alive',
                 },
             }
         );
@@ -106,6 +118,24 @@ export async function signUp(data: SignUpData): Promise<AuthResponse> {
         }
 
         const resData = AuthResponse.parse(response.data);
+        if (resData.session) {
+            setCookie('access_token', resData.session.access_token, {
+                expires: new Date(Date.now() + (resData.session.expires_in ?? 3600) * 1000),
+                path: '/',
+            });
+            setCookie('refresh_token', resData.session.refresh_token, {
+                expires: new Date(Date.now() + (resData.session.expires_in ?? 3600) * 1000),
+                path: '/',
+            });
+            setCookie('user_name', resData.user.username, {
+                expires: new Date(Date.now() + (resData.session.expires_in ?? 3600) * 1000),
+                path: '/',
+            });
+            setCookie('role', resData.user.role, {
+                expires: new Date(Date.now() + (resData.session.expires_in ?? 3600) * 1000),
+                path: '/',
+            });
+        }
         return resData;
     } catch (error: unknown) {
         console.error(error);
@@ -157,7 +187,6 @@ export async function login(data: LoginData): Promise<AuthResponse> {
             secure: process.env.NODE_ENV === 'production',
             maxAge: resData.session.expires_in
         });
-
         return resData;
     } catch (error: unknown) {
         console.error(error);
@@ -168,7 +197,7 @@ export async function login(data: LoginData): Promise<AuthResponse> {
 export async function verifyEmail(token: string): Promise<void> {
     try {
         const response = await axios.post(
-            `${process.env.NEXT_PUBLIC_API_URL}/v1/auth/verify-email`,
+            `${process.env.API_URL}/v1/auth/verify-email`,
             { token },
             {
                 headers: {
@@ -187,6 +216,10 @@ export async function verifyEmail(token: string): Promise<void> {
 }
 
 export function redirectToLogin(returnUrl?: string) {
+    //validate returnUrl
+    if (returnUrl && !returnUrl.startsWith('/')) {
+        returnUrl = '/';
+    }
     const loginPath = returnUrl 
         ? `/login?returnUrl=${encodeURIComponent(returnUrl)}`
         : '/login';
@@ -197,3 +230,40 @@ export function redirectToLogin(returnUrl?: string) {
         window.location.href = loginPath;
     }
 }
+
+let authListeners: ((isAuthenticated: boolean) => void)[] = [];
+
+export const addAuthListener = (listener: (isAuthenticated: boolean) => void) => {
+  authListeners.push(listener);
+};
+
+export const removeAuthListener = (listener: (isAuthenticated: boolean) => void) => {
+  authListeners = authListeners.filter(l => l !== listener);
+};
+
+export const notifyAuthChange = (isAuthenticated: boolean) => {
+  authListeners.forEach(listener => listener(isAuthenticated));
+};
+
+export const logout = () => {
+  // Clear all auth cookies
+  // Delete all auth cookies first
+  deleteCookie('access_token');
+  deleteCookie('refresh_token');
+  deleteCookie('user_name');
+  deleteCookie('role');
+
+  // Wait for cookies to be deleted before proceeding
+  setTimeout(() => {
+    // Notify listeners of auth change
+    notifyAuthChange(false);
+
+    // Redirect to login page
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login';
+    }
+    else {
+      redirect('/login');
+    }
+  }, 100);
+};

@@ -16,6 +16,9 @@ export type AlbumDetails = {
       thumbnailurl: string;
       duration?: number | null;
       views?: number | null;
+      artists?: {
+        name: string;
+      }[];
     }
   }[] | null;
 }

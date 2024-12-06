@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { login } from '@/app/services/auth.service';
 import LoginForm from '@/app/(auth)/login/login-form';
 import { getCookie} from 'cookies-next/client';
+import { Suspense } from 'react';
 // import {useTranslation} from 'next/translation';
 
 /**
@@ -62,8 +63,10 @@ export default function LoginPage() {
                 <div className="text-[--md-sys-color-on-background] text-4xl font-bold">Đăng nhập</div>
             </div>
             <div className="py-4 flex-col justify-start items-center gap-9 flex">
-                <LoginForm onSubmit={handleSubmit}/>
-                <GoogleLogin/>
+                <Suspense fallback={<div>Loading...</div>}> 
+                    <LoginForm onSubmit={handleSubmit}/>
+                    <GoogleLogin/>
+                </Suspense>
                 <div className="text-center">
                     <span className="text-[--md-sys-color-on-background] text-sm font-medium leading-tight tracking-tight">
                         Chưa có tài khoản? Đăng ký tài khoản

@@ -5,5 +5,5 @@ export type BrowseTypeProps = {
   image: ImageProps,
   bgColour: string,
   textColour: string,
-  url: string
+  url: string,
 }

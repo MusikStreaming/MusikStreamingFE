@@ -1,3 +1,4 @@
+// app/utils/album.ts
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -9,30 +10,17 @@ import Skeleton from '@/app/components/loading/skeleton';
 import PlayButton from '@/app/components/buttons/play-button-main';
 import IconSmallButton from '@/app/components/buttons/icon-small-button';
 import ArtistLinks from '@/app/components/info-links/artist-link';
-import ToggleIconButton from '@/app/components/buttons/toggle-button';
+import ToggleButtonFilled from '@/app/components/buttons/toggle-button';
 import SongTable from '@/app/components/tables/song-table';
 import { processCloudinaryUrl } from "@/app/api-fetch/cloudinary-url-processing";
-
-function calculateAlbumDuration(songs: AlbumDetails["songs"]) {
-  if (!songs) return 0;
-  const totalDuration = songs.reduce((total, song) => total + (song.song?.duration || 0), 0);
-  return totalDuration;
-}
-
-function countAlbumSongs(songs: AlbumDetails["songs"]) {
-  if (!songs) return 0;
-  return songs.length;
-}
+// import { formatDuration } from '@/app/utils/time';
+import { calculateAlbumDuration, countAlbumSongs, formatSongCount } from '@/app/utils/album';
 
 function formatDuration(duration: number) {
   const hours = Math.floor(duration / 3600);
   const minutes = Math.floor((duration % 3600) / 60);
   const seconds = duration % 60;
   return `${hours > 0 ? `${hours}h ` : ''}${minutes > 0 ? `${minutes}min ` : ''}${seconds > 0 ? `${seconds}sec` : ''}`;
-}
-
-function formatSongCount(count: number) {
-  return count > 1 ? `${count} songs` : `${count} song`;
 }
 
 export default function AlbumContent(params: { id: string }) {
@@ -106,9 +94,9 @@ export default function AlbumContent(params: { id: string }) {
               <IconSmallButton>
                 <span className="material-symbols-outlined">share</span>
               </IconSmallButton>
-              <ToggleIconButton>
+              <ToggleButtonFilled>
                 favorite
-              </ToggleIconButton>
+              </ToggleButtonFilled>
               <IconSmallButton>
                 <span className="material-symbols-outlined">more_vert</span>
               </IconSmallButton>
@@ -118,7 +106,16 @@ export default function AlbumContent(params: { id: string }) {
 
         {
           album?.songs && album.songs.length > 0 &&
-          <SongTable songs={album.songs} />
+          <SongTable songs={album.songs.map((song) => ({
+            song: {
+              id: song.song.id,
+              title: song.song.title,
+              duration: song.song.duration,
+              views: song.song.views,
+              coverImage: song.song.thumbnailurl,
+              artists: song.song.artists
+            }
+          }))} />
         }
 
         {/* Additional Info */}

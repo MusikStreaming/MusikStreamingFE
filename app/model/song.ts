@@ -6,5 +6,7 @@ export interface Song {
   releasedate: string;
   genre: string;
   views: number;
+  url?: string;
+  coverImage?: string;
   artists: { artist: { id: string; name: string; } }[];
 }

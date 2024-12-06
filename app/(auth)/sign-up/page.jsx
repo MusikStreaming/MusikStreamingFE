@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { signUp } from '@/app/services/auth.service';
+import DragNDropZone from '@/app/components/inputs/dragndropzone';
 import Image from 'next/image';
 
 /**
@@ -19,6 +20,7 @@ export default function SignUpPage() {
     const router = useRouter();
     const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
     const [revealPassword, setRevealPassword] = useState(false);
+    const [revealConfirmPassword, setRevealConfirmPassword] = useState(false);
     const [avatar, setAvatar] = useState(null);
     const [avatarPreview, setAvatarPreview] = useState(null);
 
@@ -56,16 +58,16 @@ export default function SignUpPage() {
     });
 
     const onDrop = useCallback((acceptedFiles) => {
-        const file = acceptedFiles[0];
-        setAvatar(file);
-        
-        // Create preview URL
-        const previewUrl = URL.createObjectURL(file);
-        setAvatarPreview(previewUrl);
-        
-        // Clean up preview URL when component unmounts
-        return () => URL.revokeObjectURL(previewUrl);
-    }, []);
+        if (!Array.isArray(acceptedFiles) || acceptedFiles.length === 0) {
+            return;
+        }
+
+        acceptedFiles.forEach((file) => {
+            const previewUrl = URL.createObjectURL(file);
+            setAvatarPreview(previewUrl);
+            setAvatar(file);
+        });
+    }, [setAvatar, setAvatarPreview]);
 
     const { getRootProps, getInputProps } = useDropzone({
         onDrop,
@@ -74,6 +76,7 @@ export default function SignUpPage() {
         },
         maxFiles: 1,
         maxSize: 5242880, // 5MB
+        multiple: false
     });
 
     /**
@@ -111,12 +114,11 @@ export default function SignUpPage() {
     }
 
     const validateForm = () => {
-        const { email, password, confirmPassword, name, file } = state.formData;
+        const { email, password, confirmPassword, name } = state.formData;
         const emailError = !validateField('email', { email });
         const passwordError = !validateField('password', { password });
         const confirmPasswordError = !validateField('confirmPassword', { confirmPassword });
         const nameError = !validateField('name', { name });
-        const fileError = !validateField('file', { file });
 
         dispatch({
             type: 'setErrors',
@@ -125,12 +127,11 @@ export default function SignUpPage() {
                 password: passwordError,
                 confirmPassword: confirmPasswordError,
                 name: nameError,
-                file: fileError,
-                general: emailError || passwordError || confirmPasswordError || nameError || fileError
+                general: emailError || passwordError || confirmPasswordError || nameError
             }
         });
 
-        return !(emailError || passwordError || confirmPasswordError || nameError || fileError);
+        return !(emailError || passwordError || confirmPasswordError || nameError);
     }
 
     /**
@@ -148,11 +149,11 @@ export default function SignUpPage() {
         }
 
         try {
-            await signUp({
+            const res = await signUp({
                 email: state.formData.email,
                 password: state.formData.password,
                 name: state.formData.name,
-                file: state.formData.file
+                avatar: avatar
             });
             router.push('/verify-email');
         } catch (error) {
@@ -171,89 +172,70 @@ export default function SignUpPage() {
             </div>
             <form onSubmit={handleSubmit} className="flex-col justify-start items-center gap-6 flex self-stretch">
                 <div className="flex-col justify-stretch items-start gap-3 flex w-full">
-                    <div {...getRootProps()} className="cursor-pointer w-full flex flex-col items-center gap-2">
-                        <input {...getInputProps()} />
-                        <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-dashed border-[--md-sys-color-outline] hover:border-[--md-sys-color-primary] transition-colors">
-                            {avatarPreview ? (
-                                <Image 
-                                    src={avatarPreview} 
-                                    alt="Avatar preview" 
-                                    width={128} 
-                                    height={128}
-                                    className="object-cover w-full h-full"
-                                />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-[--md-sys-color-surface-variant]">
-                                    <md-icon>add_photo_alternate</md-icon>
-                                </div>
-                            )}
-                        </div>
-                        <span className="text-sm text-[--md-sys-color-on-surface-variant]">
-                            Click để tải lên ảnh đại diện
-                        </span>
-                    </div>
-
-                    <md-outlined-text-field
-                        error={state.errors.name}
-                        required={true}
-                        className='max-w-[560px] w-[80vw]'
-                        label="Tên của bạn"
-                        value={state.formData.name}
-                        onInput={handleInputChange('name')}
-                        autoFocus={true}
-                    >
-                        <md-icon slot="leading-icon">person</md-icon>
-                    </md-outlined-text-field>
-
-                    <md-outlined-text-field
-                        error={state.errors.email}
-                        className='max-w-[560px] w-[80vw]'
-                        label="Email"
-                        type="email"
-                        value={state.formData.email}
-                        onInput={handleInputChange('email')}
-                    >
-                        <md-icon slot="leading-icon">email</md-icon>
-                    </md-outlined-text-field>
-
-                    <md-outlined-text-field
-                        error={state.errors.password}
-                        className='max-w-[560px] w-[80vw]'
-                        label="Mật khẩu"
-                        type={!revealPassword ? "password" : ""}
-                        value={state.formData.password}
-                        onInput={handleInputChange('password')}
-                        supportingText={(state.errors.password ? "Mật khẩu phải dài hơn 10 ký tự và chứa ít nhất 1 chữ hoa, 1 chữ thường và 1 số" : "")}
-                    >
-                        <md-icon slot="leading-icon">password</md-icon>
-                    </md-outlined-text-field>
-
-                    <md-outlined-text-field
-                        error={state.errors.confirmPassword}
-                        className='max-w-[560px] w-[80vw]'
-                        label="Xác nhận mật khẩu"
-                        type={!revealPassword ? "password" : ""}
-                        value={state.formData.confirmPassword}
-                        onInput={handleInputChange('confirmPassword')}
-                        supportingText={(state.errors.confirmPassword && !state.errors.password) ? "Mật khẩu nhập lại không trùng với mật khẩu ban đầu" : ""}
-                    >
-                        <md-icon slot="leading-icon">password</md-icon>
-                    </md-outlined-text-field>
-                    <div className='flex gap-3'>
-                        <input type="checkbox" name="Hiện mật khẩu" id="reveal_pwd" label="Hiện mật khẩu" onClick={
-                            () => {
-                                setRevealPassword(!revealPassword)
-                            }
-                        }/>
-                        <label htmlFor="reveal_pwd">Hiện mật khẩu</label>
-                    </div>
+                    <DragNDropZone onDrop={onDrop} avatarPreview={avatarPreview} supportText="Click để tải lên ảnh đại diện" supportedTypes={['image/*']} />
                 </div>
 
-                {state.errorMessage && (
-                    <div className="text-[--md-sys-color-error] text-sm">
-                        {state.errorMessage}
-                    </div>
-                )}
+                <md-outlined-text-field
+                    error={state.errors.name}
+                    required={true}
+                    className='max-w-[560px] w-[80vw]'
+                    label="Tên của bạn"
+                    value={state.formData.name}
+                    onInput={handleInputChange('name')}
+                    autoFocus={true}
+                >
+                    <md-icon slot="leading-icon">person</md-icon>
+                </md-outlined-text-field>
+
+                <md-outlined-text-field
+                    error={state.errors.email}
+                    className='max-w-[560px] w-[80vw]'
+                    label="Email"
+                    type="email"
+                    value={state.formData.email}
+                    onInput={handleInputChange('email')}
+                >
+                    <md-icon slot="leading-icon">email</md-icon>
+                </md-outlined-text-field>
+
+                <md-outlined-text-field
+                    error={state.errors.password}
+                    className='max-w-[560px] w-[80vw]'
+                    label="Mật khẩu"
+                    type={!revealPassword ? "password" : ""}
+                    value={state.formData.password}
+                    onInput={handleInputChange('password')}
+                    supportingText={(state.errors.password ? "Mật khẩu phải dài hơn 10 ký tự và chứa ít nhất 1 chữ hoa, 1 chữ thường và 1 số" : "")}
+                >
+                    <md-icon slot="leading-icon">password</md-icon>
+                    <md-icon-button type="button" slot="trailing-icon" onClick={() => setRevealPassword(!revealPassword)}>
+                        <md-icon>{revealPassword ? "visibility_off" : "visibility"}</md-icon>
+                    </md-icon-button>
+                </md-outlined-text-field>
+
+                <md-outlined-text-field
+                    error={state.errors.confirmPassword}
+                    className='max-w-[560px] w-[80vw]'
+                    label="Xác nhận mật khẩu"
+                    type={!revealConfirmPassword ? "password" : ""}
+                    value={state.formData.confirmPassword}
+                    onInput={handleInputChange('confirmPassword')}
+                    supportingText={(state.errors.confirmPassword && !state.errors.password) ? "Mật khẩu nhập lại không trùng với mật khẩu ban đầu" : ""}
+                >
+                    <md-icon slot="leading-icon">password</md-icon>
+                    <md-icon-button type="button" slot="trailing-icon" onClick={() => setRevealConfirmPassword(!revealConfirmPassword)}>
+                        <md-icon>{revealConfirmPassword ? "visibility_off" : "visibility"}</md-icon>
+                    </md-icon-button>
+                </md-outlined-text-field>
+
+
+                {
+                    state.errorMessage && (
+                        <div className="text-[--md-sys-color-error] text-sm">
+                            {state.errorMessage}
+                        </div>
+                    )
+                }
 
                 <FilledButton
                     type="submit"
@@ -272,7 +254,7 @@ export default function SignUpPage() {
                         Đăng nhập
                     </Link>
                 </div>
-            </form>
-        </div>
+            </form >
+        </div >
     );
 }
