@@ -50,7 +50,8 @@ export default function Songs() {
                         ? song.artists.map(artist => artist.artist.name)
                         : undefined,
                     songID: song.id,
-                    duration: song.duration
+                    duration: song.duration,
+                    artists: song.artists.map(artist => ({ id: artist.artist.id, name: artist.artist.name }))
                 }));
 
                 setSongs(cardData);

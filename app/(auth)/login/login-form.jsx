@@ -146,7 +146,7 @@ export default function LoginForm({
     };
 
     return (
-        // <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<div>Loading...</div>}>
             <form onSubmit={handleFormSubmit} className="flex-col justify-start items-center gap-6 flex self-stretch">
                 <div className="flex-col justify-stretch items-start gap-3 flex">
                     <md-outlined-text-field
@@ -190,7 +190,7 @@ export default function LoginForm({
                     )}
                 </div>
             </form>
-        // </Suspense>
+        </Suspense>
     )
 
 }

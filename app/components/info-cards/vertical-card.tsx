@@ -45,10 +45,8 @@ export default function VerticalCard({
   songID = undefined,
   duration = undefined,
   artists = undefined,
-  onClick = () => { }
 }: CardProps) {
   const router = useRouter();
-  const [play, setPlay] = useState(false);
   const { currentSong, isPlaying, playSong, pauseSong, isLoading } = useMedia();
   
   router.prefetch(href);
@@ -113,7 +111,6 @@ export default function VerticalCard({
                 fill={true}
                 sizes="(max-width: 640px) 280px, 200px"
                 priority={true}
-                style={{ objectFit: 'cover' }}
               />
               <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </>

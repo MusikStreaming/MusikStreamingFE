@@ -20,7 +20,7 @@ export default function ToggleIconButton({ children, alternateIcon, defaultState
 
   return (
     <IconSmallButton onClick={handleClick} className={`${isActive ? 'text-[--md-sys-color-primary]' : ''} flex items-center justify-center`}>
-      {isActive ? alternateIcon || children : children}
+      {isActive && alternateIcon ? alternateIcon : children}
     </IconSmallButton>
   );
 } 

@@ -155,6 +155,7 @@ export default function SignUpPage() {
                 name: state.formData.name,
                 avatar: avatar
             });
+            setCookie('skipVerifyEmail', false);
             router.push('/verify-email');
         } catch (error) {
             console.error(error);

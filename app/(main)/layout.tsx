@@ -71,10 +71,10 @@ export default function RootLayout({ children }: RootLayoutProps): JSX.Element {
       <body className={`${inter.className} antialiased`}>
         <Providers>
           <NavBar />
-            <div className="content flex p-4 pr-1 gap-4 flex-grow flex-1 justify-stretch">
+          <div className="content flex p-4 pr-1 md:gap-4 flex-grow flex-1 justify-stretch">
             <NavRail />
             <div className="center-scroll flex flex-grow self-stretch rounded-xl justify-stretch">
-              <div className="center-scroll-inner min-h-[100vh] flex items-start h-full self-stretch w-full bg-[--md-sys-color-surface-container-low] rounded-l-xl px-4 py-6">
+              <div className="center-scroll-inner min-h-[100vh] flex items-start h-full self-stretch w-full bg-[--md-sys-color-surface-container-low] rounded-l-xl px-2 md:px-4 py-6">
                 {children}
               </div>
             </div>
@@ -83,8 +83,8 @@ export default function RootLayout({ children }: RootLayoutProps): JSX.Element {
           <div className="sticky bottom-0">
             <SongControl />
             <BottomNavBar />
-            </div>
-          </Providers>
+          </div>
+        </Providers>
       </body>
     </html>
   );

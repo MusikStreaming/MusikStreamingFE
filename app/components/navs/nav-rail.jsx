@@ -220,7 +220,7 @@ export default function NavRail({ className, items: customItems }) {
         <div 
             ref={navRef}
             style={extended ? { width: `${width}px` } : {}}
-            className={`${className} nav-rail ${windowWidth < 590 ? "hidden" : "flex"} w-full relative flex-col bg-[--md-sys-color-surface-container-low] rounded-2xl nav-rail-${extended ? 'extended' : 'collapsed'} ${animationDirection}`}
+            className={`${className} nav-rail ${windowWidth < 768 ? "hidden" : "flex"} w-full relative flex-col bg-[--md-sys-color-surface-container-low] rounded-2xl nav-rail-${extended ? 'extended' : 'collapsed'} ${animationDirection}`}
         >
             <div 
                 className="resize-handle" 

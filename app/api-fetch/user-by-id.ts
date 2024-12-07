@@ -27,7 +27,7 @@ export default async function fetchUserById(id: string) {
   }
   const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/v1/user/${id}`, {
     headers: {
-      'Authorization': `Bearer ${getCookie('access_token') || id}`
+      'Authorization': `Bearer ${id || getCookie('user_id')}`
     }
   });
   try {

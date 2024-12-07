@@ -204,7 +204,7 @@ body {
   height: 200vh;
 }
 
-@media (min-width: 590px){
+@media (min-width: 768px){
   .center-scroll{
     overflow-y: scroll;
     max-height: calc(100vh - var(--desktop-content-offset));
@@ -408,7 +408,7 @@ a{
   }
 }
 
-@media screen and (min-width: 590px) {
+@media screen and (min-width: 768px) {
   nav.bottom-nav-bar {
     display: none;
   }
@@ -418,4 +418,31 @@ a{
   .nav-rail {
     display: flex;
   }
+}
+
+/* Add these animation classes */
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.slide-up-enter {
+  animation: slideUp 0.3s ease-out forwards;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+.slide-down-exit {
+  animation: slideDown 0.3s ease-in forwards;
 }

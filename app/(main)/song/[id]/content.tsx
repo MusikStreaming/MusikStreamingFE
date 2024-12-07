@@ -19,6 +19,18 @@ import { useMedia } from '@/app/contexts/media-context';
 import { useLiked } from '@/app/contexts/liked-context';
 import TextButton from '@/app/components/buttons/text-button';
 
+const mapSongToPlayable = (song: SongDetails) => ({
+  id: song.id,
+  title: song.title,
+  duration: song.duration,
+  coverImage: song.thumbnailurl,
+  thumbnailurl: song.thumbnailurl || '',
+  releasedate: song.releasedate,
+  genre: song.genre,
+  views: song.views,
+  artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
+});
+
 function processDatetime(ISODate: string): string {
   const date = new Date(ISODate);
   return date.toLocaleDateString();
@@ -30,6 +42,7 @@ export default function SongContent(params: { id: string; initialData: SongDetai
   const router = useRouter();
   const {
     playSong,
+    pauseSong,
     isPlaying,
     currentSong,
     progress,
@@ -60,8 +73,13 @@ export default function SongContent(params: { id: string; initialData: SongDetai
     }
   }, [fetchData, params.initialData]);
 
-  const isEmpty = !currentSong;
-  const isDisabled = isEmpty || isLoading;
+  useEffect(() => {
+    // Reset any scroll position when the page loads
+    window.scrollTo(0, 0);
+  }, []);
+
+  const hasNoCurrentSong = !currentSong;
+  const isPlaybackDisabled = hasNoCurrentSong || isLoading;
 
   if (error) {
     return <ErrorComponent onReloadClick={fetchData} />;
@@ -97,18 +115,12 @@ export default function SongContent(params: { id: string; initialData: SongDetai
               <div className="mt-4 flex justify-start items-center gap-4">
                 <PlayButton
                   className="bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary] w-12 h-12"
-                  onClick={() => song && playSong({
-                    id: song.id,
-                    title: song.title,
-                    duration: song.duration,
-                    coverImage: song.thumbnailurl,
-                    thumbnailurl: song.thumbnailurl || '',
-                    releasedate: song.releasedate,
-                    genre: song.genre,
-                    views: song.views,
-                    artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
-                  })}
+                  // play this song
+                  // or resume playback if this song is paused
+                  // or pause if this song is playing
+                  onClick={() => song && (isPlaying && currentSong?.id === song?.id ? pauseSong() : playSong(mapSongToPlayable(song)))}
                   isPlaying={isPlaying && currentSong?.id === song?.id}
+                  songId={song?.id}
                 />
                 <IconSmallButton onClick={() => {
                   if (song && window.location) {
@@ -166,7 +178,7 @@ export default function SongContent(params: { id: string; initialData: SongDetai
             }
           </div>
         </div>
-        <div className="mobile flex flex-col md:hidden">
+        <div className="mobile flex flex-col md:hidden slide-up-enter">
           <TextButton className="text-[--md-sys-color-primary] w-fit" onClick={() => router.back()}>
             <span className="material-symbols-outlined">arrow_back</span>
             Quay lại
@@ -216,7 +228,7 @@ export default function SongContent(params: { id: string; initialData: SongDetai
                 <input
                   className={twMerge(
                     "w-full",
-                    isDisabled && "opacity-50"
+                    isPlaybackDisabled && "opacity-50"
                   )}
                   aria-label="song-progress"
                   type="range"
@@ -224,7 +236,7 @@ export default function SongContent(params: { id: string; initialData: SongDetai
                   min={0}
                   max={song?.duration || 100}
                   onChange={(e) => seekTo(parseInt(e.target.value))}
-                  disabled={isDisabled}
+                  disabled={isPlaybackDisabled}
                 />
                 <div className="flex justify-between gap-3 w-full items-center">
                   <p className="">{song?.id === currentSong?.id ? formatDuration(progress, true) : '0:00'}</p>
@@ -240,17 +252,9 @@ export default function SongContent(params: { id: string; initialData: SongDetai
                 </IconSmallButton>
                 <PlayButton
                   className="bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary] w-12 h-12"
-                  onClick={() => song && playSong({
-                    id: song.id,
-                    title: song.title,
-                    duration: song.duration,
-                    coverImage: song.thumbnailurl,
-                    thumbnailurl: song.thumbnailurl || '',
-                    releasedate: song.releasedate,
-                    genre: song.genre,
-                    views: song.views,
-                    artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
-                  })}
+                  onClick={() => song && playSong(mapSongToPlayable(song))}
+                  isPlaying={isPlaying && currentSong?.id === song?.id}
+                  songId={song?.id}
                 />
                 <IconSmallButton>
                   <span className="material-symbols-outlined">skip_next</span>
