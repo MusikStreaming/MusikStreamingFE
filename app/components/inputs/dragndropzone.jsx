@@ -18,7 +18,7 @@ export default function DragNDropZone({ onDrop, avatarPreview, supportText, supp
               />
           ) : (
               <div className="w-full h-full flex items-center justify-center bg-[--md-sys-color-surface-variant]">
-                  <md-icon>add_photo_alternate</md-icon>
+                  <span className="material-symbols-outlined">add_photo_alternate</span>
               </div>
           )}
       </div>

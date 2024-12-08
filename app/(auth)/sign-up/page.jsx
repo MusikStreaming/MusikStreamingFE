@@ -11,6 +11,7 @@ import { useDropzone } from 'react-dropzone';
 import { signUp } from '@/app/services/auth.service';
 import DragNDropZone from '@/app/components/inputs/dragndropzone';
 import Image from 'next/image';
+import { setCookie, hasCookie } from 'cookies-next/client';
 
 /**
  * SignUpPage component handles the user registration process.
@@ -156,7 +157,12 @@ export default function SignUpPage() {
                 avatar: avatar
             });
             setCookie('skipVerifyEmail', false);
+            setCookie('access_token', res.session.access_token);
+            setCookie('refresh_token', res.session.refresh_token);
+            setCookie('role', res.user.role);
+            setCookie('user_id', res.user.id);
             router.push('/verify-email');
+
         } catch (error) {
             console.error(error);
             dispatch({ type: 'setError', payload: error.message || 'Sign up failed' });

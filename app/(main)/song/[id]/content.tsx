@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import fetchSongById from '@/app/api-fetch/song-by-id';
+import fetchAlbumById from '@/app/api-fetch/album-by-id';
 import ErrorComponent from '@/app/components/api-fetch-container/fetch-error';
 import { SongDetails } from '@/app/model/song-details';
 import Skeleton from '@/app/components/loading/skeleton';
@@ -18,6 +19,9 @@ import { formatDuration } from '@/app/utils/time';
 import { useMedia } from '@/app/contexts/media-context';
 import { useLiked } from '@/app/contexts/liked-context';
 import TextButton from '@/app/components/buttons/text-button';
+import { AlbumDetails } from '@/app/model/album-details';
+import VerticalCard from '@/app/components/info-cards/vertical-card';
+import styles from './content.module.css';
 
 const mapSongToPlayable = (song: SongDetails) => ({
   id: song.id,
@@ -36,8 +40,30 @@ function processDatetime(ISODate: string): string {
   return date.toLocaleDateString();
 }
 
+interface AlbumSong {
+  song: {
+    id: string;
+    title: string;
+    thumbnailurl?: string;
+    artists?: { name: string }[];
+  };
+}
+
+const mapSongToCard = (songData: AlbumSong['song']) => ({
+  title: songData?.title || '',
+  subtitle: songData?.artists?.map(a => a.name).join(', ') || '',
+  img: {
+    src: songData?.thumbnailurl || '',
+    alt: songData?.title || '',
+    width: 200,
+    height: 200
+  },
+  href: `/song/${songData?.id}`,
+});
+
 export default function SongContent(params: { id: string; initialData: SongDetails | null }) {
   const [song, setSong] = useState<SongDetails | undefined>(params.initialData || undefined);
+  const [albums, setAlbums] = useState<AlbumDetails[]>([]);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const {
@@ -50,7 +76,7 @@ export default function SongContent(params: { id: string; initialData: SongDetai
     isLoading
   } = useMedia();
   const { likedSongs, addLikedSong, removeLikedSong } = useLiked();
-  const fetchData = useCallback(async () => {
+  const fetchSongData = useCallback(async () => {
     try {
       const { id } = params;
       const songData = await fetchSongById(id);
@@ -69,9 +95,23 @@ export default function SongContent(params: { id: string; initialData: SongDetai
 
   useEffect(() => {
     if (!params.initialData) {
-      fetchData();
+      fetchSongData();
     }
-  }, [fetchData, params.initialData]);
+  }, [fetchSongData, params.initialData]);
+
+  const fetchAlbumData = useCallback(async (id: string) => {
+    const album = await fetchAlbumById(id);
+    return album;
+  }, []);
+
+  useEffect(() => {
+    if (song?.albums) {
+      song.albums.forEach(async (album) => {
+        const albumData = await fetchAlbumData(album?.album?.id || '');
+        setAlbums(prevAlbums => [...prevAlbums, albumData]);
+      });
+    }
+  }, [song, fetchAlbumData]);
 
   useEffect(() => {
     // Reset any scroll position when the page loads
@@ -82,14 +122,14 @@ export default function SongContent(params: { id: string; initialData: SongDetai
   const isPlaybackDisabled = hasNoCurrentSong || isLoading;
 
   if (error) {
-    return <ErrorComponent onReloadClick={fetchData} />;
+    return <ErrorComponent onReloadClick={fetchSongData} />;
   }
 
   try {
     return (
       <div className='flex flex-col w-full gap-8 p-4'>
         {/* Hero Section */}
-        <div className="desktop hidden md:flex md:flex-col gap-6">
+        <div className="desktop hidden md:flex md:flex-col gap-6 w-full">
           <div className='flex flex-col md:flex-row items-center gap-6'>
             {song ?
               <Image
@@ -118,7 +158,9 @@ export default function SongContent(params: { id: string; initialData: SongDetai
                   // play this song
                   // or resume playback if this song is paused
                   // or pause if this song is playing
-                  onClick={() => song && (isPlaying && currentSong?.id === song?.id ? pauseSong() : playSong(mapSongToPlayable(song)))}
+                  onClick={() => {
+                    return song && (isPlaying && currentSong?.id === song?.id ? pauseSong() : playSong(mapSongToPlayable(song)));
+                  }}
                   isPlaying={isPlaying && currentSong?.id === song?.id}
                   songId={song?.id}
                 />
@@ -129,19 +171,19 @@ export default function SongContent(params: { id: string; initialData: SongDetai
                 }}>
                   <span className="material-symbols-outlined">share</span>
                 </IconSmallButton>
-                <ToggleButtonFilled 
-                  active={song && likedSongs.some(s => s.id === song.id)} 
-                  onClick={() => song && (likedSongs.some(s => s.id === song.id) 
-                    ? removeLikedSong({ 
-                        ...song, 
-                        thumbnailurl: song.thumbnailurl || '',
-                        artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
-                      }) 
-                    : addLikedSong({ 
-                        ...song, 
-                        thumbnailurl: song.thumbnailurl || '',
-                        artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
-                      })
+                <ToggleButtonFilled
+                  active={song && likedSongs.some(s => s.id === song.id)}
+                  onClick={() => song && (likedSongs.some(s => s.id === song.id)
+                    ? removeLikedSong({
+                      ...song,
+                      thumbnailurl: song.thumbnailurl || '',
+                      artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
+                    })
+                    : addLikedSong({
+                      ...song,
+                      thumbnailurl: song.thumbnailurl || '',
+                      artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
+                    })
                   )}>
                   favorite
                 </ToggleButtonFilled>
@@ -178,14 +220,14 @@ export default function SongContent(params: { id: string; initialData: SongDetai
             }
           </div>
         </div>
-        <div className="mobile flex flex-col md:hidden slide-up-enter">
+        <div className="mobile flex flex-col md:hidden slide-up-enter w-full">
           <TextButton className="text-[--md-sys-color-primary] w-fit" onClick={() => router.back()}>
             <span className="material-symbols-outlined">arrow_back</span>
             Quay lại
           </TextButton>
           <div className="song-info flex flex-col gap-[60px] w-full pt-6 items-center">
             <div className="cover-and-title flex flex-col w-full items-center">
-              <div className={`img-large-rotate ${isPlaying && currentSong?.id === song?.id ? 'animate-spin-slow' : ''}`}>
+              <div className={`img-large-rotate ${currentSong?.id === song?.id ? 'animate-spin-slow' : ''}`}>
                 <Image
                   src={song?.thumbnailurl || '/assets/placeholder.jpg'}
                   alt={song?.title || 'Song cover'}
@@ -204,19 +246,19 @@ export default function SongContent(params: { id: string; initialData: SongDetai
                   <ToggleIconButton alternateIcon={<span className="material-symbols-outlined">playlist_add_check</span>}>
                     <span className="material-symbols-outlined">playlist_add</span>
                   </ToggleIconButton>
-                  <ToggleButtonFilled 
-                    active={song && likedSongs.some(s => s.id === song.id)} 
-                    onClick={() => song && (likedSongs.some(s => s.id === song.id) 
-                      ? removeLikedSong({ 
-                          ...song, 
-                          thumbnailurl: song.thumbnailurl || '',
-                          artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
-                        }) 
-                      : addLikedSong({ 
-                          ...song, 
-                          thumbnailurl: song.thumbnailurl || '',
-                          artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
-                        })
+                  <ToggleButtonFilled
+                    active={song && likedSongs.some(s => s.id === song.id)}
+                    onClick={() => song && (likedSongs.some(s => s.id === song.id)
+                      ? removeLikedSong({
+                        ...song,
+                        thumbnailurl: song.thumbnailurl || '',
+                        artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
+                      })
+                      : addLikedSong({
+                        ...song,
+                        thumbnailurl: song.thumbnailurl || '',
+                        artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
+                      })
                     )}>
                     favorite
                   </ToggleButtonFilled>
@@ -252,7 +294,7 @@ export default function SongContent(params: { id: string; initialData: SongDetai
                 </IconSmallButton>
                 <PlayButton
                   className="bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary] w-12 h-12"
-                  onClick={() => song && playSong(mapSongToPlayable(song))}
+                  onClick={() => song && (isPlaying && currentSong?.id === song?.id ? pauseSong() : playSong(mapSongToPlayable(song)))}
                   isPlaying={isPlaying && currentSong?.id === song?.id}
                   songId={song?.id}
                 />
@@ -270,16 +312,39 @@ export default function SongContent(params: { id: string; initialData: SongDetai
               </div>
             </div>
             <div className="flex flex-col gap-3 w-full pt-6 items-center">
-              <p className="">Release Date: {processDatetime(song?.releasedate || '')}</p>
-              <p className="">Total Views: {song?.views.toLocaleString()}</p>
+              <p className="">Ngày phát hành: {processDatetime(song?.releasedate || '')}</p>
+              <p className="">Lượt xem: {song?.views.toLocaleString()}</p>
             </div>
           </div>
 
+        </div>
+        <div className="flex flex-col gap-3 w-full">
+          <h2 className="text-lg font-bold">Lời bài hát</h2>
+        </div>
+        <div className="flex flex-col max-w-full overflow-hidden">
+          {
+            albums.map((album, index) => (
+              index === 0 && <div key={album?.id} className="flex flex-col gap-3 w-full">
+                <p className="text-lg">Các bài hát cùng album {album?.title}</p>
+                <div className="card-scroll grid grid-flow-row gap-3 no-scrollbar overflow-hidden">
+                  {
+                    album?.songs?.map(song => (
+                      <div key={song?.song?.id} className="min-w-[140px] max-w-[200px] shrink-0">
+                        <VerticalCard
+                          {...mapSongToCard(song?.song)}
+                        />
+                      </div>
+                    ))
+                  }
+                </div>
+              </div>
+            ))
+          }
         </div>
       </div>
     );
   } catch (e) {
     console.error(e);
-    return <ErrorComponent onReloadClick={fetchData} />;
+    return <ErrorComponent onReloadClick={fetchSongData} />;
   }
 }

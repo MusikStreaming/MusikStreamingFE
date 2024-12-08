@@ -1,0 +1,10 @@
+.card-scroll-inner {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.card-scroll-inner::-webkit-scrollbar {
+  display: none;
+  width: 0px;
+  height: 0px;
+} 

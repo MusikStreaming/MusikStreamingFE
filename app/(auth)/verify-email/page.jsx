@@ -3,8 +3,9 @@
 import TextButton from "@/app/components/buttons/text-button";
 import Link from "next/link";
 import { setCookie } from "cookies-next";
-
+import { useRouter } from "next/navigation";
 export default function VerifyEmailPage() {
+    const router = useRouter();
   return(
     <div className='flex flex-col items-left justify-center h-screen gap-8 w-1/2 max-w-md'>
         <h1 className='text-2xl font-bold'>Cảm ơn bạn đã đăng ký dịch vụ MusikStreaming</h1>
@@ -13,13 +14,16 @@ export default function VerifyEmailPage() {
             <p className='text-sm text-[--md-sys-color-on-surface-variant]'>Bạn có thể tiếp tục sử dụng dịch vụ trong vòng 24 giờ tới mà không cần xác thực email. Sau 24 giờ, bạn cần xác thực email để tiếp tục sử dụng dịch vụ.</p>
         </div>
         <div className="flex flex-col gap-4">
-            <TextButton className='bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary] rounded-full'>
+            <div className='bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary] rounded-full p-2 flex items-center gap-2'>
                 <span className='material-symbols-outlined'>check_circle</span>
                 <span>Xác nhận email</span>
-            </TextButton>
-            <button className='text-sm text-[--md-sys-color-secondary] rounded-full p-0' onClick={() => setCookie('skipVerifyEmail', true)}>
+            </div>
+            {/* <button className='text-sm text-[--md-sys-color-secondary] rounded-full p-0' onClick={() => {
+                setCookie('skipVerifyEmail', true, { maxAge: 24 * 60 * 60 });
+                router.push('/');
+            }}>
                 Tiếp tục mà không cần xác nhận email
-            </button>
+            </button> */}
         </div>
     </div>
   )

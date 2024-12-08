@@ -1,6 +1,5 @@
 'use client';
 
-;
 import './nav-rail.css';
 import '@material/material-color-utilities';
 import Link from 'next/link';
@@ -89,8 +88,8 @@ export default function NavRailCommonItem(
         props.href = '#';
     }
     return (
-        <div className={`nav-item w-full rounded-full cursor-pointer font-medium selected-${props.selected}`} role='link'>
-            <Link className={`state-layer w-full relative flex extended-gap-${props.extended} items-center justify-between rounded-full padding-${props.extended ? "extended" : "collapsed"}`} href={props.href}>
+        <div className={`nav-item w-full rounded-full cursor-pointer font-medium selected-${props.selected} transition-all duration-300 ease-in-out`} role='link'>
+            <Link className={`state-layer w-full relative flex extended-gap-${props.extended} items-center justify-between rounded-full padding-${props.extended ? "extended" : "collapsed"} transition-all duration-300 ease-in-out`} href={props.href}>
                 <md-ripple></md-ripple>
                 <div className={`nav-item-content flex  w-full extended-gap-${props.extended} items-center`}>
                     <div className="icon flex items-center text-[--md-sys-color-on-surface]">

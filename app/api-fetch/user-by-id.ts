@@ -21,15 +21,16 @@ const AlternativeUserSchema = z.object({
   country: z.string(),
 });
 
-export default async function fetchUserById(id: string) {
+export default async function fetchUserById(access_token: string) {
   if (!process.env.NEXT_PUBLIC_API_URL) {
     throw new Error('API URL not set');
   }
-  const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/v1/user/${id}`, {
+  const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/v1/user/${access_token}`, {
     headers: {
-      'Authorization': `Bearer ${id || getCookie('user_id')}`
+      'Authorization': `Bearer ${getCookie('access_token')?.toString()}`
     }
   });
+  console.log(res.data);
   try {
     const data = UserSchema.parse(JSON.parse(res.data));
     return data.data;

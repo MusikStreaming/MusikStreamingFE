@@ -29,6 +29,8 @@ export default async function SongPage({ params }: { params: Promise<{ id: strin
   const initialData = data?.thumbnailurl ? data : null;
   
   return (
-    <SongContent id={id} initialData={initialData} />
+    <div className="w-full max-w-full">
+      <SongContent id={id} initialData={initialData} />
+    </div>
   )
 }

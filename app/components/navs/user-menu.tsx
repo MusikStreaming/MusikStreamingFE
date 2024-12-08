@@ -29,7 +29,7 @@ export default function UserMenu({ onLogout }: UserMenuProps) {
 
   useEffect(() => {
     const fetchUser = async () => {
-      const user = await fetchUserById(getCookie('user_id') as string);
+      const user = await fetchUserById(getCookie('access_token')?.toString() as string);
       setUser(user);
     };
     fetchUser();

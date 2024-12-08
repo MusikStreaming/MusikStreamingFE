@@ -149,7 +149,7 @@ export async function signUp(data: SignUpData): Promise<AuthResponse> {
         maxAge: resData.session.expires_in,
         httpOnly: true,
       });
-    }
+    };
     return resData;
   } catch (error: unknown) {
     console.error(error);
@@ -284,6 +284,7 @@ export const logout = () => {
   deleteCookie("user_name");
   deleteCookie("role");
   deleteCookie("user_id");
+  deleteCookie("skipVerifyEmail");
 
   // Wait for cookies to be deleted before proceeding
   setTimeout(() => {

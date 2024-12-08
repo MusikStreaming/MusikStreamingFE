@@ -7,7 +7,9 @@ import IconSmallButton from '../buttons/icon-small-button';
 import FilledButton from '@/app/components/buttons/filled-button';
 import SearchBox from '@/app/components/inputs/search-box';
 import { useRouter, usePathname } from 'next/navigation';
+import { redirectToLogin } from '@/app/services/auth.service';
 import Image from 'next/image';
+import { useSearch } from '@/app/hooks/useSearch';
 
 export default function NavBar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -16,6 +18,7 @@ export default function NavBar() {
   const router = useRouter();
   const pathname = usePathname();
   const searchFocus = useRef<HTMLInputElement>(null);
+  const { searchQuery, handleSearchChange } = useSearch();
 
   useEffect(() => {
     const checkAuth = () => {
@@ -43,18 +46,8 @@ export default function NavBar() {
     }
   }, [pathname]);
 
-  const handleSearch = () => {
-    if (isManagerMode) {
-      router.push('/manager/discography');
-    } else {
-      router.push('/search');
-    }
-  };
-
   const handleLoginClick = () => {
-    const currentPath = pathname;
-    const loginPath = `/login?returnUrl=${encodeURIComponent(currentPath)}`;
-    router.push(loginPath);
+    redirectToLogin(pathname);
   };
 
   return (
@@ -89,7 +82,13 @@ export default function NavBar() {
 
       <div className="search-and-browse-container flex justify-center gap-4 flex-grow">
         <div className="search-and-browse-inner flex-grow flex items-center sm:justify-center">
-          <SearchBox className='hidden md:flex' placeholder="Search" ref={searchFocus} />
+          <SearchBox 
+            className='hidden md:flex' 
+            placeholder="Search" 
+            ref={searchFocus}
+            text={searchQuery}
+            onChange={handleSearchChange}
+          />
         </div>
       </div>
       <div className="nav-bar-button-container flex p-3 gap-3 items-center">
