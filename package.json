@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "clean": "if exist .next rd /s /q .next && if exist out rd /s /q out"
+    "clean": "if exist .next rd /s /q .next && if exist out rd /s /q out",
+    "tauri": "tauri"
   },
   "dependencies": {
     "@emotion/cache": "^11.13.1",
@@ -36,6 +37,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.1.0",
     "@types/lodash": "^4.17.13",
     "@types/node": "^20",
     "@types/react": "^18",
