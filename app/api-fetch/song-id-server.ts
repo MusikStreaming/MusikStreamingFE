@@ -1,9 +1,9 @@
 import axios from "axios";
-import { SongSchema, AlternativeSongSchema } from "./song-by-id";
+import { SongSchema, AlternativeSongSchema } from "@/app/model/schemas/song-by-id";
 
 export default async function fetchSongByIdServer(id: string){
   const res = await axios.get(
-    `${process.env.NEXT_PUBLIC_API_URL}/v1/song/${id}`,
+    `${process.env.API_URL}/v1/song/${id}`,
     {
       headers: {
         'Cache-Control': 'max-age=300000, stale-while-revalidate',

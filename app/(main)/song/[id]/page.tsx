@@ -6,11 +6,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const song = await fetchSongByIdServer(id);
   if (song) {
     return {
-      title: `${song.title} - ${song.artists.map(artist => artist.name).join(", ")} | MusikStreaming`,
-      description: `${song.title} by ${song.artists.map(artist => artist.name).join(", ")} - Listen to the latest music on MusikStreaming`,
+      title: `${song.title} - ${song.artists.map((artist: { name: string }) => artist.name).join(", ")} | MusikStreaming`,
+      description: `${song.title} by ${song.artists.map((artist: { name: string }) => artist.name).join(", ")} - Listen to the latest music on MusikStreaming`,
       openGraph: {
-        title: `${song.title} - ${song.artists.map(artist => artist.name).join(", ")} | MusikStreaming`,
-        description: `${song.title} by ${song.artists.map(artist => artist.name).join(", ")} - Listen to the latest music on MusikStreaming`,
+        title: `${song.title} - ${song.artists.map((artist: { name: string }) => artist.name).join(", ")} | MusikStreaming`,
+        description: `${song.title} by ${song.artists.map((artist: { name: string }) => artist.name).join(", ")} - Listen to the latest music on MusikStreaming`,
         type: "website"
       }
     };
@@ -29,6 +29,8 @@ export default async function SongPage({ params }: { params: Promise<{ id: strin
   const initialData = data?.thumbnailurl ? data : null;
   
   return (
-    <SongContent id={id} initialData={initialData} />
+    <div className="w-full max-w-full">
+      <SongContent id={id} initialData={initialData} />
+    </div>
   )
 }

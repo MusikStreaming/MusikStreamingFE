@@ -70,11 +70,14 @@
     max-height: calc(100vh - 196px);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     overflow-y: auto;
+    overflow-x: hidden;
+    will-change: width;
 }
 
 .nav-rail-extended {
     transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     min-width: 280px;
+    max-width: 600px;
     width: 20vw;
 }
 

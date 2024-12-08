@@ -11,9 +11,8 @@ import React from 'react'
 import ArtistContent from './content';
 import fetchArtistByIdServer from '@/app/api-fetch/artist-id-server';
 
-
-export async function generateMetadata({ params } : { params: Promise<{ id: string }> }) {
-    const id = (await params).id;
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
     const artist = await fetchArtistByIdServer(id);
     if (artist) {
         return {

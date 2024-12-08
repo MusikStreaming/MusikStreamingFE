@@ -2,7 +2,7 @@ import axios from "axios";
 import { Song } from "../model/song";
 import z from "zod";
 
-const SongListSchema = z.array(z.object({
+export const SongListSchema = z.array(z.object({
         id: z.string(),
         title: z.string(),
         thumbnailurl: z.string(),
@@ -20,7 +20,7 @@ const SongListSchema = z.array(z.object({
         )
     }));
 
-const AlternativeSongListSchema = z.object({
+export const AlternativeSongListSchema = z.object({
     data: z.array(z.object({
         id: z.string(),
         title: z.string(),

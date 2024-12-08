@@ -1,4 +1,4 @@
-    "use client"
+"use client"
 
 import { useEffect, useState } from "react"
 import fetchAllAlbums from "@/app/api-fetch/all-albums"
@@ -16,29 +16,34 @@ export default function Albums() {
     useEffect(() => {
         async function loadAlbums() {
             try {
+                console.log("Fetching albums...");
                 const albums = await fetchAllAlbums();
-                console.log(albums);
+                console.log("API Response:", albums);
+                
                 if (!albums) {
-                    setError(true);
-                    return;
+                    throw new Error("No albums data received");
                 }
+
                 const cardData: CardProps[] = albums.map((album) => {
+                    console.log("Processing album:", album);
                     const url = processCloudinaryUrl(album.thumbnailurl, 200, 200, "collections");
                     return {
                         img: {
                             src: url,
-                            alt: album.title,
+                            alt: album.title || "Album cover",
                             width: 200
                         },
-                        title: album.title,
-                        subtitle: album.type,
+                        title: album.title || "Untitled Album",
+                        subtitle: album.type || "Unknown Type",
                         href: `/album/${album.id}`
                     };
                 });
+                
+                console.log("Processed card data:", cardData);
                 setCards(cardData);
                 setError(false);
             } catch (e) {
-                console.log(e);
+                console.error("Error loading albums:", e);
                 setError(true);
             } finally {
                 setLoading(false);
@@ -49,27 +54,10 @@ export default function Albums() {
 
     if (loading) {
         return (
-            <div className="card-grid grid grid-flow-row">
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 p-4">
+                {[...Array(4)].map((_, index) => (
+                    <Skeleton key={index} className="w-full h-[200px]"/>
+                ))}
             </div>
         );
     }
@@ -86,7 +74,7 @@ export default function Albums() {
     }
 
     return (
-        <div className="card-grid grid grid-flow-row">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 p-4">
             {cards.map((card) => (
                 <VerticalCard key={card.href} {...card} />
             ))}

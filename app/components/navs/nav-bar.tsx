@@ -7,15 +7,18 @@ import IconSmallButton from '../buttons/icon-small-button';
 import FilledButton from '@/app/components/buttons/filled-button';
 import SearchBox from '@/app/components/inputs/search-box';
 import { useRouter, usePathname } from 'next/navigation';
+import { redirectToLogin } from '@/app/services/auth.service';
 import Image from 'next/image';
+import { useSearch } from '@/app/hooks/useSearch';
 
 export default function NavBar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
   const [isManagerMode, setIsManagerMode] = useState(false);
-  const route = useRouter();
+  const router = useRouter();
   const pathname = usePathname();
   const searchFocus = useRef<HTMLInputElement>(null);
+  const { searchQuery, handleSearchChange } = useSearch();
 
   useEffect(() => {
     const checkAuth = () => {
@@ -43,12 +46,8 @@ export default function NavBar() {
     }
   }, [pathname]);
 
-  const handleSearch = () => {
-    if (isManagerMode) {
-      route.push('/manager/discography');
-    } else {
-      route.push('/search');
-    }
+  const handleLoginClick = () => {
+    redirectToLogin(pathname);
   };
 
   return (
@@ -56,7 +55,7 @@ export default function NavBar() {
       <div className='flex mr-3'>
         <div className="nav-bar-button-container hidden md:flex md:p-3 md:gap-3 md:items-center">
           <IconSmallButton className="app-bar-button" onClick={() => {
-            route.back();
+            router.back();
           }}>
             <span className="material-symbols-outlined">
               arrow_back
@@ -64,7 +63,7 @@ export default function NavBar() {
           </IconSmallButton>
           <IconSmallButton onClick={
             () => {
-              route.forward();
+              router.forward();
             }
           }>
             <span className="material-symbols-outlined">
@@ -83,7 +82,13 @@ export default function NavBar() {
 
       <div className="search-and-browse-container flex justify-center gap-4 flex-grow">
         <div className="search-and-browse-inner flex-grow flex items-center sm:justify-center">
-          <SearchBox className='hidden md:flex' placeholder="Search" ref={searchFocus} />
+          <SearchBox 
+            className='hidden md:flex' 
+            placeholder="Search" 
+            ref={searchFocus}
+            text={searchQuery}
+            onChange={handleSearchChange}
+          />
         </div>
       </div>
       <div className="nav-bar-button-container flex p-3 gap-3 items-center">
@@ -93,7 +98,7 @@ export default function NavBar() {
             <UserMenu onLogout={() => setIsLoggedIn(false)} />
           </>
         ) : (
-          <FilledButton onClick={() => route.push("/login")}>
+          <FilledButton onClick={handleLoginClick}>
             {"Đăng nhập/Đăng ký"}
           </FilledButton>
         )}

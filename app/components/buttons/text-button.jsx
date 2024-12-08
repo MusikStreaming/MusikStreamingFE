@@ -8,13 +8,13 @@ import { twMerge } from 'tailwind-merge';
  * @param {React.ReactNode} props.children - Child elements to be rendered inside the button
  * @returns {JSX.Element} The rendered TextButton component
  */
-export default function TextButton(props) {
+export default function TextButton({ className, children, ...props }) {
     return(
-        <div className={twMerge("text-btn", props.className)} role='button' onClick={props.onClick}>
-            <div className="state-layer relative h-12 p-3 rounded-full flex items-center">
+        <div className={twMerge("text-btn", className)} role='button' {...props}>
+            <div className={twMerge("state-layer relative h-12 p-3 rounded-full flex items-center", props.className)}>
                 <md-ripple></md-ripple>
                 <div className="flex w-fit gap-3">
-                {props.children}
+                {children}
                 </div>
             </div>
         </div>

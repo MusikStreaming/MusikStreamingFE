@@ -10,4 +10,10 @@ export type CardProps = {
     isMultipleItemSub?: boolean;
     subHrefItems?: string[];
     subItems?: string[];
+    songID?: string;
+    duration?: number;
+    artists?: {
+        id: string;
+        name: string;
+    }[];
 }
