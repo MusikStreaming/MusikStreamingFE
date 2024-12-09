@@ -225,7 +225,7 @@ export default function NavRail({ className, items: customItems }) {
                 bg-[--md-sys-color-surface-container-low] rounded-2xl
                 overflow-y-auto overflow-x-hidden
                 max-h-[calc(100vh-196px)]
-                transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]
+                transition-all duration-200 ease-in-out
                 ${extended ? 
                     'min-w-[280px] max-w-[600px] w-[20vw]' : 
                     'w-[80px] min-w-[80px] max-w-[80px]'
@@ -249,7 +249,7 @@ export default function NavRail({ className, items: customItems }) {
                     <div className={`rounded-full flex gap-4 relative ${extended ? 'py-4 pl-4 pr-6' : 'p-4'}`}>
                         <span className="material-symbols-outlined w-6 block">menu</span>
                         <span className={`
-                            transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
+                            transition-all duration-300 ease-in-out
                             ${extended ? 
                                 'opacity-100 w-auto whitespace-nowrap pointer-events-auto translate-x-0' : 
                                 'opacity-0 w-0 whitespace-nowrap pointer-events-none -translate-x-5'

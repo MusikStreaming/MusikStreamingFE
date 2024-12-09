@@ -1,6 +1,5 @@
 'use client';
 
-import { Song } from '@/app/model/song';
 import { useMedia } from '@/app/contexts/media-context';
 import SongQueueCard from './song-queue-card';
 
