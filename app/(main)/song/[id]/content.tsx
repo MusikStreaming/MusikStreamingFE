@@ -21,7 +21,6 @@ import { useLiked } from '@/app/contexts/liked-context';
 import TextButton from '@/app/components/buttons/text-button';
 import { AlbumDetails } from '@/app/model/album-details';
 import VerticalCard from '@/app/components/info-cards/vertical-card';
-import styles from './content.module.css';
 import Link from 'next/link';
 
 const mapSongToPlayable = (song: SongDetails) => ({

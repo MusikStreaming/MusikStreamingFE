@@ -87,13 +87,13 @@ export default function LoginForm({
         })
     }
 
-    const waitForCookies = async (cookieName, maxAttempts = 10) => {
-        for (let i = 0; i < maxAttempts; i++) {
-            if (getCookie(cookieName)) return true;
-            await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-        return false;
-    }
+    // const waitForCookies = async (cookieName, maxAttempts = 10) => {
+    //     for (let i = 0; i < maxAttempts; i++) {
+    //         if (getCookie(cookieName)) return true;
+    //         await new Promise(resolve => setTimeout(resolve, 1000));
+    //     }
+    //     return false;
+    // }
 
     const handleFormSubmit = async (e) => {
         e.preventDefault();
