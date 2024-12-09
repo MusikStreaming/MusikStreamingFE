@@ -60,6 +60,10 @@ export default function LoginPage() {
                 throw new Error('Đăng nhập thất bại: Không thể tạo phiên đăng nhập');
             }
             
+            // Correctly handle the returnUrl
+            const returnUrl = new URLSearchParams(window.location.search).get('returnUrl') || '/';
+            window.location.href = returnUrl;
+            
             return { success: true };
         } catch (error) {
             console.error('Login error:', error);
