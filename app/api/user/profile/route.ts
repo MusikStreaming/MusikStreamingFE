@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+// import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!
-);
+// const supabase = createClient(
+//   process.env.NEXT_PUBLIC_SUPABASE_URL!,
+//   process.env.SUPABASE_SERVICE_KEY!
+// );
 
 export async function GET(request: NextRequest) {
   try {
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
       id: userData.id,
       username: userData.username,
       email: userData.email,
-      role: userData.role,
+      role: userData.role || 'User',
       country: userData.country,
       avatarurl: userData.avatarurl
     });

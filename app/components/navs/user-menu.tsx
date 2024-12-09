@@ -5,7 +5,6 @@ import { deleteCookie, getCookie } from 'cookies-next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import fetchUserById from '@/app/api-fetch/user-by-id';
 
 interface User {
   id: string;
@@ -28,27 +27,30 @@ export default function UserMenu({ onLogout }: UserMenuProps) {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const response = await fetch('/api/user/profile', {
-          credentials: 'include'
-        });
-        const userData = await response.json();
-        setUser(userData);
-        setIsManager(['Artist Manager', 'Admin'].includes(userData.role));
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-      }
-    };
-
-    fetchUserData();
-  }, []);
-
-  useEffect(() => {
     const checkManagerStatus = () => {
       const role = getCookie('role');
-      const isManagerRole = decodeURIComponent(String(role)) === 'Artist Manager';
-      setIsManager(isManagerRole);
+      if (role) {
+        const decodedRole = decodeURIComponent(String(role));
+        setIsManager(['Artist Manager', 'Admin'].includes(decodedRole));
+      }
+
+      const fetchUserData = async () => {
+        try {
+          const response = await fetch('/api/user/profile', {
+            credentials: 'include'
+          });
+          if (!response.ok) {
+            throw new Error('Failed to fetch user data');
+          }
+          const userData = await response.json();
+          setUser(userData);
+          setIsManager(['Artist Manager', 'Admin'].includes(userData.role));
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
+      };
+
+      fetchUserData();
     };
 
     const checkManagerPath = () => {
@@ -68,11 +70,11 @@ export default function UserMenu({ onLogout }: UserMenuProps) {
   const handleLogout = async () => {
     try {
       setIsOpen(false);
-      
       deleteCookie('session');
       deleteCookie('username');
+      deleteCookie('role');
+      setIsManager(false);
       onLogout();
-      
       await router.push('/');
     } catch (error) {
       console.error('Logout error:', error);
@@ -103,15 +105,21 @@ export default function UserMenu({ onLogout }: UserMenuProps) {
                 href={isManagerPath ? "/" : "/manager"}
                 className="px-4 py-2 text-sm hover:bg-[--md-sys-color-surface-variant] rounded-md flex items-center gap-2"
                 role="menuitem"
+                onClick={() => setIsOpen(false)}
               >
-                <span className="material-symbols-outlined">{isManagerPath ? "exit_to_app" : "dashboard"}</span>
-                <span className="text-sm font-medium">{isManagerPath ? "Exit Manager Dashboard" : "Manager Dashboard"}</span>
+                <span className="material-symbols-outlined">
+                  {isManagerPath ? "exit_to_app" : "dashboard"}
+                </span>
+                <span className="text-sm font-medium">
+                  {isManagerPath ? "Thoát chế độ quản lý" : "Bảng điều khiển"}
+                </span>
               </Link>
             )}
             <Link
               href={isManager ? "/manager/settings" : "/settings"}
               className="px-4 py-2 text-sm hover:bg-[--md-sys-color-surface-variant] rounded-md flex items-center gap-2"
               role="menuitem"
+              onClick={() => setIsOpen(false)}
             >
               <span className="material-symbols-outlined">settings</span>
               <span className="text-sm font-medium">Cài đặt</span>

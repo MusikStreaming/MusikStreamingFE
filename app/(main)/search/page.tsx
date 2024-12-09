@@ -1,18 +1,15 @@
 'use client';
-import BrowseCard from '@/app/components/browse/browse-card';
 import ScalableSearchBox from '@/app/components/inputs/scalable-search-box';
-import { useRef, useEffect, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRef, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import useScreenWidth from '@/app/hooks/useScreenWidth';
 import BrowseContainer from './browse-container';
 import ResultMobile from './result-mobile';
 import ResultDesktop from './result-desktop';
-import debounce from 'lodash/debounce';
 import { useSearch } from '@/app/hooks/useSearch';
 
 export default function SearchPage() {
     const pathname = usePathname();
-    const router = useRouter();
     const { searchQuery, handleSearchChange } = useSearch();
     const searchFocus = useRef<HTMLInputElement>(null);
     const screenWidth = useScreenWidth();
