@@ -446,3 +446,13 @@ a{
 .slide-down-exit {
   animation: slideDown 0.3s ease-in forwards;
 }
+
+.nav-rail{
+  height: calc(100vh- var(--mobile-content-offset));
+}
+
+@media screen and (min-width: 768px){
+  .nav-rail{
+    height: calc(100vh- var(--desktop-content-offset));
+  }
+}

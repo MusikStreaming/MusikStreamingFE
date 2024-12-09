@@ -4,6 +4,7 @@ import z from "zod";
 import { setCookie, deleteCookie } from "cookies-next/client";
 import { redirect } from "next/navigation";
 import { AuthResponse } from "../model/schemas/auth-response";
+// import 
 
 interface SignUpData {
   email: string;
@@ -354,3 +355,105 @@ export async function verifyAuth(token: string): Promise<AuthResponse> {
   });
   return response.data;
 }
+// const signInWithGoogle: RequestHandler = async (
+//   req: Request,
+//   res: Response,
+// ) => {
+//   const { data, error } = await supabase.auth.signInWithOAuth({
+//     provider: "google",
+//     options: {
+//       redirectTo: ${env.BASE_URL.replace(/\*/g, "open")}/v1/auth/oauth/callback,
+//     },
+//   });
+
+//   if (error) {
+//     res.status(error.status ?? 500).json({ error: error.message });
+//     return;
+//   }
+
+//   if (!data.url) {
+//     res.status(500).json({ error: "Failed to fetch oauth url" });
+//     return;
+//   }
+
+//   res.status(200).json({ url: data.url });
+// };
+
+// const handleOAuthCallback: RequestHandler = async (
+//   req: Request,
+//   res: Response,
+// ) => {
+//   const baseUrl = env.BASE_URL.replace(/\*/g, "open");
+//   const callbackAddr = new URL("/api/auth/callback", baseUrl).toString();
+//   const redirectAddr = new URL("/login", baseUrl).toString();
+
+//   const { code } = req.query;
+
+//   if (!code) {
+//     const codeErrorParams = new URLSearchParams({
+//       error: "code missing",
+//     });
+//     return res.status(400).redirect(${redirectAddr}?${codeErrorParams});
+//   }
+
+//   const { data: tokenData, error: tokenError } =
+//     await supabase.auth.exchangeCodeForSession(code as string);
+
+//   if (tokenError) {
+//     const tokenErrorParams = new URLSearchParams({
+//       error: "token exchange failed",
+//     });
+//     return res.status(500).redirect(${redirectAddr}?${tokenErrorParams});
+//   }
+
+//   const { access_token, refresh_token, expires_in, user } = tokenData.session;
+
+//   const {
+//     data: userData,
+//     error: userError,
+//     status,
+//   } = await supabasePro
+//     .from("profiles")
+//     .select("username, role")
+//     .eq("id", user.id)
+//     .single();
+
+//   if (userError) {
+//     const userErrorParams = new URLSearchParams({
+//       error: "user fetch failed",
+//     });
+//     return res
+//       .status(status ?? 500)
+//       .redirect(${redirectAddr}?${userErrorParams});
+//   }
+
+//   try {
+//     await fetch(callbackAddr, {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json",
+//       },
+//       body: JSON.stringify({
+//         user: {
+//           id: user.id,
+//           aud: user.aud,
+//           username: userData.username,
+//           role: userData.role,
+//         },
+//         session: {
+//           access_token,
+//           expires_in,
+//           refresh_token,
+//         },
+//       }),
+//     });
+
+//     return res.redirect(redirectAddr);
+//   } catch (error) {
+//     console.error(error);
+//     const unknownErrorParams = new URLSearchParams({
+//       error: "unhandled fetch exception",
+//     });
+//     return res.status(500).redirect(${redirectAddr}?${unknownErrorParams});
+//   }
+// };

@@ -61,9 +61,11 @@ interface MediaContextType {
   /** Function to add a song to the queue */
   addToQueue: (song: Song) => void;
   /** Function to remove a song from the queue */
-  removeFromQueue: (index: number) => void;
+  removeFromQueue: (songId: string) => void;
   /** Function to clear the queue */
   clearQueue: () => void;
+  /** Index of the current song in the queue */
+  queueIndex: number;
 }
 
 /**
@@ -89,6 +91,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
   const [nextSong, setNextSong] = useState<Song | null>(null);
   const [queue, setQueue] = useState<Song[]>([]);
   const [queueIndex, setQueueIndex] = useState(0);
+  const [backupQueue, setBackupQueue] = useState<Song[]>([]);
 
   // 2. All useCallback declarations
   const updateMediaSession = useCallback((song: Song) => {
@@ -209,18 +212,31 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
 
   const playNextSong = useCallback(() => {
     if (queue.length > queueIndex + 1) {
-      setQueueIndex(prev => prev + 1);
-      playSong(queue[queueIndex + 1]);
+      // Move current song to backup queue if it exists
+      if (currentSong) {
+        setBackupQueue(prev => [...prev, currentSong]);
+      }
+      
+      // Simply move to next song in queue
+      const nextIndex = queueIndex + 1;
+      const nextSong = queue[nextIndex];
+      setQueueIndex(nextIndex);
+      playSong(nextSong);
+    } else if (backupQueue.length > 0) {
+      // If at end of queue and have backup, reset with backup
+      // setQueue(backupQueue);
+      // setBackupQueue([]);
+      // setQueueIndex(0);
+      // playSong(backupQueue[0]);
     }
-  }, [queue, queueIndex, playSong]);
+  }, [queue, queueIndex, currentSong, backupQueue, playSong]);
 
   const playAlbum = useCallback((songs: Song[]) => {
     if (!isAuthenticated || songs.length === 0) return;
     
-    // Clear current queue and add all songs
+    // Clear both queues when starting new album
+    setBackupQueue([]);
     setQueue(songs);
-    
-    // Start playing from first song
     setQueueIndex(0);
     playSong(songs[0]);
   }, [isAuthenticated, playSong]);
@@ -229,9 +245,21 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
     setQueue(prev => [...prev, song]);
   }, []);
 
-  const removeFromQueue = useCallback((index: number) => {
-    setQueue(prev => prev.filter((_, i) => i !== index));
-  }, []);
+  const removeFromQueue = useCallback((songId: string) => {
+    setQueue(prev => {
+      const index = prev.findIndex(song => song.id === songId);
+      if (index === -1) return prev;
+      
+      const newQueue = [...prev];
+      newQueue.splice(index, 1);
+      
+      // Adjust queueIndex if removing a song before current
+      if (index < queueIndex) {
+        setQueueIndex(prev => prev - 1);
+      }
+      return newQueue;
+    });
+  }, [queueIndex]);
 
   const clearQueue = useCallback(() => {
     setQueue([]);
@@ -385,6 +413,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
         addToQueue: isAuthenticated ? addToQueue : () => {},
         removeFromQueue: isAuthenticated ? removeFromQueue : () => {},
         clearQueue: isAuthenticated ? clearQueue : () => {},
+        queueIndex,
       }}
     >
       <audio
@@ -402,8 +431,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
           }
         }}
         onEnded={() => {
-          setIsPlaying(false);
-          setProgress(0);
+          playNextSong();
         }}
         onLoadStart={() => setIsLoading(true)}
         onCanPlay={() => setIsLoading(false)}
@@ -466,6 +494,7 @@ export function useMedia() {
       addToQueue: () => {},
       removeFromQueue: () => {},
       clearQueue: () => {},
+      queueIndex: 0,
     };
   }
 

@@ -221,10 +221,12 @@ export default function NavRail({ className, items: customItems }) {
             className={`
                 ${className}
                 ${windowWidth < 768 ? "hidden" : "flex"}
+                nav-rail
                 relative flex-col
                 bg-[--md-sys-color-surface-container-low] rounded-2xl
                 overflow-y-auto overflow-x-hidden
-                max-h-[calc(100vh-196px)]
+                md:h-[calc(100vh-220px)]
+                h-[calc(100vh-328px)]
                 transition-all duration-200 ease-in-out
                 ${extended ? 
                     'min-w-[280px] max-w-[600px] w-[20vw]' : 
