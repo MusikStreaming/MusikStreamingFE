@@ -62,7 +62,7 @@ export default function VerticalCard({
 
   const handlePlayClick = async (songID: string) => {
     try {
-      if (!hasCookie('access_token')) {
+      if (!hasCookie('session')) {
         redirectToLogin(window.location.pathname);
         return;
       }

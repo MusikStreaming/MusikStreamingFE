@@ -28,11 +28,20 @@ export default function UserMenu({ onLogout }: UserMenuProps) {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const user = await fetchUserById(getCookie('access_token')?.toString() as string);
-      setUser(user);
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch('/api/user/profile', {
+          credentials: 'include'
+        });
+        const userData = await response.json();
+        setUser(userData);
+        setIsManager(['Artist Manager', 'Admin'].includes(userData.role));
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
     };
-    fetchUser();
+
+    fetchUserData();
   }, []);
 
   useEffect(() => {
@@ -60,10 +69,8 @@ export default function UserMenu({ onLogout }: UserMenuProps) {
     try {
       setIsOpen(false);
       
-      deleteCookie('access_token');
-      deleteCookie('refresh_token');
-      deleteCookie('role');
-      
+      deleteCookie('session');
+      deleteCookie('username');
       onLogout();
       
       await router.push('/');

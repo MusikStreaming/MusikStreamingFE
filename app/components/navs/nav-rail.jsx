@@ -86,10 +86,10 @@ export default function NavRail({ className, items: customItems }) {
 
     useEffect(() => {
         const checkAuth = () => {
-            const accessToken = getCookie("access_token");
+            const session = getCookie("session");
             
             // If logged in, set up pinned items
-            if (accessToken) {
+            if (session) {
                 setPinnedItems({
                     'favorite': {
                         text: 'Yêu thích',
@@ -297,7 +297,7 @@ export default function NavRail({ className, items: customItems }) {
                         </div>
                         <div className={`flex-col ${extended ? "gap-0" : "gap-2"} h-fit flex`}>
                             {
-                                (hasCookie('access_token')) &&
+                                (hasCookie('session')) &&
                                 Object.keys(pinnedItems).map((key) => {
                                     const pinned = pinnedItems[key];
                                     const imgSrc = pinned.img?.src || "/favicon.ico";

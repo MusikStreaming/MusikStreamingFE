@@ -22,12 +22,13 @@ import TextButton from '@/app/components/buttons/text-button';
 import { AlbumDetails } from '@/app/model/album-details';
 import VerticalCard from '@/app/components/info-cards/vertical-card';
 import styles from './content.module.css';
+import Link from 'next/link';
 
 const mapSongToPlayable = (song: SongDetails) => ({
   id: song.id,
   title: song.title,
   duration: song.duration,
-  coverImage: song.thumbnailurl,
+  coverImage: song.thumbnailurl || '/assets/placeholder.jpg',
   thumbnailurl: song.thumbnailurl || '',
   releasedate: song.releasedate,
   genre: song.genre,
@@ -176,11 +177,13 @@ export default function SongContent(params: { id: string; initialData: SongDetai
                   onClick={() => song && (likedSongs.some(s => s.id === song.id)
                     ? removeLikedSong({
                       ...song,
+                      coverImage: song.thumbnailurl || '/assets/placeholder.jpg',
                       thumbnailurl: song.thumbnailurl || '',
                       artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
                     })
                     : addLikedSong({
                       ...song,
+                      coverImage: song.thumbnailurl || '/assets/placeholder.jpg',
                       thumbnailurl: song.thumbnailurl || '',
                       artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
                     })
@@ -251,11 +254,13 @@ export default function SongContent(params: { id: string; initialData: SongDetai
                     onClick={() => song && (likedSongs.some(s => s.id === song.id)
                       ? removeLikedSong({
                         ...song,
+                        coverImage: song.thumbnailurl || '/assets/placeholder.jpg',
                         thumbnailurl: song.thumbnailurl || '',
                         artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
                       })
                       : addLikedSong({
                         ...song,
+                        coverImage: song.thumbnailurl || '/assets/placeholder.jpg',
                         thumbnailurl: song.thumbnailurl || '',
                         artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
                       })
@@ -321,19 +326,15 @@ export default function SongContent(params: { id: string; initialData: SongDetai
         <div className="flex flex-col gap-3 w-full">
           <h2 className="text-lg font-bold">Lời bài hát</h2>
         </div>
-        <div className="flex flex-col max-w-full overflow-hidden">
+        <div className="flex flex-col w-full overflow-hidden">
           {
             albums.map((album, index) => (
               index === 0 && <div key={album?.id} className="flex flex-col gap-3 w-full">
-                <p className="text-lg">Các bài hát cùng album {album?.title}</p>
-                <div className="card-scroll grid grid-flow-row gap-3 no-scrollbar overflow-hidden">
+                <p className="text-lg">Các bài hát cùng album <Link href={`/album/${album?.id}`} className="font-medium hover:underline hover:text-[--md-sys-color-primary]">{album?.title}</Link></p>
+                <div className="card-scroll grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-4">
                   {
                     album?.songs?.map(song => (
-                      <div key={song?.song?.id} className="min-w-[140px] max-w-[200px] shrink-0">
-                        <VerticalCard
-                          {...mapSongToCard(song?.song)}
-                        />
-                      </div>
+                      <VerticalCard key={song?.song?.id} {...mapSongToCard(song?.song)} />
                     ))
                   }
                 </div>

@@ -5,7 +5,9 @@ import { twMerge } from 'tailwind-merge';
 import SongQueue from './song-queue';
 
 export default function QueueContainer() {
-  const { isQueueVisible, toggleQueue } = useMedia();
+  const { isQueueVisible, toggleQueue, currentSong, queue } = useMedia();
+  
+  const hasContent = currentSong || queue.length > 0;
   
   return (
     <>
@@ -17,8 +19,11 @@ export default function QueueContainer() {
         <div className="bg-[--md-sys-color-surface] h-full rounded-xl p-4">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold">Queue</h2>
+            {!hasContent && (
+              <p className="text-sm text-[--md-sys-color-outline]">Queue is empty</p>
+            )}
           </div>
-          <SongQueue songs={[]} />
+          <SongQueue />
         </div>
       </div>
 
@@ -37,7 +42,7 @@ export default function QueueContainer() {
               <span className="material-symbols-outlined">close</span>
             </button>
           </div>
-          <SongQueue songs={[]} />
+          <SongQueue />
         </div>
       </div>
     </>

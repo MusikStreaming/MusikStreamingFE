@@ -156,11 +156,23 @@ export default function SignUpPage() {
                 name: state.formData.name,
                 avatar: avatar
             });
-            setCookie('skipVerifyEmail', false);
-            setCookie('access_token', res.session.access_token);
-            setCookie('refresh_token', res.session.refresh_token);
-            setCookie('role', res.user.role);
-            setCookie('user_id', res.user.id);
+
+            // Only set necessary non-sensitive cookies
+            setCookie('skipVerifyEmail', false, {
+                httpOnly: true,
+                secure: true,
+                sameSite: 'strict',
+                path: '/',
+            });
+
+            // Let the backend handle setting sensitive cookies via HTTP response headers
+            // The backend should set these as HTTP-only cookies
+            // DO NOT set these cookies on the client side:
+            // - access_token
+            // - refresh_token
+            // - role
+            // - user_id
+
             router.push('/verify-email');
 
         } catch (error) {

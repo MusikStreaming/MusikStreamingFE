@@ -7,6 +7,7 @@ export default function Favorites(){
     return (
         <div className="favorites-page w-full">
             <h1 className="favorites-title">Favorites</h1>
+            {likedSongs.length > 0 ? (
             <SongTable songs={likedSongs.map(song => ({ 
                 song: {
                     ...song,
@@ -14,6 +15,9 @@ export default function Favorites(){
                     artists: song.artists?.map(a => ({ name: a.artist.name }))
                 }
             }))} showImage={true} />
+            ) : (
+                <SongTable songs={[]} showImage={false} />
+            )}
         </div>
     )
 }

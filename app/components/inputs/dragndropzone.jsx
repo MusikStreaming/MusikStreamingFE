@@ -1,16 +1,16 @@
 import { useDropzone } from 'react-dropzone';
 import Image from 'next/image';
 
-export default function DragNDropZone({ onDrop, avatarPreview, supportText, supportedTypes }) {
+export default function DragNDropZone({ onDrop, avatarPreview: imgPreview, supportText, supportedTypes }) {
     const { getRootProps, getInputProps } = useDropzone({ onDrop });
     
     return (
       <div {...getRootProps()} className="cursor-pointer w-full flex flex-col items-center gap-2">
       <input {...getInputProps()} />
       <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-dashed border-[--md-sys-color-outline] hover:border-[--md-sys-color-primary] transition-colors">
-          {avatarPreview ? (
+          {imgPreview ? (
               <Image 
-                  src={avatarPreview} 
+                  src={imgPreview} 
                   alt="Avatar preview" 
                   width={128} 
                   height={128}

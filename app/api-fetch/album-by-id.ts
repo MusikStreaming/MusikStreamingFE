@@ -20,11 +20,14 @@ const AlbumSchema = z.object({
                 id: z.string(),
                 title: z.string(),
                 thumbnailurl: z.string(),
-                duration: z.number().nullable().optional(),
+                duration: z.number().nullable(),
                 views: z.number().nullable().optional(),
                 artists: z.array(z.object({
+                    id: z.string().optional(),
                     name: z.string()
-                })).optional(),
+                })).optional().default([]),
+                releasedate: z.string().optional(),
+                genre: z.string().optional()
             })
         })
     ).optional().nullable(),

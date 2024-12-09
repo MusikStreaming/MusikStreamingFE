@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-export default function SongQueueCard({ song }) {
+export default function SongQueueCard({ song, isPlaying, onRemove }) {
   return(
     <div className="song-queue-card flex items-center gap-4" aria-label="song-queue-card">
       <input type="checkbox" className="checkbox rounded-full" />

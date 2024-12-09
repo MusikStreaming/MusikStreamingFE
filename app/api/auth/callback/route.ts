@@ -49,3 +49,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Authentication failed' }, { status: 500 });
   }
 }
+
+export async function OPTIONS(request: NextRequest) {
+  request.headers.set('Access-Control-Request-Method', 'POST');
+  request.headers.set('Access-Control-Request-Headers', 'Content-Type, Authorization');
+  request.headers.set('Access-Control-Allow-Origin', '*');
+  request.headers.set('Access-Control-Allow-Methods', 'POST');
+  request.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  return NextResponse.json({ message: 'OK' }, { status: 200 });
+}

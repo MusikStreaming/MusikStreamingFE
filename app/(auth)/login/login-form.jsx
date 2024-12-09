@@ -12,7 +12,7 @@ export default function LoginForm({
 }) {
     const router = useRouter()
     const searchParams = useSearchParams()
-    if (getCookie("access_token")) {
+    if (getCookie("session")) {
         router.push("/")
     }
     const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -108,39 +108,22 @@ export default function LoginForm({
             if (result?.error) {
                 dispatch({ 
                     type: "setStatus", 
-                    payload: { isLoading: false, errorMessage: result.error } 
+                    payload: { 
+                        isLoading: false, 
+                        errorMessage: result.error 
+                    } 
                 });
             } else if (result?.success) {
-                // Ensure cookies are set before navigation
-                // await new Promise(resolve => setTimeout(resolve, 1000));
-
-                if (!waitForCookies('access_token')) {
-                    dispatch({
-                        type: "setStatus",
-                        payload: { isLoading: false, errorMessage: "Không thể đăng nhập, vui lòng thử lại sau." }
-                    });
-                } else {
-                    const role = getCookie('role');
-                    let returnUrl = searchParams.get('returnUrl');
-                    // validate returnUrl to prevent open redirect attack
-                    const isValidReturnUrl = returnUrl && returnUrl.match(/^https?:\/\//);
-                    if (!isValidReturnUrl) {
-                        returnUrl = null;
-                    }
-                    
-                    if (role === 'Artist Manager') {
-                        router.push('/manager');
-                    } else if (returnUrl) {
-                        router.push(decodeURIComponent(returnUrl));
-                    } else {
-                        router.push('/');
-                    }
-                }
+                // Redirect will be handled by the parent component
+                window.location.href = searchParams.get('returnUrl') || '/';
             }
         } catch (error) {
             dispatch({ 
                 type: "setStatus", 
-                payload: { isLoading: false, errorMessage: error.message } 
+                payload: { 
+                    isLoading: false, 
+                    errorMessage: error.message || 'Đăng nhập thất bại, vui lòng thử lại sau' 
+                } 
             });
         }
     };
@@ -177,9 +160,9 @@ export default function LoginForm({
                 </div>
                 <div className="max-w-[560px] w-[80vw] flex flex-col gap-4 items-center justify-stretch">
                     <FilledButton
+                        type="submit"
                         disabled={state.status.isLoading}
                         className='max-w-[560px] w-[80vw]'
-                        onClick={handleFormSubmit}
                     >
                         {state.status.isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
                     </FilledButton>

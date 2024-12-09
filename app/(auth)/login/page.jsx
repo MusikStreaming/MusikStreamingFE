@@ -4,7 +4,7 @@ import Link from 'next/link';
 // import { useReducer } from 'react';
 import { login } from '@/app/services/auth.service';
 import LoginForm from '@/app/(auth)/login/login-form';
-import { getCookie} from 'cookies-next/client';
+import { getCookie, hasCookie } from 'cookies-next';
 import { Suspense } from 'react';
 // import {useTranslation} from 'next/translation';
 
@@ -42,18 +42,31 @@ export default function LoginPage() {
     async function handleSubmit(formData) {
         try {
             const { email, password } = formData;
-            const res = await login({ email, password });
+            console.log('Starting login process...');
             
-            // Verify cookies were set
-            const accessToken = getCookie('access_token');
-            if (!accessToken) {
-                throw new Error('Failed to set authentication cookies');
+            const res = await login({ email, password });
+            console.log('Login response:', res);
+            
+            // Wait a brief moment for cookies to be set
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Check both cookie existence and value
+            const hasSession = hasCookie('session');
+            const sessionValue = getCookie('session');
+            
+            console.log('Session status:', { hasSession, sessionValue });
+            
+            if (!hasSession || sessionValue !== 'true') {
+                throw new Error('Đăng nhập thất bại: Không thể tạo phiên đăng nhập');
             }
             
             return { success: true };
         } catch (error) {
-            console.error('Login failed:', error);
-            return { error: error.message };
+            console.error('Login error:', error);
+            return { 
+                error: typeof error === 'string' ? error : 
+                       error?.message || 'Đăng nhập thất bại, vui lòng thử lại sau'
+            };
         }
     }
 

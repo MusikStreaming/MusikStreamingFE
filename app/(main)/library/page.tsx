@@ -8,8 +8,8 @@ export default function Library(){
     const router = useRouter();
 
     useEffect(() => {
-    const accessToken = getCookie("access_token");
-    if (!accessToken) {
+    const session = getCookie("session");
+    if (!session) {
         router.replace("/login");   
     }
     }, [router]);

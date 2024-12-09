@@ -75,9 +75,9 @@ async function getCountryCode(): Promise<string> {
   });
 }
 
-export async function signUp(data: SignUpData): Promise<AuthResponse> {
+export async function signUp(incomingData: SignUpData): Promise<AuthResponse> {
   const country = await getCountryCode();
-  data.country = country;
+  const data = { ...incomingData, country };
 
   try {
     const formData = new FormData();
@@ -90,7 +90,8 @@ export async function signUp(data: SignUpData): Promise<AuthResponse> {
       formData.append("file", data.avatar);
     }
 
-    const response = await axios.post(
+    // First make the external signup request
+    const externalResponse = await axios.post(
       `${process.env.NEXT_PUBLIC_API_URL}/v1/auth/signup`,
       formData,
       {
@@ -99,120 +100,107 @@ export async function signUp(data: SignUpData): Promise<AuthResponse> {
           "Accept-Encoding": "gzip, deflate, br",
           Connection: "keep-alive",
         },
+        withCredentials: false // Remove credentials for external request
       },
     );
 
-    if (response.status !== 200) {
-      const resError = AuthResponseError.parse(response.data);
+    if (externalResponse.status !== 200) {
+      const resError = AuthResponseError.parse(externalResponse.data);
       throw new Error(resError.error);
     }
 
-    const resData = AuthResponse.parse(response.data);
-    if (resData.session) {
-      setCookie("access_token", resData.session.access_token, {
-        expires: new Date(
-          Date.now() + (resData.session.expires_in ?? 3600) * 1000,
-        ),
-        path: "/",
-        sameSite: "strict" as const,
-        secure: process.env.NODE_ENV === "production",
-        maxAge: resData.session.expires_in,
-        httpOnly: true,
-      });
-      setCookie("refresh_token", resData.session.refresh_token, {
-        expires: new Date(
-          Date.now() + (resData.session.expires_in ?? 3600) * 1000,
-        ),
-        path: "/",
-        sameSite: "strict" as const,
-        secure: process.env.NODE_ENV === "production",
-        maxAge: resData.session.expires_in,
-        httpOnly: true,
-      });
-      setCookie("user_name", resData.user.username, {
-        expires: new Date(
-          Date.now() + (resData.session.expires_in ?? 3600) * 1000,
-        ),
-        path: "/",
-        sameSite: "strict" as const,
-        secure: process.env.NODE_ENV === "production",
-        maxAge: resData.session.expires_in,
-        httpOnly: true,
-      });
-      setCookie("role", resData.user.role, {
-        expires: new Date(
-          Date.now() + (resData.session.expires_in ?? 3600) * 1000,
-        ),
-        path: "/",
-        sameSite: "strict" as const,
-        secure: process.env.NODE_ENV === "production",
-        maxAge: resData.session.expires_in,
-        httpOnly: true,
-      });
-    };
-    return resData;
+    // Then set up local session through our API
+    const localResponse = await axios.post(
+      `/api/auth/signin`,
+      { 
+        externalAuth: {
+          session: {
+            access_token: externalResponse.data.session.access_token,
+            expires_in: externalResponse.data.session.expires_in
+          },
+          user: externalResponse.data.user
+        }
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        withCredentials: true // Keep credentials for local request
+      }
+    );
+
+    if (!localResponse.data.success) {
+      throw new Error('Failed to create local session');
+    }
+
+    return localResponse.data;
   } catch (error: unknown) {
     console.error(error);
-    throw new Error(
-      "Sign up failed: " +
-        (error instanceof Error ? error.message : String(error)),
-    );
+    if (axios.isAxiosError(error)) {
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message;
+      throw new Error(`Đăng ký thất bại: ${errorMessage}`);
+    }
+    throw new Error('Đăng ký thất bại, vui lòng thử lại sau');
   }
 }
 
 export async function login(data: LoginData): Promise<AuthResponse> {
   try {
-    const response = await axios.post(
+    console.log('Attempting external authentication...');
+    // First authenticate with external server
+    const externalResponse = await axios.post(
       `${process.env.NEXT_PUBLIC_API_URL}/v1/auth/signin`,
       data,
       {
         headers: {
           "Content-Type": "application/json",
         },
+        withCredentials: false
+      }
+    );
+
+    console.log('External auth response:', externalResponse.data);
+
+    if (!externalResponse.data?.session?.access_token) {
+      throw new Error('Invalid response from authentication server');
+    }
+
+    console.log('Setting up local session...');
+    // Then set up local session through our API
+    const localResponse = await axios.post(
+      `/api/auth/signin`,
+      { 
+        externalAuth: {
+          session: {
+            access_token: externalResponse.data.session.access_token,
+            expires_in: externalResponse.data.session.expires_in
+          },
+          user: externalResponse.data.user
+        }
       },
-    );
-    if (response.status !== 200) {
-      const resError = AuthResponseError.parse(response.data);
-      throw new Error(resError.error);
-    }
-    const resData = AuthResponse.parse(response.data);
-
-    if (!resData.session) {
-      return resData;
-    }
-
-    // Calculate expiration date with default 1 hour expiration
-    const expires = new Date(
-      Date.now() + (resData.session.expires_in ?? 3600) * 1000,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        withCredentials: true
+      }
     );
 
-    const cookiesOptions = {
-      expires,
-      path: "/",
-      sameSite: "strict" as const,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: resData.session.expires_in,
-    };
+    if (!localResponse.data.success) {
+      throw new Error('Failed to create local session');
+    }
 
-    // Set client-side cookies with proper attributes
-    setCookie("access_token", resData.session.access_token, cookiesOptions);
-    setCookie("refresh_token", resData.session.refresh_token, cookiesOptions);
-    setCookie("user_name", resData.user.username, cookiesOptions);
-    setCookie("role", resData.user.role, {
-      expires,
-      path: "/",
-      sameSite: "strict" as const,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: resData.session.expires_in,
-    });
-    setCookie("user_id", resData.user.id, cookiesOptions);
-    return resData;
+    return localResponse.data;
   } catch (error: unknown) {
-    console.error(error);
-    throw new Error(
-      "Login failed: " +
-        (error instanceof Error ? error.message : String(error)),
-    );
+    console.error('Login error details:', error);
+    
+    if (axios.isAxiosError(error)) {
+      console.error('Response data:', error.response?.data);
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message;
+      throw new Error(`Đăng nhập thất bại: ${errorMessage}`);
+    }
+    
+    throw new Error('Đăng nhập thất bại, vui lòng thử lại sau');
   }
 }
 
@@ -243,12 +231,8 @@ export function redirectToLogin(returnUrl?: string) {
     returnUrl = "/";
   }
   // create full return url
-  console.log(window.location.origin);
-  const fullReturnUrl = returnUrl
-    ? `${window.location.hostname}${returnUrl}`
-    : window.location.hostname;
   const loginPath = returnUrl
-    ? `/login?returnUrl=${encodeURIComponent(fullReturnUrl)}`
+    ? `/login?returnUrl=${encodeURIComponent(returnUrl)}`
     : "/login";
 
   if (typeof window === "undefined") {
@@ -276,18 +260,13 @@ export const notifyAuthChange = (isAuthenticated: boolean) => {
   authListeners.forEach((listener) => listener(isAuthenticated));
 };
 
-export const logout = () => {
-  // Clear all auth cookies
-  // Delete all auth cookies first
-  deleteCookie("access_token");
-  deleteCookie("refresh_token");
-  deleteCookie("user_name");
-  deleteCookie("role");
-  deleteCookie("user_id");
-  deleteCookie("skipVerifyEmail");
-
-  // Wait for cookies to be deleted before proceeding
-  setTimeout(() => {
+export const logout = async () => {
+  try {
+    // Call logout endpoint to clear server-side session
+    await axios.post('/api/auth/logout', {}, { 
+      withCredentials: true 
+    });
+    
     // Notify listeners of auth change
     notifyAuthChange(false);
 
@@ -297,7 +276,10 @@ export const logout = () => {
     } else {
       redirect("/login");
     }
-  }, 100);
+  } catch (error) {
+    console.error('Logout error:', error);
+    throw error;
+  }
 };
 
 export async function signInWithGoogle(returnUrl?: string) {
@@ -365,3 +347,10 @@ export const handleAuthCallback = async (data: AuthResponse): Promise<void> => {
     throw new Error("Failed to process authentication callback");
   }
 };
+
+export async function verifyAuth(token: string): Promise<AuthResponse> {
+  const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/v1/user/`, { token }, {
+    
+  });
+  return response.data;
+}

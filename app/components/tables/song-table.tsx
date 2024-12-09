@@ -37,7 +37,7 @@ export default function SongTable({ songs, className, showImage }: {
 
   const handlePlayClick = async (song: typeof songs[0]['song']) => {
     try {
-      if (!hasCookie('access_token')) {
+      if (!hasCookie('session')) {
         redirectToLogin(window.location.pathname);
         return;
       }
@@ -58,7 +58,7 @@ export default function SongTable({ songs, className, showImage }: {
         title: song.title,
         url: songUrl,
         duration: song.duration || 0,
-        coverImage: song.coverImage,
+        coverImage: song.coverImage || '',
         thumbnailurl: song.coverImage || '',
         releasedate: "",
         genre: '',

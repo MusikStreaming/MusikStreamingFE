@@ -9,7 +9,7 @@ import AccountSettingsPage from './account';
 export default function Settings() {
     const router = useRouter();
     useEffect(() => {
-        const accessToken = getCookie("access_token");
+        const accessToken = getCookie("session");
         if (!accessToken) {
             router.replace("/login");
         }

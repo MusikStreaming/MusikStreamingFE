@@ -35,7 +35,7 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "app/(auth)/login/page.jsx"
-, "app/components/navs/nav-rail-common-item.jsx", "app/components/navs/bottom-nav-bar-item.jsx", "app/services/auth.service.js", "app/components/buttons/filled-button.jsx", "app/(auth)/sign-up/page.jsx", "app/components/navs/nav-rail.jsx", "app/components/navs/nav-rail-pinned-item.jsx", "app/components/buttons/text-button.jsx", "app/components/buttons/toggle-button.jsx", "app/components/buttons/outlined-button.jsx", "app/components/inputs/search-box.jsx", "app/components/inputs/date-input.jsx", "app/(main)/layout.jsx", "app/components/inputs/dragndropzone.jsx", "app/manager/discography/add/add-album.jsx", "app/components/inputs/chip-input.jsx"  ],
+, "app/components/navs/nav-rail-common-item.jsx", "app/components/navs/bottom-nav-bar-item.jsx", "app/services/auth.service.js", "app/components/buttons/filled-button.jsx", "app/(auth)/sign-up/page.jsx", "app/components/navs/nav-rail.jsx", "app/components/navs/nav-rail-pinned-item.jsx", "app/components/buttons/text-button.jsx", "app/components/buttons/toggle-button.jsx", "app/components/buttons/outlined-button.jsx", "app/components/inputs/search-box.jsx", "app/components/inputs/date-input.jsx", "app/(main)/layout.jsx", "app/components/inputs/dragndropzone.jsx", "app/manager/discography/add/add-album.tsx", "app/components/inputs/chip-input.jsx", "app/components/inputs/dropdown.jsx"  ],
   "exclude": [
     "node_modules",
     "src-tauri"

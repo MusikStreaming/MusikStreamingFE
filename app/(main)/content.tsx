@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getCookie } from "cookies-next";
+import { getCookie, hasCookie } from "cookies-next";
 import { Suspense } from "react";
 import Loading from "./loading";
 
@@ -14,38 +14,80 @@ export default function Content() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [username, setUsername] = useState<string>('');
 
+  // Separate effect for auth check
   useEffect(() => {
     let mounted = true;
 
-    const checkAuth = async () => {
-      try {
-        const accessToken = getCookie("access_token");
-        if (mounted) {
-          setIsLoggedIn(!!accessToken);
-          setIsInitialized(true);
-          setIsLoading(false);
-        }
-      } catch (error) {
-        console.error("Auth check error:", error);
-        if (mounted) {
-          setIsLoading(false);
-          setIsInitialized(true);
+    const checkAuth = () => {
+      const hasSession = hasCookie('session');
+      const sessionValue = getCookie('session');
+      const isAuthenticated = hasSession && sessionValue === 'true';
+
+      if (mounted) {
+        setIsLoggedIn(isAuthenticated);
+        if (!isAuthenticated) {
+          setUsername('');
         }
       }
     };
 
     checkAuth();
-
-    const interval = setInterval(checkAuth, 5000);
     window.addEventListener('storage', checkAuth);
-
+    
     return () => {
       mounted = false;
-      clearInterval(interval);
       window.removeEventListener('storage', checkAuth);
     };
   }, []);
+
+  // Separate effect for profile data
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchProfile = async () => {
+      if (!isLoggedIn) {
+        setIsLoading(false);
+        setIsInitialized(true);
+        return;
+      }
+
+      try {
+        // Get username from cookie first for quick display
+        const cookieUsername = getCookie('username');
+        if (cookieUsername) {
+          setUsername(String(cookieUsername));
+        }
+
+        // Then fetch full profile data once
+        const response = await fetch('/api/user/profile', {
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch user profile');
+        }
+
+        if (mounted) {
+          setIsInitialized(true);
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error('Failed to fetch user profile:', error);
+        if (mounted) {
+          setIsInitialized(true);
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchProfile();
+
+    return () => {
+      mounted = false;
+    };
+  }, [isLoggedIn]); // Only re-run when login state changes
 
   if (!isInitialized || isLoading) {
     return <Loading />;
@@ -72,7 +114,7 @@ export default function Content() {
 
   return (
     <div className="home w-full flex flex-col gap-8">
-      <h1 className="text-lg font-bold">Chào mừng đã quay lại, {getCookie("user_name")!}</h1>
+      <h1 className="text-lg font-bold">Chào mừng đã quay lại, {username}!</h1>
       <h2 className="text-lg font-bold">Bài hát vừa nghe</h2>
       <div className="grid grid-cols-2 gap-4">
       </div>

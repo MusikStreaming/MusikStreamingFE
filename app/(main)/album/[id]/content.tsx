@@ -15,6 +15,7 @@ import SongTable from '@/app/components/tables/song-table';
 import { processCloudinaryUrl } from "@/app/api-fetch/cloudinary-url-processing";
 // import { formatDuration } from '@/app/utils/time';
 import { calculateAlbumDuration, countAlbumSongs, formatSongCount } from '@/app/utils/album';
+import { useMedia } from '@/app/contexts/media-context';
 
 function formatDuration(duration: number) {
   const hours = Math.floor(duration / 3600);
@@ -26,27 +27,27 @@ function formatDuration(duration: number) {
 export default function AlbumContent(params: { id: string }) {
   const [album, setAlbum] = useState<AlbumDetails | undefined>();
   const [error, setError] = useState<string | null>(null);
+  const { playAlbum } = useMedia();
 
   const fetchData = useCallback(async () => {
     try {
       const {id} = params;
       const albumData = await fetchAlbumById(id);
-      console.log("Album data:", albumData);
-      if (albumData) {
-        setAlbum(albumData);
+      if (!albumData) {
+        throw new Error('Album not found');
       }
+      setAlbum(albumData);
     } catch (e) {
-      console.error(e);
-      if (e instanceof Error) {
-        setError(e.message);
-      } else {
-        setError(String(e));
-      }
+      console.error('Error fetching album:', e);
+      setError(e instanceof Error ? e.message : 'Failed to load album');
     }
   }, [params]);
 
   useEffect(() => {
-    fetchData();
+    fetchData().catch(e => {
+      console.error('Error in album fetch effect:', e);
+      setError(e instanceof Error ? e.message : 'Failed to load album');
+    });
   }, [fetchData, params.id]);
 
   if (error) {
@@ -90,7 +91,34 @@ export default function AlbumContent(params: { id: string }) {
               <p className='text-sm'>{formatSongCount(countAlbumSongs(album.songs))} • {formatDuration(calculateAlbumDuration(album.songs))}</p>
             }
             <div className="mt-4 flex justify-start items-center gap-4">
-              <PlayButton className="bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary] w-12 h-12"/>
+              <PlayButton 
+                className="bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary] w-12 h-12"
+                onClick={() => {
+                  try {
+                    if (!album?.songs?.length) {
+                      throw new Error('No songs in album');
+                    }
+                    
+                    const mappedSongs = album.songs.map(s => {
+                      if (!s.song) {
+                        throw new Error('Invalid song data');
+                      }
+                      return {
+                        id: s.song.id,
+                        title: s.song.title,
+                        duration: s.song.duration || null,
+                        coverImage: s.song.thumbnailurl || '/assets/placeholder.jpg',
+                        thumbnailurl: s.song.thumbnailurl || '',
+                        artists: s.song.artists?.map(a => ({ artist: { id: '', name: a.name } })) || []
+                      };
+                    });
+                    
+                    playAlbum(mappedSongs);
+                  } catch (e) {
+                    console.error('Error playing album:', e);
+                  }
+                }}
+              />
               <IconSmallButton>
                 <span className="material-symbols-outlined">share</span>
               </IconSmallButton>
@@ -113,7 +141,7 @@ export default function AlbumContent(params: { id: string }) {
               duration: song.song.duration,
               views: song.song.views,
               coverImage: song.song.thumbnailurl,
-              artists: song.song.artists
+              artists: song.song.artists?.map(a => ({ name: a.name })) || []
             }
           }))} />
         }

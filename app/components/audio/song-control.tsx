@@ -43,13 +43,16 @@ export default function SongControl() {
   const pathname = usePathname();
   const router = useRouter();
 
+  const [isMuted, setIsMuted] = useState(false);
+  const [volumeBeforeMute, setVolumeBeforeMute] = useState(volume);
+
   const [isOverflowing, setIsOverflowing] = useState(false);
   const titleRef = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
     const checkAuth = () => {
-      const accessToken = getCookie("access_token");
-      setIsAuthenticated(!!accessToken);
+      const session = getCookie("session");
+      setIsAuthenticated(!!session);
     };
 
     const handleResize = () => {
@@ -67,10 +70,6 @@ export default function SongControl() {
       window.removeEventListener('resize', handleResize);
     };
   }, [pathname]);
-
-  // if (!isAuthenticated) {
-  //   return null;
-  // }
 
   const isEmpty = !currentSong;
   const isDisabled = isEmpty || isLoading;
@@ -199,7 +198,7 @@ export default function SongControl() {
               isPlaying={isPlaying}
               songId={currentSong?.id}
             />
-            <IconSmallButton disabled={isDisabled}>
+            <IconSmallButton disabled={isDisabled} onClick={playNextSong}>
               <span className={twMerge(
                 "material-symbols-outlined-filled",
                 isDisabled && "opacity-50"
@@ -247,7 +246,15 @@ export default function SongControl() {
               <span className={twMerge(
                 "material-symbols-outlined",
                 isDisabled && "opacity-50"
-              )}>volume_up</span>
+              )} onClick={() => {
+                if (volume === 0) {
+                  setVolume(volumeBeforeMute);
+                  setIsMuted(false);
+                } else {
+                  setVolume(0);
+                  setIsMuted(true);
+                }
+              }}>{isMuted ? "volume_off" : "volume_up"}</span>
             </IconSmallButton>
             <input
               className={twMerge(
@@ -259,7 +266,11 @@ export default function SongControl() {
               value={volume * 100}
               min={0}
               max={100}
-              onChange={(e) => setVolume(Number.parseInt(e.target.value) / 100)}
+              onChange={(e) => {
+                setVolume(Number.parseInt(e.target.value) / 100);
+                setIsMuted(false);
+                setVolumeBeforeMute(volume);
+              }}
               disabled={isDisabled}
             />
           </div>

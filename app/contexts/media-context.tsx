@@ -7,7 +7,7 @@
 
 import { createContext, useContext, useRef, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { getCookie } from 'cookies-next/client';
+import { getCookie, hasCookie } from 'cookies-next/client';
 import { debounce } from 'lodash';
 import { Song } from '@/app/model/song';
 import getSong from '@/app/api-fetch/get-song';
@@ -54,13 +54,17 @@ interface MediaContextType {
   playPreviousSong: () => void;
   /** Play the next song */
   playNextSong: () => void;
+  /** Function to play an album */
+  playAlbum: (songs: Song[]) => void;
+  /** Queue of songs */
+  queue: Song[];
+  /** Function to add a song to the queue */
+  addToQueue: (song: Song) => void;
+  /** Function to remove a song from the queue */
+  removeFromQueue: (index: number) => void;
+  /** Function to clear the queue */
+  clearQueue: () => void;
 }
-
-/**
- * Updates the media session metadata
- * @param {Song} song - Current song
- */
-
 
 /**
  * Provider component that wraps app to provide media playback functionality
@@ -68,22 +72,10 @@ interface MediaContextType {
  * @param {React.ReactNode} props.children - Child components
  */
 export function MediaProvider({ children }: { children: React.ReactNode }) {
+  // 1. All useState declarations
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [currentSong, setCurrentSong] = useState<Song | null>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = sessionStorage.getItem('currentSong');
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch (e) {
-          console.error('Error parsing saved song:', e);
-          return null;
-        }
-      }
-    }
-    return null;
-  });
+  const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -95,8 +87,11 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
   const [dragProgress, setDragProgress] = useState(0);
   const [previousSong, setPreviousSong] = useState<Song | null>(null);
   const [nextSong, setNextSong] = useState<Song | null>(null);
+  const [queue, setQueue] = useState<Song[]>([]);
+  const [queueIndex, setQueueIndex] = useState(0);
 
-  const updateMediaSession = (song: Song) => {
+  // 2. All useCallback declarations
+  const updateMediaSession = useCallback((song: Song) => {
     if ('mediaSession' in navigator) {
       navigator.mediaSession.metadata = new MediaMetadata({
         title: song.title,
@@ -121,22 +116,139 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
         }
       });
     }
-  };
+  }, []);
 
+  const playSong = useCallback(async (song: Song) => {
+    if (!isAuthenticated) return;
+    
+    // If the song is not in queue, add it and set as current
+    if (!queue.some(s => s.id === song.id)) {
+      setQueue(prev => [...prev, song]);
+      setQueueIndex(queue.length);
+    }
+
+    if (currentSong?.id === song.id && audioRef.current) {
+      audioRef.current.play();
+      setIsPlaying(true);
+      return;
+    }
+
+    setIsLoading(true);
+    setCurrentSong(song);
+
+    try {
+      // Fetch song URL if not provided
+      let audioUrl = song.url;
+      if (!audioUrl) {
+        const songData = await getSong(song.id);
+        audioUrl = songData.url;
+      }
+
+      if (!audioUrl) {
+        throw new Error('Failed to get audio URL');
+      }
+
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = audioUrl;
+        audioRef.current.load();
+        audioRef.current.volume = volume;
+        await audioRef.current.play();
+        
+        // Update song with URL before saving to session
+        const updatedSong = { ...song, url: audioUrl };
+        setCurrentSong(updatedSong);
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('currentSong', JSON.stringify(updatedSong));
+        }
+        
+        // Update media session
+        updateMediaSession(song);
+        setIsPlaying(true);
+      }
+    } catch (error) {
+      console.error('Error playing song:', error);
+      setIsPlaying(false);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isAuthenticated, queue, volume, audioRef, setCurrentSong, setIsPlaying, setIsLoading, currentSong?.id, updateMediaSession]);
+
+  const pauseSong = useCallback(() => {
+    if (!isAuthenticated) return;
+    if (audioRef.current) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    }
+  }, [isAuthenticated]);
+
+  const resumeSong = useCallback(async () => {
+    if (audioRef.current) {
+      setIsLoading(true);
+      try {
+        await audioRef.current.play();
+        setIsPlaying(true);
+      } catch (error) {
+        console.error('Error resuming song:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  }, []);
+
+  const playPreviousSong = useCallback(() => {
+    if (queueIndex > 0) {
+      setQueueIndex(prev => prev - 1);
+      playSong(queue[queueIndex - 1]);
+    } else if (audioRef.current) {
+      // If at start of queue, restart current song
+      audioRef.current.currentTime = 0;
+      audioRef.current.play();
+    }
+  }, [queue, queueIndex, playSong]);
+
+  const playNextSong = useCallback(() => {
+    if (queue.length > queueIndex + 1) {
+      setQueueIndex(prev => prev + 1);
+      playSong(queue[queueIndex + 1]);
+    }
+  }, [queue, queueIndex, playSong]);
+
+  const playAlbum = useCallback((songs: Song[]) => {
+    if (!isAuthenticated || songs.length === 0) return;
+    
+    // Clear current queue and add all songs
+    setQueue(songs);
+    
+    // Start playing from first song
+    setQueueIndex(0);
+    playSong(songs[0]);
+  }, [isAuthenticated, playSong]);
+
+  const addToQueue = useCallback((song: Song) => {
+    setQueue(prev => [...prev, song]);
+  }, []);
+
+  const removeFromQueue = useCallback((index: number) => {
+    setQueue(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const clearQueue = useCallback(() => {
+    setQueue([]);
+    setQueueIndex(0);
+  }, []);
+
+  // 4. All useEffect declarations
   useEffect(() => {
+    const audio = audioRef.current;
     const handleAuthChange = (isAuth: boolean) => {
       if (!isAuth) {
-        // Clear audio state
-        const audio = audioRef.current;
         if (audio) {
           audio.pause();
           audio.src = '';
           audio.load();
-          console.log('Audio cleared');
-          console.log(audio);
         }
-
-        // Reset all state
+        // Clear audio state
         setIsPlaying(false);
         setCurrentSong(null);
         setProgress(0);
@@ -155,8 +267,10 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
     };
 
     // Initial auth check
-    const accessToken = getCookie("access_token");
-    handleAuthChange(!!accessToken);
+    const hasSession = hasCookie('session');
+    const sessionValue = getCookie('session');
+    const isAuth = hasSession && sessionValue === 'true';
+    handleAuthChange(isAuth);
     setIsInitialized(true);
 
     // Add listener for auth changes
@@ -164,15 +278,13 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
     
     return () => {
       removeAuthListener(handleAuthChange);
-      // Clean up audio on unmount
-      const audio = audioRef.current;
       if (audio) {
         audio.pause();
         audio.src = '';
         audio.load();
       }
     };
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     debounce(() => {
@@ -183,14 +295,11 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
   }, [progress, isPlaying]);
 
   // Debounced seek function
-  const debouncedSeek = useCallback(
-    debounce((time: number) => {
-      if (audioRef.current) {
-        audioRef.current.currentTime = time;
-      }
-    }, 100),
-    []
-  );
+  const debouncedSeek = useCallback((time: number) => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = time;
+    }
+  }, []);
 
   /**
    * Handles the start of seek drag
@@ -241,101 +350,6 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
   }
 
   /**
-   * Starts playing a song
-   * @param {Song} song - Song to play
-   */
-  const playSong = async (song: Song) => {
-    if (!isAuthenticated) return;
-    
-    if (currentSong?.id === song.id && audioRef.current) {
-      audioRef.current.play();
-      if ('mediaSession' in navigator) {
-        navigator.mediaSession.playbackState = 'playing';
-      }
-      setIsPlaying(true);
-      return;
-    }
-
-    setIsLoading(true);
-    setCurrentSong(song);
-
-    try {
-      // Fetch song URL if not provided
-      let audioUrl = song.url;
-      if (!audioUrl) {
-        const songData = await getSong(song.id);
-        audioUrl = songData.url;
-      }
-
-      if (!audioUrl) {
-        throw new Error('Failed to get audio URL');
-      }
-
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = audioUrl;
-        audioRef.current.load();
-        audioRef.current.volume = volume;
-        await audioRef.current.play();
-        
-        // Update song with URL before saving to session
-        const updatedSong = { ...song, url: audioUrl };
-        setCurrentSong(updatedSong);
-        if (typeof window !== 'undefined') {
-          sessionStorage.setItem('currentSong', JSON.stringify(updatedSong));
-        }
-        
-        // Update media session
-        updateMediaSession(song);
-        if ('mediaSession' in navigator) {
-          navigator.mediaSession.playbackState = 'playing';
-        }
-        
-        setIsPlaying(true);
-      }
-    } catch (error) {
-      console.error('Error playing song:', error);
-      setIsPlaying(false);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  /**
-   * Pauses the currently playing song
-   */
-  const pauseSong = () => {
-    if (!isAuthenticated) return;
-    if (audioRef.current) {
-      audioRef.current.pause();
-      if ('mediaSession' in navigator) {
-        navigator.mediaSession.playbackState = 'paused';
-      }
-      setIsPlaying(false);
-    }
-  };
-
-  /**
-   * Resumes playback of the current song
-   */
-  const resumeSong = async () => {
-    if (audioRef.current) {
-      setIsLoading(true);
-      try {
-        await audioRef.current.play();
-        if ('mediaSession' in navigator) {
-          navigator.mediaSession.playbackState = 'playing';
-        }
-        setIsPlaying(true);
-      } catch (error) {
-        console.error('Error resuming song:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-  };
-
-  /**
    * Updates the volume level
    * @param {number} newVolume - New volume level (0-1)
    */
@@ -346,18 +360,6 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const playPreviousSong = () => {
-    console.log('playPreviousSong');
-    if (audioRef.current && progress > 0) {
-      seekTo(0);
-      audioRef.current.play();
-    }
-  };
-
-  const playNextSong = () => {
-    console.log('playNextSong');
-  };
-
   return (
     <MediaContext.Provider
       value={{
@@ -366,26 +368,31 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         progress: isDragging ? dragProgress : progress,
         volume,
-        playSong,
-        pauseSong,
-        resumeSong,
-        setVolume: handleVolumeChange,
-        seekTo,
+        playSong: isAuthenticated ? playSong : () => {},
+        pauseSong: isAuthenticated ? pauseSong : () => {},
+        resumeSong: isAuthenticated ? resumeSong : () => {},
+        setVolume: isAuthenticated ? handleVolumeChange : () => {},
+        seekTo: isAuthenticated ? seekTo : () => {},
         isQueueVisible,
-        toggleQueue,
-        handleSeekStart,
-        handleSeekEnd,
+        toggleQueue: isAuthenticated ? toggleQueue : () => {},
+        handleSeekStart: isAuthenticated ? handleSeekStart : () => {},
+        handleSeekEnd: isAuthenticated ? handleSeekEnd : () => {},
         isDragging,
-        playPreviousSong,
-        playNextSong,
+        playPreviousSong: isAuthenticated ? playPreviousSong : () => {},
+        playNextSong: isAuthenticated ? playNextSong : () => {},
+        playAlbum: isAuthenticated ? playAlbum : () => {},
+        queue,
+        addToQueue: isAuthenticated ? addToQueue : () => {},
+        removeFromQueue: isAuthenticated ? removeFromQueue : () => {},
+        clearQueue: isAuthenticated ? clearQueue : () => {},
       }}
     >
       <audio
         ref={audioRef}
         onTimeUpdate={(e) => {
+          if (!isAuthenticated) return;
           const audio = e.currentTarget as HTMLAudioElement;
           updateProgress(audio.currentTime);
-          // Update media session position state
           if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession) {
             navigator.mediaSession.setPositionState({
               duration: audio.duration || 0,
@@ -419,8 +426,8 @@ export function useMedia() {
   useEffect(() => {
     const checkAuth = () => {
       if (typeof window !== 'undefined') {
-        const accessToken = getCookie("access_token");
-        setIsAuthenticated(!!accessToken);
+        const session = getCookie("session");
+        setIsAuthenticated(!!session);
       }
     };
 
@@ -454,6 +461,11 @@ export function useMedia() {
       isDragging: false,
       playPreviousSong: () => {},
       playNextSong: () => {},
+      playAlbum: () => {},
+      queue: [],
+      addToQueue: () => {},
+      removeFromQueue: () => {},
+      clearQueue: () => {},
     };
   }
 
