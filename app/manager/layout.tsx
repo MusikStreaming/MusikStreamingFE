@@ -82,7 +82,7 @@ export default function ManagerLayout({
                     <NavBar />
                     <div className="flex flex-1 gap-4 p-4 overflow-hidden">
                         <NavRail 
-                            className="hidden md:flex" 
+                            className="hidden md:flex h-full" 
                             items={managerItems}
                         />
                         <main className="flex-1 overflow-y-auto rounded-xl bg-[--md-sys-color-surface]">

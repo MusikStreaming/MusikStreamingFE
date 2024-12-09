@@ -204,7 +204,7 @@ body {
   height: 200vh;
 }
 
-@media (min-width: 590px){
+@media (min-width: 768px){
   .center-scroll{
     overflow-y: scroll;
     max-height: calc(100vh - var(--desktop-content-offset));
@@ -408,7 +408,7 @@ a{
   }
 }
 
-@media screen and (min-width: 590px) {
+@media screen and (min-width: 768px) {
   nav.bottom-nav-bar {
     display: none;
   }

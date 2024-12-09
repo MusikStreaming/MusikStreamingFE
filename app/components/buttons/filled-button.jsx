@@ -16,6 +16,7 @@ import Image from 'next/image';
  * @param {boolean} [props.showLeadingImg] - Flag to show or hide the leading image.
  * @param {string} [props.children] - Button text.
  * @param {boolean} [props.disabled] - Flag to disable the button.
+ * @param {string} [props.type] - Type of the button.
  */
 export default function FilledButton(props) {
     let showIcon = props.showIcon;
@@ -26,7 +27,7 @@ export default function FilledButton(props) {
         showIcon = false;
     }
     return(
-        <button className={`text-btn flex border-[--md-sys-color-outline] items-center justify-stretch focus:ring ${props.className}`} role='button' onClick={props.onClick} disabled={props.disabled}>
+        <button className={`text-btn flex border-[--md-sys-color-outline] items-center justify-stretch focus:ring ${props.className}`} role='button' onClick={props.onClick} disabled={props.disabled} type={props.type}>
             <div className={`state-layer p-4 relative ${showIcon?"":"pr-6"} gap-3 rounded-full flex items-center justify-center bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary] disabled:text-[--md-sys-color-surface-variant] flex-grow`} >
                 <md-ripple className="ripple"/>
                 {

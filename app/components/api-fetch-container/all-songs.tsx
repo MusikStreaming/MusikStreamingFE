@@ -11,95 +11,87 @@ import { randomUUID } from "crypto"
 // import ErrorComponent from "./fetch-error"
 
 export default function Songs() {
-    const [cards, setCards] = useState<CardProps[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [songs, setSongs] = useState<CardProps[]>([]);
 
     useEffect(() => {
+        let mounted = true;
+
         async function loadSongs() {
             try {
-                const songs = await fetchAllSongs();
-                console.log(songs);
-                if (!songs) return;
-                const cardData: CardProps[] = songs.map((song) => {
-                    const url = processCloudinaryUrl(song.thumbnailurl, 200, 200, "songs");
-                    const isMultipleArtists = song.artists.length > 1;
-                    return isMultipleArtists ? {
-                        img: {
-                            src: url,
-                            alt: song.title,
-                            width: 200
-                        },
-                        title: song.title,
-                        subtitle: song.artists.map(artist => artist.artist.name).join(", "),
-                        subHrefItems: song.artists.map(artist => `/artist/${artist.artist.id}`),
-                        subItems: song.artists.map(artist => artist.artist.name),
-                        href: `/song/${song.id}`,
-                        isMultipleItemSub: true
-                    } : {
-                        img: {
-                            src: url,
-                            alt: song.title,
-                            width: 200
-                        },
-                        title: song.title,
-                        subtitle: song.artists[0].artist.name,
-                        href: `/song/${song.id}`,
-                        isMultipleItemSub: false,
-                        subHref: `/artist/${song.artists[0].artist.id}`
-                    };
-                });
-                setCards(cardData);
-            } catch (e) {
-                console.log(e);
-                setError(true);
+                setLoading(true);
+                const songsData = await fetchAllSongs();
+                
+                if (!mounted) return;
+                
+                if (!songsData) {
+                    setError('No songs found');
+                    return;
+                }
+
+                const cardData: CardProps[] = songsData.map((song) => ({
+                    img: {
+                        src: processCloudinaryUrl(song.thumbnailurl, 200, 200, "songs"),
+                        alt: song.title,
+                        width: 200
+                    },
+                    title: song.title,
+                    subtitle: song.artists.length > 1 
+                        ? song.artists.map(artist => artist.artist.name).join(", ")
+                        : song.artists[0].artist.name,
+                    href: `/song/${song.id}`,
+                    isMultipleItemSub: song.artists.length > 1,
+                    subHref: song.artists.length === 1 ? `/artist/${song.artists[0].artist.id}` : undefined,
+                    subHrefItems: song.artists.length > 1 
+                        ? song.artists.map(artist => `/artist/${artist.artist.id}`)
+                        : undefined,
+                    subItems: song.artists.length > 1 
+                        ? song.artists.map(artist => artist.artist.name)
+                        : undefined,
+                    songID: song.id,
+                    duration: song.duration ?? undefined,
+                    artists: song.artists.map(artist => ({ id: artist.artist.id, name: artist.artist.name }))
+                }));
+
+                setSongs(cardData);
+            } catch (error) {
+                if (mounted) {
+                    console.error('Error loading songs:', error);
+                    setError(error instanceof Error ? error.message : 'Failed to load songs');
+                }
             } finally {
-                setLoading(false);
+                if (mounted) {
+                    setLoading(false);
+                }
             }
         }
+
         loadSongs();
+
+        return () => {
+            mounted = false;
+        };
     }, []);
+
+    if (error) {
+        return <div className="text-error">{error}</div>;
+    }
 
     if (loading) {
         return (
             <div className="card-grid grid grid-flow-row">
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
-                <Skeleton className="w-[140px] h-[200px]"/>
+                {[...Array(21)].map((_, i) => (
+                    <Skeleton key={i} className="w-[140px] h-[200px]"/>
+                ))}
             </div>
         );
     }
 
-    if (error || !cards) {
-        return <ErrorComponent onReloadClick={() => {
-            setError(false);
-            setLoading(true);
-        }} />;
-    }
-
     return (
         <div className="card-grid grid grid-flow-row">
-            {cards.map((card) => (
-                card ? <VerticalCard key={card.href} {...card} />
-                : <Skeleton key={randomUUID()} className="w-[140px] h-[200px]"/>
+            {songs.map((song, index) => (
+                <VerticalCard key={index} {...song} />
             ))}
         </div>
     );

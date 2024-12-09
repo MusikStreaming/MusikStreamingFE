@@ -58,7 +58,7 @@ export default async function fetchArtistById(id: string) {
                 }
             }
             else {
-                const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/v1/artist/${id}`, {
+                const response = await axios.get(`${process.env.API_URL}/v1/artist/${id}`, {
                     headers: {
                         'Cache-Control': 'max-age=3600000, stale-while-revalidate',
                     }
@@ -86,7 +86,7 @@ export default async function fetchArtistById(id: string) {
     else {
         // server render
         try {
-            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/v1/artist/${id}`);
+            const response = await axios.get(`${process.env.API_URL}/v1/artist/${id}`);
             try {
                 const data = ArtistSchema.parse(response.data);
                 return data[0] as Artist;

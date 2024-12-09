@@ -1,31 +1,53 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { getCookie } from 'cookies-next';
+import { getCookie, hasCookie } from 'cookies-next';
 import UserMenu from '@/app/components/navs/user-menu';
 import IconSmallButton from '../buttons/icon-small-button';
 import FilledButton from '@/app/components/buttons/filled-button';
 import SearchBox from '@/app/components/inputs/search-box';
 import { useRouter, usePathname } from 'next/navigation';
+import { redirectToLogin } from '@/app/services/auth.service';
 import Image from 'next/image';
+import { useSearch } from '@/app/hooks/useSearch';
 
 export default function NavBar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userName, setUserName] = useState('');
-  const [isManagerMode, setIsManagerMode] = useState(false);
-  const route = useRouter();
+  const [userData, setUserData] = useState<{
+    username: string;
+    role?: string;
+  } | null>(null);
+  const router = useRouter();
   const pathname = usePathname();
   const searchFocus = useRef<HTMLInputElement>(null);
+  const { searchQuery, handleSearchChange } = useSearch();
 
   useEffect(() => {
-    const checkAuth = () => {
-      const accessToken = getCookie("access_token");
-      setIsLoggedIn(!!accessToken);
-      if (accessToken) {
-        const name = getCookie("user_name");
-        setUserName(name ? String(name) : '');
-        const role = getCookie("role");
-        setIsManagerMode(role === 'manager');
+    const checkAuth = async () => {
+      try {
+        const hasSession = hasCookie('session');
+        const sessionValue = getCookie('session');
+        const isAuthenticated = hasSession && sessionValue === 'true';
+        
+        setIsLoggedIn(isAuthenticated);
+
+        if (isAuthenticated) {
+          // Fetch user data from our API
+          const response = await fetch('/api/user/profile', {
+            credentials: 'include'
+          });
+          const userData = await response.json();
+          setUserData({
+            username: userData.username || '',
+            role: userData.role
+          });
+        } else {
+          setUserData(null);
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+        setIsLoggedIn(false);
+        setUserData(null);
       }
     };
 
@@ -43,12 +65,8 @@ export default function NavBar() {
     }
   }, [pathname]);
 
-  const handleSearch = () => {
-    if (isManagerMode) {
-      route.push('/manager/discography');
-    } else {
-      route.push('/search');
-    }
+  const handleLoginClick = () => {
+    redirectToLogin(pathname);
   };
 
   return (
@@ -56,25 +74,22 @@ export default function NavBar() {
       <div className='flex mr-3'>
         <div className="nav-bar-button-container hidden md:flex md:p-3 md:gap-3 md:items-center">
           <IconSmallButton className="app-bar-button" onClick={() => {
-            route.back();
+            router.back();
           }}>
             <span className="material-symbols-outlined">
               arrow_back
             </span>
           </IconSmallButton>
-          <IconSmallButton onClick={
-            () => {
-              route.forward();
-            }
-          }>
+          <IconSmallButton onClick={() => {
+            router.forward();
+          }}>
             <span className="material-symbols-outlined">
               arrow_forward
             </span>
           </IconSmallButton>
         </div>
         <div className="nav-bar-title-container flex items-center gap-3">
-          <Image width={64} height={64} src={"/assets/rounded-logo.png"} priority alt="logo"
-          />
+          <Image width={64} height={64} src={"/assets/rounded-logo.png"} priority alt="logo" />
           <h1 className="hidden lg:block nav-bar-title text-lg font-bold">
             {"MusikStreaming"}
           </h1>
@@ -83,21 +98,30 @@ export default function NavBar() {
 
       <div className="search-and-browse-container flex justify-center gap-4 flex-grow">
         <div className="search-and-browse-inner flex-grow flex items-center sm:justify-center">
-          <SearchBox className='hidden md:flex' placeholder="Search" ref={searchFocus} />
+          <SearchBox 
+            className='hidden md:flex' 
+            placeholder="Search" 
+            ref={searchFocus}
+            text={searchQuery}
+            onChange={handleSearchChange}
+          />
         </div>
       </div>
       <div className="nav-bar-button-container flex p-3 gap-3 items-center">
-        {isLoggedIn ? (
+        {isLoggedIn && userData ? (
           <>
-            <span className="text-sm font-medium">{userName}</span>
-            <UserMenu onLogout={() => setIsLoggedIn(false)} />
+            <span className="text-sm font-medium">{userData.username}</span>
+            <UserMenu onLogout={() => {
+              setIsLoggedIn(false);
+              setUserData(null);
+            }} />
           </>
         ) : (
-          <FilledButton onClick={() => route.push("/login")}>
+          <FilledButton onClick={handleLoginClick}>
             {"Đăng nhập/Đăng ký"}
           </FilledButton>
         )}
       </div>
     </div>
-  )
+  );
 }

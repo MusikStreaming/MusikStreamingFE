@@ -5,6 +5,15 @@ import { deleteCookie, getCookie } from 'cookies-next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import fetchUserById from '@/app/api-fetch/user-by-id';
+
+interface User {
+  id: string;
+  username: string;
+  country: string;
+  role?: string;
+  avatarurl?: string;
+}
 
 interface UserMenuProps {
   onLogout: () => void;
@@ -16,6 +25,24 @@ export default function UserMenu({ onLogout }: UserMenuProps) {
   const [isManager, setIsManager] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch('/api/user/profile', {
+          credentials: 'include'
+        });
+        const userData = await response.json();
+        setUser(userData);
+        setIsManager(['Artist Manager', 'Admin'].includes(userData.role));
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   useEffect(() => {
     const checkManagerStatus = () => {
@@ -42,10 +69,8 @@ export default function UserMenu({ onLogout }: UserMenuProps) {
     try {
       setIsOpen(false);
       
-      deleteCookie('access_token');
-      deleteCookie('refresh_token');
-      deleteCookie('role');
-      
+      deleteCookie('session');
+      deleteCookie('username');
       onLogout();
       
       await router.push('/');
@@ -63,7 +88,7 @@ export default function UserMenu({ onLogout }: UserMenuProps) {
         aria-label="Open user menu"
       >
         <Image
-          src="/assets/default-avatar.png"
+          src={user?.avatarurl || "/assets/default-avatar.png"}
           alt="User avatar"
           width={40}
           height={40}

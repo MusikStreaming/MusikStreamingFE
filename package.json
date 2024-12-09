@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "clean": "if exist .next rd /s /q .next && if exist out rd /s /q out"
+    "clean": "if exist .next rd /s /q .next && if exist out rd /s /q out",
+    "tauri": "tauri"
   },
   "dependencies": {
     "@emotion/cache": "^11.13.1",
@@ -18,11 +19,12 @@
     "@material/web": "^2.2.0",
     "@supabase/auth-ui-react": "^0.4.7",
     "@supabase/auth-ui-shared": "^0.1.8",
-    "@supabase/supabase-js": "^2.46.1",
+    "@supabase/supabase-js": "^2.47.2",
     "axios": "^1.7.7",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cookies-next": "^5.0.2",
+    "lodash": "^4.17.21",
     "lucide-react": "^0.460.0",
     "next": "^15.0.3",
     "next-auth": "^5.0.0-beta.25",
@@ -32,9 +34,13 @@
     "rimraf": "^6.0.1",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
+    "tauri": "^0.15.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.1.0",
+    "@types/jest": "^29.5.14",
+    "@types/lodash": "^4.17.13",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
@@ -42,6 +48,7 @@
     "eslint-config-next": "^15.0.3",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
+    "ts-jest": "^29.2.5",
     "typescript": "^5"
   }
 }

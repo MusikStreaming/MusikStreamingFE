@@ -4,7 +4,6 @@ import NavRailCommonItem from './nav-rail-common-item';
 import NavRailPinnedItem from './nav-rail-pinned-item';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import "./nav-rail.css";
 import { NavItemType } from '@/app/model/nav-item-type';
 import { getCookie } from 'cookies-next';
 import { hasCookie } from 'cookies-next/client';
@@ -87,10 +86,10 @@ export default function NavRail({ className, items: customItems }) {
 
     useEffect(() => {
         const checkAuth = () => {
-            const accessToken = getCookie("access_token");
+            const session = getCookie("session");
             
             // If logged in, set up pinned items
-            if (accessToken) {
+            if (session) {
                 setPinnedItems({
                     'favorite': {
                         text: 'Yêu thích',
@@ -219,25 +218,50 @@ export default function NavRail({ className, items: customItems }) {
     return (                                                                 
         <div 
             ref={navRef}
-            style={extended ? { width: `${width}px` } : {}}
-            className={`${className} nav-rail ${windowWidth < 590 ? "hidden" : "flex"} w-full relative flex-col bg-[--md-sys-color-surface-container-low] rounded-2xl nav-rail-${extended ? 'extended' : 'collapsed'} ${animationDirection}`}
+            className={`
+                ${className}
+                ${windowWidth < 768 ? "hidden" : "flex"}
+                nav-rail
+                relative flex-col
+                bg-[--md-sys-color-surface-container-low] rounded-2xl
+                overflow-y-auto overflow-x-hidden
+                md:h-[calc(100vh-220px)]
+                h-[calc(100vh-328px)]
+                transition-all duration-200 ease-in-out
+                ${extended ? 
+                    'min-w-[280px] max-w-[600px] w-[20vw]' : 
+                    'w-[80px] min-w-[80px] max-w-[80px]'
+                }
+                ${animationDirection}
+            `}
         >
             <div 
-                className="resize-handle" 
+                className="absolute right-[-4px] top-0 bottom-0 w-2 cursor-ew-resize bg-transparent hover:bg-[--md-sys-color-outline-variant] active:bg-[--md-sys-color-outline] active:w-2 active:right-[-1px] transition-all duration-150 z-10"
                 onMouseDown={startResizing}
             />
-            <div className={`nav-rail-inner h-full nav-rail--padding-${extended ? 'extended' : 'collapsed'}`}>
-                <button className={`extend-button selected-false rounded-full w-full`} role="button" onClick={() => { 
-                    localStorage.setItem('nav-rail-extended', JSON.stringify(!extended));
-                    setExtended(!extended);
-                }}>
-                    <div className={`state-layer rounded-full flex gap-4 relative padding-${extended ? "extended" : "collapsed"}`}>
-                        <md-ripple/>
-                        <span className="material-symbols-outlined block w-6">menu</span>
-                        <span className={`extended-${extended}`}>Menu</span>
+            <div className={`h-full ${extended ? 'p-4' : 'p-3'}`}>
+                <button 
+                    className="w-full rounded-full text-[--md-sys-color-on-surface] hover:bg-[--md-sys-color-surface-container]"
+                    role="button" 
+                    onClick={() => { 
+                        localStorage.setItem('nav-rail-extended', JSON.stringify(!extended));
+                        setExtended(!extended);
+                    }}
+                >
+                    <div className={`rounded-full flex gap-4 relative ${extended ? 'py-4 pl-4 pr-6' : 'p-4'}`}>
+                        <span className="material-symbols-outlined w-6 block">menu</span>
+                        <span className={`
+                            transition-all duration-300 ease-in-out
+                            ${extended ? 
+                                'opacity-100 w-auto whitespace-nowrap pointer-events-auto translate-x-0' : 
+                                'opacity-0 w-0 whitespace-nowrap pointer-events-none -translate-x-5'
+                            }
+                        `}>
+                            Menu
+                        </span>
                     </div>
                 </button>
-                <div className="nav-rail-common flex-col mb-4">
+                <div className="flex-col mb-4">
                     {
                         Object.keys(navigationItems).map((key) => {
                             const item = navigationItems[key];
@@ -271,11 +295,11 @@ export default function NavRail({ className, items: customItems }) {
                 {showPinnedSection && (
                     <>
                         <div className="px-4">
-                            <hr className='border-[--md-sys-color-outline-variant]'/>
+                            <hr className="border-[--md-sys-color-outline-variant]"/>
                         </div>
-                        <div className={`nav-rail-pinned flex-col ${extended ? "gap-0" : "gap-2"} h-fit flex`}>
+                        <div className={`flex-col ${extended ? "gap-0" : "gap-2"} h-fit flex`}>
                             {
-                                (hasCookie('access_token')) &&
+                                (hasCookie('session')) &&
                                 Object.keys(pinnedItems).map((key) => {
                                     const pinned = pinnedItems[key];
                                     const imgSrc = pinned.img?.src || "/favicon.ico";

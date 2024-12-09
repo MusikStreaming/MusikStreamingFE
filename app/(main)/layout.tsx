@@ -12,6 +12,9 @@ import NavRail from "@/app/components/navs/nav-rail";
 import SongControl from "@/app/components/audio/song-control";
 import BottomNavBar from "@/app/components/navs/bottom-nav-bar";
 import type { Metadata } from "next";
+import { MediaProvider } from "@/app/contexts/media-context";
+import QueueContainer from '@/app/components/audio/queue-container';
+import { LikedProvider } from "@/app/contexts/liked-context";
 
 const inter = Inter({
   weight: ["400", "500", "600", "700"],
@@ -35,6 +38,24 @@ interface RootLayoutProps {
   children: React.ReactNode;
 }
 
+const compose = (providers: Array<React.ComponentType<{ children: React.ReactNode }>>) => {
+  const ComposedComponent = providers.reduce(
+    (Prev, Curr) => {
+      const ProviderWrapper = ({ children }: { children: React.ReactNode }) => (
+        <Prev>
+          <Curr>{children}</Curr>
+        </Prev>
+      );
+      ProviderWrapper.displayName = 'ProviderWrapper';
+      return ProviderWrapper;
+    }
+  );
+  ComposedComponent.displayName = 'Providers';
+  return ComposedComponent;
+};
+
+const Providers = compose([MediaProvider, LikedProvider]);
+
 /**
  * RootLayout component.
  * @param {RootLayoutProps} props - The component props.
@@ -47,20 +68,23 @@ export default function RootLayout({ children }: RootLayoutProps): JSX.Element {
       <head>  
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />  
       </head>
-      <body className={`${inter} antialiased`}>
-        <NavBar />
-        <div className="content flex p-4 pr-1 gap-4 flex-grow flex-1 justify-stretch">
-          <NavRail />
-          <div className="center-scroll flex flex-grow self-stretch rounded-xl justify-stretch">
-            <div className="center-scroll-inner min-h-[100vh] flex items-start h-full self-stretch w-full bg-[--md-sys-color-surface-container-low] rounded-l-xl px-4 py-6">
-              {children}
+      <body className={`${inter.className} antialiased`}>
+        <Providers>
+          <NavBar />
+          <div className="content flex p-4 md:gap-4 flex-grow flex-1 justify-stretch">
+            <NavRail />
+            <div className="center-scroll flex flex-grow self-stretch rounded-xl justify-stretch">
+              <div className="center-scroll-inner min-h-[100vh] flex items-start h-full self-stretch w-full bg-[--md-sys-color-surface-container-low] rounded-l-xl px-2 md:px-4 py-6">
+                {children}
+              </div>
             </div>
+            <QueueContainer />
           </div>
-        </div>
-        <div className="sticky bottom-0">
-          <SongControl />
-          <BottomNavBar />
-        </div>
+          <div className="sticky bottom-0">
+            <SongControl />
+            <BottomNavBar />
+          </div>
+        </Providers>
       </body>
     </html>
   );

@@ -1,61 +1,7 @@
+'use client';
 import axios from "axios";
-import z from "zod";
 import { SongDetails } from "../model/song-details";
-
-export const SongSchema = z.object({
-    id: z.string(),
-    title: z.string(),
-    thumbnailurl: z.string().optional(),
-    duration: z.number(),
-    releasedate: z.string(),
-    genre: z.string(),
-    views: z.number(),
-    albums: z.array(
-        z.object({
-            album: z.object({
-                id: z.string().optional(),
-                type: z.string().optional(),
-                title: z.string().optional(),
-                thumbnailurl: z.string().optional(),
-            })
-        }).optional()
-    ).nullable(),
-    artists: z.array(z.object({
-        id: z.string(),
-        name: z.string(),
-        avatarurl: z.string(),
-    })
-    )
-});
-
-// As the API calls are not stable yet, we need to have a schema for the alternative response
-export const AlternativeSongSchema = z.object({
-    data: z.object({
-        id: z.string(),
-        title: z.string(),
-        thumbnailurl: z.string().optional(),
-        duration: z.number(),
-        releasedate: z.string(),
-        genre: z.string(),
-        views: z.number(),
-        albums: z.array(
-            z.object({
-                album: z.object({
-                    id: z.string().optional(),
-                    type: z.string().optional(),
-                    title: z.string().optional(),
-                    thumbnailurl: z.string().optional(),
-                })
-            }).optional()
-        ).nullable(),
-        artists: z.array(z.object({
-            id: z.string(),
-            name: z.string(),
-            avatarurl: z.string(),
-        })
-        )
-    })
-});
+import { SongSchema, AlternativeSongSchema } from "../model/schemas/song-by-id";
 
 export default async function fetchSongById(id: string) {
     try {
@@ -74,10 +20,11 @@ export default async function fetchSongById(id: string) {
                 }
             }
             else {
-                const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/v1/song/${id}`, {
+                const res = await axios.get(`${process.env.API_URL}/v1/song/${id}`, {
                     headers: {
                         'Cache-Control': 'max-age=300000, stale-while-revalidate',
-                    }
+                    },
+                    timeout: 5000, // 5 second timeout
                 });
                 localStorage.setItem("song-" + id, JSON.stringify(res.data));
                 localStorage.setItem("songTime-" + id, Date.now().toString());
@@ -92,7 +39,7 @@ export default async function fetchSongById(id: string) {
             }
         }
         else {
-            const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/v1/song/${id}`);
+            const res = await axios.get(`${process.env.API_URL}/v1/song/${id}`);
             try {
                 const data = AlternativeSongSchema.parse(res.data);
                 return data.data as SongDetails;
