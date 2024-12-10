@@ -198,7 +198,7 @@ export async function login(data: LoginData): Promise<AuthResponse> {
     if (axios.isAxiosError(error)) {
       console.error('Response data:', error.response?.data);
       const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message;
-      throw new Error(`Đăng nhập thất bại: ${errorMessage}`);
+      throw new Error(errorMessage);
     }
     
     throw new Error('Đăng nhập thất bại, vui lòng thử lại sau');

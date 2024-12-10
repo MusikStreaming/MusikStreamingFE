@@ -6,6 +6,7 @@ import { login } from '@/app/services/auth.service';
 import LoginForm from '@/app/(auth)/login/login-form';
 import { getCookie, hasCookie } from 'cookies-next';
 import { Suspense } from 'react';
+import { useRouter } from 'next/navigation';
 // import {useTranslation} from 'next/translation';
 
 /**
@@ -39,6 +40,7 @@ export default function LoginPage() {
      *   <button type="submit">Login</button>
      * </form>
      */
+    const router = useRouter();
     async function handleSubmit(formData) {
         try {
             const { email, password } = formData;
@@ -67,6 +69,15 @@ export default function LoginPage() {
             return { success: true };
         } catch (error) {
             console.error('Login error:', error);
+            if (error?.response?.status === 401) {
+                return { error: 'Đăng nhập thất bại: Sai tên đăng nhập hoặc mật khẩu' };
+            }
+            if (error?.message === 'Network Error') {
+                return { error: 'Đăng nhập thất bại: Lỗi mạng, vui lòng thử lại sau' };
+            }
+            if (error?.message == "Email not confirmed") {
+                router.push('/verify-email');
+            }
             return { 
                 error: typeof error === 'string' ? error : 
                        error?.message || 'Đăng nhập thất bại, vui lòng thử lại sau'

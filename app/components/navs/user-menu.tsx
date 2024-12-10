@@ -35,8 +35,9 @@ export default function UserMenu({ onLogout }: UserMenuProps) {
         if (!response.ok) {
           throw new Error('Failed to check manager status');
         }
-        const { manager: managerStatus } = await response.json();
+        const { manager: managerStatus, avatarUrl: avatar } = await response.json();
         setIsManager(managerStatus);
+        // set
       } catch (error) {
         console.error('Error checking manager status:', error);
         setIsManager(false);

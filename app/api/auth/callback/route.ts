@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { setCookie } from 'cookies-next';
+import { cookies } from 'next/headers';
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,36 +9,53 @@ export async function POST(request: NextRequest) {
     // Destructure user and session data
     const { user, session } = data;
 
-    // Set access token cookie
-    setCookie('access_token', session.access_token, {
-      req: request,
-      path: '/',
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: session.expires_in,
-      httpOnly: true
-    });
-
-    // Set refresh token cookie if it exists
-    if (session.refresh_token) {
-      setCookie('refresh_token', session.refresh_token, {
-        req: request,
-        path: '/',
-        secure: process.env.NODE_ENV === 'production', 
-        sameSite: 'lax',
-        maxAge: session.expires_in,
-        httpOnly: true
-      });
+    // Ensure user and session data are present
+    if (!user || !session) {
+      console.error('Invalid auth callback data:', data);
+      return NextResponse.json({ error: 'Invalid auth callback data' }, { status: 400 });
     }
 
-    // Set user data cookie (optional, but can be useful)
-    setCookie('user_data', JSON.stringify(user), {
-      req: request,
-      path: '/',
+    // Create response with minimal user data
+    const response = NextResponse.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        avatarUrl: user.avatar_url
+      },
+      success: true,
+      redirectToManager: ['Artist Manager', 'Admin'].includes(user.role)
+    });
+
+    // Set HTTP-only cookie for session token
+    response.cookies.set('session_token', session.access_token, {
+      httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: session.expires_in,
-      httpOnly: true
+      maxAge: session.expires_in || 60 * 60 * 24 * 7,
+    });
+
+    // Set non-HTTP-only cookie for session detection
+    response.cookies.set('session', 'true', {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: session.expires_in || 60 * 60 * 24 * 7,
+    });
+
+    // Set user data cookies
+    response.cookies.set('user_id', user.id, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: session.expires_in || 60 * 60 * 24 * 7,
+    });
+
+    response.cookies.set('username', user.username, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: session.expires_in || 60 * 60 * 24 * 7,
     });
 
     // Redirect to home page
