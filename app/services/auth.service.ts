@@ -3,7 +3,7 @@ import axios from "axios";
 import z from "zod";
 import { setCookie, deleteCookie } from "cookies-next/client";
 import { redirect } from "next/navigation";
-import { AuthResponse } from "../model/schemas/auth-response";
+// import { AuthResponse } from "../model/schemas/auth-response";
 // import 
 
 interface SignUpData {
@@ -111,30 +111,30 @@ export async function signUp(incomingData: SignUpData): Promise<AuthResponse> {
     }
 
     // Then set up local session through our API
-    const localResponse = await axios.post(
-      `/api/auth/signin`,
-      { 
-        externalAuth: {
-          session: {
-            access_token: externalResponse.data.session.access_token,
-            expires_in: externalResponse.data.session.expires_in
-          },
-          user: externalResponse.data.user
-        }
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        withCredentials: true // Keep credentials for local request
-      }
-    );
+    // const localResponse = await axios.post(
+    //   `/api/auth/signup`,
+    //   { 
+    //     externalAuth: {
+    //       session: {
+    //         access_token: externalResponse.data.session.access_token,
+    //         expires_in: externalResponse.data.session.expires_in
+    //       },
+    //       user: externalResponse.data.user
+    //     }
+    //   },
+    //   {
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //     },
+    //     withCredentials: true // Keep credentials for local request
+    //   }
+    // );
 
-    if (!localResponse.data.success) {
-      throw new Error('Failed to create local session');
-    }
+    // if (localResponse.status !== 200) {
+    //   throw new Error('Failed to create local session');
+    // }
 
-    return localResponse.data;
+    return externalResponse.data;
   } catch (error: unknown) {
     console.error(error);
     if (axios.isAxiosError(error)) {
@@ -332,13 +332,11 @@ export const handleAuthCallback = async (data: AuthResponse): Promise<void> => {
     }
 
     setCookie("user_id", data.user.id, cookieOptions);
-    setCookie("role", data.user.role || "User", cookieOptions);
 
     // Store minimal user info in localStorage
     const userInfo = {
       id: data.user.id,
       username: data.user.username,
-      role: data.user.role,
     };
     localStorage.setItem("user", JSON.stringify(userInfo));
 

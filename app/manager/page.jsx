@@ -2,21 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
 export default function ManagerDashboard() {
-    const router = useRouter()
     const [stats, setStats] = useState({
         totalSongs: 0,
         totalAlbums: 0,
         totalPlays: 0
     });
-
-    const handleExitManager = () => {
-        // setTimeout(() => {
-            router.push('/');
-        // }, 100);
-    };
 
     useEffect(() => {
         // TODO: Fetch actual stats from your API
@@ -28,48 +20,69 @@ export default function ManagerDashboard() {
     }, []);
 
     return (
-        <div className="p-6">
+        <div className="h-full">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">Artist Dashboard</h1>
-                <Link href="/">
-                    Exit Manager
+                <h1 className="text-2xl font-bold text-[--md-sys-color-on-background]">
+                    Bảng điều khiển
+                </h1>
+                <Link 
+                    href="/"
+                    className="text-[--md-sys-color-primary] hover:text-[--md-sys-color-primary-hover] transition-colors"
+                >
+                    Thoát chế độ quản lý
                 </Link>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div className="p-4 rounded-lg bg-[--md-sys-color-surface-container]">
-                    <h3 className="text-lg font-semibold mb-2">Total Songs</h3>
-                    <p className="text-2xl">{stats.totalSongs}</p>
+                    <h3 className="text-lg font-semibold mb-2 text-[--md-sys-color-on-surface]">
+                        Tổng số bài hát
+                    </h3>
+                    <p className="text-2xl text-[--md-sys-color-on-surface]">
+                        {stats.totalSongs}
+                    </p>
                 </div>
                 <div className="p-4 rounded-lg bg-[--md-sys-color-surface-container]">
-                    <h3 className="text-lg font-semibold mb-2">Total Albums</h3>
-                    <p className="text-2xl">{stats.totalAlbums}</p>
+                    <h3 className="text-lg font-semibold mb-2 text-[--md-sys-color-on-surface]">
+                        Tổng số album
+                    </h3>
+                    <p className="text-2xl text-[--md-sys-color-on-surface]">
+                        {stats.totalAlbums}
+                    </p>
                 </div>
                 <div className="p-4 rounded-lg bg-[--md-sys-color-surface-container]">
-                    <h3 className="text-lg font-semibold mb-2">Total Plays</h3>
-                    <p className="text-2xl">{stats.totalPlays}</p>
+                    <h3 className="text-lg font-semibold mb-2 text-[--md-sys-color-on-surface]">
+                        Lượt phát
+                    </h3>
+                    <p className="text-2xl text-[--md-sys-color-on-surface]">
+                        {stats.totalPlays}
+                    </p>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="p-4 rounded-lg bg-[--md-sys-color-surface-container]">
-                    <h2 className="text-xl font-bold mb-4">Recent Activity</h2>
+                    <h2 className="text-xl font-bold mb-4 text-[--md-sys-color-on-surface]">
+                        Hoạt động gần đây
+                    </h2>
                     {/* Add recent activity content */}
                 </div>
                 <div className="p-4 rounded-lg bg-[--md-sys-color-surface-container]">
-                    <h2 className="text-xl font-bold mb-4">Quick Actions</h2>
+                    <h2 className="text-xl font-bold mb-4 text-[--md-sys-color-on-surface]">
+                        Thao tác nhanh
+                    </h2>
                     <div className="flex flex-col gap-2">
                         <Link 
                             href="/manager/discography"
-                            className="p-2 rounded hover:bg-[--md-sys-color-surface-container-high] transition-colors"
+                            className="p-2 rounded text-[--md-sys-color-on-surface] hover:bg-[--md-sys-color-surface-container-high] transition-colors"
                         >
-                            Manage Discography
+                            Quản lý discography
                         </Link>
                         <Link 
                             href="/manager/settings"
-                            className="p-2 rounded hover:bg-[--md-sys-color-surface-container-high] transition-colors"
+                            className="p-2 rounded text-[--md-sys-color-on-surface] hover:bg-[--md-sys-color-surface-container-high] transition-colors"
                         >
-                            Account Settings
+                            Cài đặt tài khoản
                         </Link>
                     </div>
                 </div>

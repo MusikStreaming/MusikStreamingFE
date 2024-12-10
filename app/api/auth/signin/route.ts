@@ -1,10 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-// import { createClient } from '@supabase/supabase-js';
-
-// const supabase = createClient(
-//   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-//   process.env.SUPABASE_SERVICE_KEY!
-// );
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,20 +14,21 @@ export async function POST(request: NextRequest) {
     }
 
     const { session, user } = externalAuth;
+    console.log('User role during signin:', user.role); // Debug log
 
-    // Create response with user data
+    // Create response with minimal user data
     const response = NextResponse.json({
       user: {
         id: user.id,
         email: user.email,
         username: user.username,
-        role: user.role,
         avatarUrl: user.avatar_url
       },
-      success: true
+      success: true,
+      redirectToManager: ['Artist Manager', 'Admin'].includes(user.role)
     });
 
-    // Set HTTP-only cookie for sensitive session data
+    // Set HTTP-only cookie for session token
     response.cookies.set('session_token', session.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -42,7 +37,7 @@ export async function POST(request: NextRequest) {
       path: '/',
     });
 
-    // Set a non-HTTP-only cookie for session detection
+    // Set non-HTTP-only cookie for session detection
     response.cookies.set('session', 'true', {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
@@ -51,35 +46,21 @@ export async function POST(request: NextRequest) {
       path: '/',
     });
 
-    // Set role cookie - Make it accessible to client
-    response.cookies.set('role', user.role || 'User', {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: session.expires_in || 60 * 60 * 24 * 7,
-      path: '/',
-    });
-
-    // Set username cookie for quick access
-    response.cookies.set('username', user.username || '', {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: session.expires_in || 60 * 60 * 24 * 7,
-      path: '/',
-    });
-
-    // Set user data cookies
     response.cookies.set('user_id', user.id, {
-      httpOnly: true,
+      httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: session.expires_in || 60 * 60 * 24 * 7,
-      path: '/',
     });
+
+    response.cookies.set('username', user.username, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: session.expires_in || 60 * 60 * 24 * 7,
+    })
 
     return response;
-
   } catch (error) {
     console.error('Sign in error:', error);
     return NextResponse.json(

@@ -114,8 +114,12 @@ export default function LoginForm({
                     } 
                 });
             } else if (result?.success) {
-                // Redirect will be handled by the parent component
-                window.location.href = searchParams.get('returnUrl') || '/';
+                // Check if we should redirect to manager dashboard
+                if (result.redirectToManager) {
+                    window.location.href = '/manager';
+                } else {
+                    window.location.href = searchParams.get('returnUrl') || '/';
+                }
             }
         } catch (error) {
             dispatch({ 

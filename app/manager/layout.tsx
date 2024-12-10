@@ -3,25 +3,27 @@
 import NavBar from '@/app/components/navs/nav-bar';
 import NavRail from '@/app/components/navs/nav-rail';
 import { useEffect, useState } from 'react';
-import { getCookie } from 'cookies-next';
 import { useRouter } from 'next/navigation';
 import './global.css';
 
 const managerItems = {
     'dashboard': {
-        text: 'Dashboard',
+        text: 'Bảng điều khiển',
+        icon: 'dashboard',
         badgevalue: 0,
         href: '/manager',
         type: 0
     },
     'album': {
         text: 'Discography',
+        icon: 'album',
         badgevalue: 0,
         href: '/manager/discography',
         type: 0
     },
     'settings': {
-        text: 'Settings',
+        text: 'Cài đặt',
+        icon: 'settings',
         badgevalue: 0,
         href: '/manager/settings',
         type: 0
@@ -33,59 +35,50 @@ export default function ManagerLayout({
 }: {
     children: React.ReactNode
 }) {
+    const [isLoading, setIsLoading] = useState(true);
     const router = useRouter();
-    const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
     useEffect(() => {
-        const role = getCookie('role');
-        console.log('Role:', role);
-        
-        if (role === 'Artist Manager' || role === 'Artist%20Manager') {
-            setIsAuthorized(true);
-        } else {
-            setIsAuthorized(false);
-        }
-    }, []);
+        const verifyAccess = async () => {
+            try {
+                const response = await fetch('/api/auth/user-info', {
+                    credentials: 'include'
+                });
 
-    useEffect(() => {
-        if (isAuthorized === false) {
-            router.replace('/');
-        }
-    }, [isAuthorized, router]);
+                if (!response.ok) {
+                    router.replace('/');
+                    return;
+                }
 
-    if (isAuthorized === null) {
-        return null;
-    }
+                setIsLoading(false);
+            } catch (error) {
+                console.error('Failed to verify manager access:', error);
+                router.replace('/');
+            }
+        };
 
-    if (!isAuthorized) {
-        return null;
+        verifyAccess();
+    }, [router]);
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-[--md-sys-color-primary]"></div>
+            </div>
+        );
     }
 
     return (
-        <html>
-            <head>
-            <title>Manager Dashboard</title>
-            <meta name="description" content="Artist Manager Dashboard for managing discography and settings." />
-            <meta name="viewport" content="width=device-width, initial-scale=1" />
-            <meta property="og:title" content="Manager Dashboard" />
-            <meta property="og:description" content="Artist Manager Dashboard for managing discography and settings." />
-            <meta property="og:type" content="website" />
-            <meta property="og:url" content="https://www.yourwebsite.com/manager" />
-            <meta property="og:image" content="https://www.yourwebsite.com/assets/manager-dashboard.png" />
-            <meta name="twitter:card" content="summary_large_image" />
-            <meta name="twitter:title" content="Manager Dashboard" />
-            <meta name="twitter:description" content="Artist Manager Dashboard for managing discography and settings." />
-            <meta name="twitter:image" content="https://www.yourwebsite.com/assets/manager-dashboard.png" />
-            </head>
+        <html lang="en">
             <body>
-                <div className="flex flex-col h-screen">
+                <div className="flex flex-col min-h-screen bg-[--md-sys-color-background]">
                     <NavBar />
                     <div className="flex flex-1 gap-4 p-4 overflow-hidden">
                         <NavRail 
                             className="hidden md:flex h-full" 
                             items={managerItems}
                         />
-                        <main className="flex-1 overflow-y-auto rounded-xl bg-[--md-sys-color-surface]">
+                        <main className="flex-1 overflow-y-auto">
                             {children}
                         </main>
                     </div>

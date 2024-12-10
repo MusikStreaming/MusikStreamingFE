@@ -157,22 +157,7 @@ export default function SignUpPage() {
                 avatar: avatar
             });
 
-            // Only set necessary non-sensitive cookies
-            setCookie('skipVerifyEmail', false, {
-                httpOnly: true,
-                secure: true,
-                sameSite: 'strict',
-                path: '/',
-            });
-
-            // Let the backend handle setting sensitive cookies via HTTP response headers
-            // The backend should set these as HTTP-only cookies
-            // DO NOT set these cookies on the client side:
-            // - access_token
-            // - refresh_token
-            // - role
-            // - user_id
-
+            // Redirect to email verification page
             router.push('/verify-email');
 
         } catch (error) {

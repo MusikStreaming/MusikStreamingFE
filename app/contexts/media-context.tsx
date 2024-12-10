@@ -178,7 +178,6 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
   }, [isAuthenticated, queue, volume, audioRef, setCurrentSong, setIsPlaying, setIsLoading, currentSong?.id, updateMediaSession]);
 
   const pauseSong = useCallback(() => {
-    if (!isAuthenticated) return;
     if (audioRef.current) {
       audioRef.current.pause();
       setIsPlaying(false);
