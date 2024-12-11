@@ -170,7 +170,7 @@ export async function login(data: LoginData): Promise<AuthResponse> {
     console.log('Setting up local session...');
     // Then set up local session through our API
     const localResponse = await axios.post(
-      `/api/auth/signup`,
+      `/api/auth/signin`,
       { 
         externalAuth: {
           session: {
