@@ -51,7 +51,8 @@ export async function GET() {
     }
 
     return NextResponse.json({ 
-      manager: true 
+      manager: true,
+      avatarUrl: userData.avatarurl || '/assets/default-avatar.png'
     }, { 
       status: 200,
       headers: {

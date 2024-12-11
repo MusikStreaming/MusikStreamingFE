@@ -13,7 +13,8 @@ export async function middleware(request: NextRequest) {
 
     try {
       // Verify manager status with backend
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/user`, {
+      const user_id = request.cookies.get('user_id')?.value;
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/user/${user_id}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${sessionToken}`,

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function ManagerDashboard() {
@@ -9,15 +10,47 @@ export default function ManagerDashboard() {
         totalAlbums: 0,
         totalPlays: 0
     });
+    const [isManager, setIsManager] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
-        // TODO: Fetch actual stats from your API
-        setStats({
-            totalSongs: 42,
-            totalAlbums: 5,
-            totalPlays: 10000
-        });
-    }, []);
+        const checkManagerStatus = async () => {
+            try {
+                const response = await fetch('/api/auth/user-info', {
+                    credentials: 'include'
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to check manager status');
+                }
+                const { manager } = await response.json();
+                if (!manager) {
+                    router.push('/');
+                } else {
+                    setIsManager(true);
+                }
+            } catch (error) {
+                console.error('Error checking manager status:', error);
+                router.push('/');
+            }
+        };
+
+        checkManagerStatus();
+    }, [router]);
+
+    useEffect(() => {
+        if (isManager) {
+            // TODO: Fetch actual stats from your API
+            setStats({
+                totalSongs: 42,
+                totalAlbums: 5,
+                totalPlays: 10000
+            });
+        }
+    }, [isManager]);
+
+    if (!isManager) {
+        return null;
+    }
 
     return (
         <div className="h-full">

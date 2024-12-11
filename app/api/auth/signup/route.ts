@@ -13,7 +13,10 @@ export async function POST(request: NextRequest) {
                 { status: 400 }
             );
         }
-        return 200;
+        return NextResponse.json(
+            { message: 'Signup successful' },
+            { status: 200 }
+        );
     } catch (error) {
         console.error('Signup error:', error);
         return NextResponse.json(

@@ -1,7 +1,7 @@
 "use client";
 import axios from "axios";
 import z from "zod";
-import { setCookie, deleteCookie } from "cookies-next/client";
+import { setCookie } from "cookies-next/client";
 import { redirect } from "next/navigation";
 // import { AuthResponse } from "../model/schemas/auth-response";
 // import 

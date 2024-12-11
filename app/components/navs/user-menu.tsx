@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
-import { deleteCookie, getCookie } from 'cookies-next';
+import { useState, useEffect } from 'react';
+import { getCookie } from 'cookies-next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 interface User {
   id: string;
@@ -121,7 +121,7 @@ return (
             </Link>
           )}
           <Link
-            href={isManager ? "/manager/settings" : "/settings"}
+            href={pathname === "/manager" ? "/manager/settings" : "/settings"}
             className="px-4 py-2 text-sm hover:bg-[--md-sys-color-surface-variant] rounded-md flex items-center gap-2"
             role="menuitem"
             onClick={() => setIsOpen(false)}
