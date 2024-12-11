@@ -35,7 +35,7 @@ export default function Content() {
 
     checkAuth();
     window.addEventListener('storage', checkAuth);
-    
+
     return () => {
       mounted = false;
       window.removeEventListener('storage', checkAuth);
@@ -64,7 +64,7 @@ export default function Content() {
         const response = await fetch('/api/user/profile', {
           credentials: 'include'
         });
-        
+
         if (!response.ok) {
           throw new Error('Failed to fetch user profile');
         }
@@ -106,6 +106,12 @@ export default function Content() {
           <h2 className="text-lg font-bold">Bài hát nổi bật</h2>
           <Suspense fallback={<Loading />}>
             <Songs />
+          </Suspense>
+        </div>
+        <div className="card-scroll flex flex-col overflow-x-hidden gap-4">
+          <h2 className="text-lg font-bold">Đề xuất dành cho bạn</h2>
+          <Suspense fallback={<Loading />}>
+            <Albums />
           </Suspense>
         </div>
       </div>
