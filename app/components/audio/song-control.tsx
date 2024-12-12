@@ -114,22 +114,24 @@ export default function SongControl() {
     <div className={twMerge(
       'song-playing z-[1000] bg-[--md-sys-color-inverse-on-surface] flex-col transition-transform duration-300',
       shouldHide && 'hidden'
-    )}>
-      <div className="p-4 gap-4 flex flex-wrap items-center justify-between">
+    )} onClick={() => {
+      if (window.innerWidth < 768 && currentSong?.id) router.push(`/song/${currentSong.id}`)}
+    }>
+      <div className="p-4 gap-1 md:gap-4 flex flex-wrap items-center justify-between">
         <div className="song-title flex items-center gap-2 w-fit md:w-1/4">
           <div className={twMerge(
             "relative cursor-pointer",
             (isLoading || isEmpty) && "opacity-50",
             isLoading && "animate-pulse"
           )} onClick={handleImageClick}>
-            <div className="w-16 h-16">
+            <div className="md:w-16 md:h-16">
               <Image
-                src={currentSong?.coverImage || "/assets/placeholder.jpg"}
+                src={currentSong?.thumbnailurl || "/assets/placeholder.jpg"}
                 alt={currentSong?.title || "song-playing"}
                 width={64}
                 height={64}
                 className={twMerge(
-                  "transition-opacity duration-200 w-16 h-16 md:w-[64px] md:h-[64px] object-cover",
+                  "transition-opacity duration-200 w-8 h-8 md:w-[64px] md:h-[64px] object-cover rounded-sm md:rounded-none",
                   (isLoading || isEmpty) && "grayscale",
                   "cursor-pointer"
                 )}
@@ -143,12 +145,12 @@ export default function SongControl() {
               </div>
             )}
           </div>
-          <div className="song-title-info md:w-full max-w-[200px] md:max-w-[300px] overflow-hidden">
+          <div className="song-title-info text-xs md:text-base md:w-full w-2/3 md:max-w-[300px] overflow-hidden">
             <p 
               ref={titleRef}
               className={twMerge(
                 "song-title-text block whitespace-nowrap text-nowrap",
-                isOverflowing && "hover:animate-marquee"
+                isOverflowing && "animate-marquee"
               )}
             >
               <Link
@@ -161,12 +163,13 @@ export default function SongControl() {
               </Link>
             </p>
             {currentSong?.artists && currentSong.artists.length > 0 && (
-              <p className="text-sm text-[--md-sys-color-outline]">
+              <p className="text-xs md:text-sm text-[--md-sys-color-outline]">
                 {[...currentSong.artists].map((artist, index, array) => (
                   <span key={artist.artist.id}>
                     <Link
                       href={`/artist/${artist.artist.id}`}
                       className="hover:text-[--md-sys-color-primary] transition-colors"
+                      onClick={(e) => e.stopPropagation()}
                     >
                       {artist.artist.name}
                     </Link>
@@ -181,8 +184,11 @@ export default function SongControl() {
           </ToggleButtonFilled>
         </div>
         <div className="song-controls-container flex-col w-1/3">
-          <div className="song-controls flex items-center justify-end md:justify-center gap-4">
-            <IconSmallButton disabled={isDisabled} onClick={playPreviousSong}>
+          <div className="song-controls flex items-center justify-end md:justify-center gap-0 md:gap-4">
+            <IconSmallButton disabled={isDisabled} onClick={(e: React.MouseEvent)=>{
+              e.preventDefault()
+              playPreviousSong()
+            }}>
               <span className={twMerge(
                 "material-symbols-outlined-filled",
                 isDisabled && "opacity-50"
@@ -193,12 +199,21 @@ export default function SongControl() {
                 "h-8 w-8 md:p-3 md:h-12 md:w-12 md:bg-[--md-sys-color-primary] md:text-[--md-sys-color-on-primary]",
                 isDisabled && "opacity-50"
               )}
-              onClick={() => isPlaying ? pauseSong() : resumeSong()}
+              onClick={(e: React.MouseEvent) => {
+                e.stopPropagation();
+                if (isPlaying) 
+                  pauseSong()
+                else resumeSong();
+              }}
               disabled={isDisabled}
               isPlaying={isPlaying}
               songId={currentSong?.id}
             />
-            <IconSmallButton disabled={isDisabled} onClick={playNextSong}>
+            <IconSmallButton disabled={isDisabled} onClick={
+              (e: React.MouseEvent)=>{
+                e.stopPropagation()
+                playNextSong()
+              }}>
               <span className={twMerge(
                 "material-symbols-outlined-filled",
                 isDisabled && "opacity-50"

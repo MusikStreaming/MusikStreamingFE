@@ -79,6 +79,7 @@ export default function Artists() {
       const url = processCloudinaryUrl(artist.avatarurl, 200, 200, "artists");
       console.log(url);
       cards.push({
+        type: "artist",
         img: {
           src: url,
           alt: artist.name,

@@ -18,7 +18,7 @@ export default function SongTable({ songs, className, showImage }: {
       views?: number | null;
       id: string;
       url?: string;
-      coverImage?: string;
+      thumbnailurl?: string;
       artists?: {
         name: string;
       }[];
@@ -58,8 +58,7 @@ export default function SongTable({ songs, className, showImage }: {
         title: song.title,
         url: songUrl,
         duration: song.duration || 0,
-        coverImage: song.coverImage || '',
-        thumbnailurl: song.coverImage || '',
+        thumbnailurl: song.thumbnailurl || '',
         releasedate: "",
         genre: '',
         views: song.views || 0,
@@ -102,8 +101,8 @@ export default function SongTable({ songs, className, showImage }: {
                 />
               </td>
               <td className="px-4 py-4 flex items-center gap-4">
-                {showImage && song.song.coverImage &&
-                  <Image src={song.song.coverImage} alt={song.song.title} className="w-10 h-10 rounded-lg" width={40} height={40} />
+                {showImage && song.song.thumbnailurl &&
+                  <Image src={song.song.thumbnailurl} alt={song.song.title} className="w-10 h-10 rounded-lg" width={40} height={40} />
                 }
                 <div className="flex flex-col">
                   {song.song.title ?

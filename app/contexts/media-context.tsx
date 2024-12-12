@@ -55,7 +55,7 @@ interface MediaContextType {
   /** Play the next song */
   playNextSong: () => void;
   /** Function to play an album */
-  playAlbum: (songs: Song[]) => void;
+  playList: (songs: Song[]) => void;
   /** Queue of songs */
   queue: Song[];
   /** Function to add a song to the queue */
@@ -101,12 +101,12 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
         artist: song.artists?.map(a => a.artist.name).join(', ') || '',
         album: '',
         artwork: [
-          { src: song.coverImage || '/favicon.ico', sizes: '96x96', type: 'image/png' },
-          { src: song.coverImage || '/favicon.ico', sizes: '128x128', type: 'image/png' },
-          { src: song.coverImage || '/favicon.ico', sizes: '192x192', type: 'image/png' },
-          { src: song.coverImage || '/favicon.ico', sizes: '256x256', type: 'image/png' },
-          { src: song.coverImage || '/favicon.ico', sizes: '384x384', type: 'image/png' },
-          { src: song.coverImage || '/favicon.ico', sizes: '512x512', type: 'image/png' },
+          { src: song.thumbnailurl || '/favicon.ico', sizes: '96x96', type: 'image/png' },
+          { src: song.thumbnailurl || '/favicon.ico', sizes: '128x128', type: 'image/png' },
+          { src: song.thumbnailurl || '/favicon.ico', sizes: '192x192', type: 'image/png' },
+          { src: song.thumbnailurl || '/favicon.ico', sizes: '256x256', type: 'image/png' },
+          { src: song.thumbnailurl || '/favicon.ico', sizes: '384x384', type: 'image/png' },
+          { src: song.thumbnailurl || '/favicon.ico', sizes: '512x512', type: 'image/png' },
         ]
       });
   
@@ -230,7 +230,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
     }
   }, [queue, queueIndex, currentSong, backupQueue, playSong]);
 
-  const playAlbum = useCallback((songs: Song[]) => {
+  const playList = useCallback((songs: Song[]) => {
     if (!isAuthenticated || songs.length === 0) return;
     
     // Clear both queues when starting new album
@@ -407,7 +407,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
         isDragging,
         playPreviousSong: isAuthenticated ? playPreviousSong : () => {},
         playNextSong: isAuthenticated ? playNextSong : () => {},
-        playAlbum: isAuthenticated ? playAlbum : () => {},
+        playList: isAuthenticated ? playList : () => {},
         queue,
         addToQueue: isAuthenticated ? addToQueue : () => {},
         removeFromQueue: isAuthenticated ? removeFromQueue : () => {},
@@ -488,7 +488,7 @@ export function useMedia() {
       isDragging: false,
       playPreviousSong: () => {},
       playNextSong: () => {},
-      playAlbum: () => {},
+      playList: () => {},
       queue: [],
       addToQueue: () => {},
       removeFromQueue: () => {},

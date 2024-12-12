@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import fetchAlbumById from '@/app/api-fetch/album-by-id';
 import ErrorComponent from '@/app/components/api-fetch-container/fetch-error';
@@ -16,6 +17,7 @@ import { processCloudinaryUrl } from "@/app/api-fetch/cloudinary-url-processing"
 // import { formatDuration } from '@/app/utils/time';
 import { calculateAlbumDuration, countAlbumSongs, formatSongCount } from '@/app/utils/album';
 import { useMedia } from '@/app/contexts/media-context';
+import TextButton from '@/app/components/buttons/text-button';
 
 function formatDuration(duration: number) {
   const hours = Math.floor(duration / 3600);
@@ -27,7 +29,8 @@ function formatDuration(duration: number) {
 export default function AlbumContent(params: { id: string }) {
   const [album, setAlbum] = useState<AlbumDetails | undefined>();
   const [error, setError] = useState<string | null>(null);
-  const { playAlbum } = useMedia();
+  const { playList } = useMedia();
+  const router = useRouter();
 
   const fetchData = useCallback(async () => {
     try {
@@ -56,7 +59,11 @@ export default function AlbumContent(params: { id: string }) {
 
   try {
     return (
-      <div className='flex flex-col w-full gap-8 p-4'>
+      <div className='flex flex-col w-full gap-8 md:p-4'>
+        <TextButton className='flex md:hidden text-[--md-sys-color-primary]' onClick={() => router.back()}>
+          <span className='material-symbols-outlined'>arrow_back</span>
+          Quay lại
+        </TextButton>
         {/* Hero Section */}
         <div className='flex flex-col md:flex-row items-center gap-6'>
           {album ? 
@@ -107,13 +114,12 @@ export default function AlbumContent(params: { id: string }) {
                         id: s.song.id,
                         title: s.song.title,
                         duration: s.song.duration || null,
-                        coverImage: s.song.thumbnailurl || '/assets/placeholder.jpg',
-                        thumbnailurl: s.song.thumbnailurl || '',
+                        thumbnailurl: s.song.thumbnailurl || '/assets/placeholder.jpg',
                         artists: s.song.artists?.map(a => ({ artist: { id: '', name: a.name } })) || []
                       };
                     });
                     
-                    playAlbum(mappedSongs);
+                    playList(mappedSongs);
                   } catch (e) {
                     console.error('Error playing album:', e);
                   }
@@ -140,7 +146,7 @@ export default function AlbumContent(params: { id: string }) {
               title: song.song.title,
               duration: song.song.duration,
               views: song.song.views,
-              coverImage: song.song.thumbnailurl,
+              thumbnailurl: song.song.thumbnailurl,
               artists: song.song.artists?.map(a => ({ name: a.name })) || []
             }
           }))} />

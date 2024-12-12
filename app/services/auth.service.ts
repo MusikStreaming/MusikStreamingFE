@@ -111,31 +111,31 @@ export async function signUp(incomingData: SignUpData): Promise<AuthResponse> {
     }
 
     // Then set up local session through our API
-    const localResponse = await axios.post(
-      `/api/auth/signup`,
-      { 
-        externalAuth: {
-          session: {
-            access_token: externalResponse.data.session.access_token,
-            expires_in: externalResponse.data.session.expires_in,
-            refresh_token: externalResponse.data.session.refresh_token
-          },
-          user: externalResponse.data.user
-        }
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        withCredentials: true // Keep credentials for local request
-      }
-    );
+    // const localResponse = await axios.post(
+    //   `/api/auth/signup`,
+    //   { 
+    //     externalAuth: {
+    //       session: {
+    //         access_token: externalResponse.data.session.access_token,
+    //         expires_in: externalResponse.data.session.expires_in,
+    //         refresh_token: externalResponse.data.session.refresh_token
+    //       },
+    //       user: externalResponse.data.user
+    //     }
+    //   },
+    //   {
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //     },
+    //     withCredentials: true // Keep credentials for local request
+    //   }
+    // );
 
-    if (localResponse.status !== 200) {
-      throw new Error('Failed to create local session');
-    }
+    // if (localResponse.status !== 200) {
+    //   throw new Error('Failed to create local session');
+    // }
 
-    return localResponse.data;
+    return externalResponse.data;
   } catch (error: unknown) {
     console.error(error);
     if (axios.isAxiosError(error)) {

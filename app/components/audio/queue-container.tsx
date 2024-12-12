@@ -13,15 +13,12 @@ export default function QueueContainer() {
     <>
       {/* Desktop queue */}
       <div className={twMerge(
-        "song-queue-container w-80 transition-all duration-300",
+        "song-queue-container w-80 transition-all duration-300 max-h-[calc(100vh-228px)] overflow-y-auto bg-[--md-sys-color-surface]",
         isQueueVisible ? "md:block" : "hidden"
       )}>
-        <div className="bg-[--md-sys-color-surface] h-[calc(100vh-136px)] rounded-xl p-4">
+        <div className="bg-[--md-sys-color-surface] rounded-xl p-4">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold">Queue</h2>
-            {!hasContent && (
-              <p className="text-sm text-[--md-sys-color-outline]">Queue is empty</p>
-            )}
           </div>
           <SongQueue />
         </div>

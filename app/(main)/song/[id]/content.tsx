@@ -22,13 +22,13 @@ import TextButton from '@/app/components/buttons/text-button';
 import { AlbumDetails } from '@/app/model/album-details';
 import VerticalCard from '@/app/components/info-cards/vertical-card';
 import Link from 'next/link';
+import { SongCard } from '@/app/components/info-cards/song-card';
 
 const mapSongToPlayable = (song: SongDetails) => ({
   id: song.id,
   title: song.title,
   duration: song.duration,
-  coverImage: song.thumbnailurl || '/assets/placeholder.jpg',
-  thumbnailurl: song.thumbnailurl || '',
+  thumbnailurl: song.thumbnailurl || '/assets/placeholder.jpg',
   releasedate: song.releasedate,
   genre: song.genre,
   views: song.views,
@@ -73,7 +73,8 @@ export default function SongContent(params: { id: string; initialData: SongDetai
     currentSong,
     progress,
     seekTo,
-    isLoading
+    isLoading,
+    queue,
   } = useMedia();
   const { likedSongs, addLikedSong, removeLikedSong } = useLiked();
   const fetchSongData = useCallback(async () => {
@@ -176,14 +177,12 @@ export default function SongContent(params: { id: string; initialData: SongDetai
                   onClick={() => song && (likedSongs.some(s => s.id === song.id)
                     ? removeLikedSong({
                       ...song,
-                      coverImage: song.thumbnailurl || '/assets/placeholder.jpg',
-                      thumbnailurl: song.thumbnailurl || '',
+                      thumbnailurl: song.thumbnailurl || '/assets/placeholder.jpg',
                       artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
                     })
                     : addLikedSong({
                       ...song,
-                      coverImage: song.thumbnailurl || '/assets/placeholder.jpg',
-                      thumbnailurl: song.thumbnailurl || '',
+                      thumbnailurl: song.thumbnailurl || '/assets/placeholder.jpg',
                       artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
                     })
                   )}>
@@ -204,7 +203,7 @@ export default function SongContent(params: { id: string; initialData: SongDetai
                   title: song.title,
                   duration: song.duration,
                   views: song.views,
-                  coverImage: song.thumbnailurl,
+                  thumbnailurl: song.thumbnailurl,
                   artists: song.artists?.map(a => ({ name: a.name })) || []
                 }
               }]} showImage={false} /> :
@@ -253,14 +252,12 @@ export default function SongContent(params: { id: string; initialData: SongDetai
                     onClick={() => song && (likedSongs.some(s => s.id === song.id)
                       ? removeLikedSong({
                         ...song,
-                        coverImage: song.thumbnailurl || '/assets/placeholder.jpg',
-                        thumbnailurl: song.thumbnailurl || '',
+                        thumbnailurl: song.thumbnailurl || '/assets/placeholder.jpg',
                         artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
                       })
                       : addLikedSong({
                         ...song,
-                        coverImage: song.thumbnailurl || '/assets/placeholder.jpg',
-                        thumbnailurl: song.thumbnailurl || '',
+                        thumbnailurl: song.thumbnailurl || '/assets/placeholder.jpg',
                         artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
                       })
                     )}>
@@ -315,15 +312,19 @@ export default function SongContent(params: { id: string; initialData: SongDetai
                 </IconSmallButton>
               </div>
             </div>
-            <div className="flex flex-col gap-3 w-full pt-6 items-center">
+            {/* <div className="flex flex-col gap-3 w-full pt-6 items-center">
               <p className="">Ngày phát hành: {processDatetime(song?.releasedate || '')}</p>
               <p className="">Lượt xem: {song?.views.toLocaleString()}</p>
-            </div>
+            </div> */}
           </div>
 
         </div>
         <div className="flex flex-col gap-3 w-full">
           <h2 className="text-lg font-bold">Lời bài hát</h2>
+        </div>
+        <div className='flex flex-col'>
+          <h2 className='text-lg font-bold'>Danh sách phát</h2>
+
         </div>
         <div className="flex flex-col w-full overflow-hidden">
           {
@@ -333,7 +334,7 @@ export default function SongContent(params: { id: string; initialData: SongDetai
                 <div className="card-scroll grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-4">
                   {
                     album?.songs?.map(song => (
-                      <VerticalCard key={song?.song?.id} {...mapSongToCard(song?.song)} />
+                      <SongCard key={song?.song?.id} type="song" {...mapSongToCard(song?.song)} />
                     ))
                   }
                 </div>

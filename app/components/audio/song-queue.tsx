@@ -22,7 +22,7 @@ export default function SongQueue() {
   const upcomingSongs = queue.slice(queueIndex + 1);
 
   return (
-    <div className="flex flex-col gap-4 md:max-h-[calc(100vh-220px)] max-h-[calc(100vh-328px)] overflow-y-hidden">
+    <div className="flex flex-col gap-4">
       <div className="h-full overflow-y-auto">
         {currentSong && (
           <div className="now-playing">

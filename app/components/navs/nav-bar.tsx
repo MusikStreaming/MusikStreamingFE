@@ -10,6 +10,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { redirectToLogin } from '@/app/services/auth.service';
 import Image from 'next/image';
 import { useSearch } from '@/app/hooks/useSearch';
+import { twMerge } from 'tailwind-merge';
 
 export default function NavBar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -99,7 +100,7 @@ export default function NavBar() {
       <div className="search-and-browse-container flex justify-center gap-4 flex-grow">
         <div className="search-and-browse-inner flex-grow flex items-center sm:justify-center">
           <SearchBox 
-            className='hidden md:flex' 
+            className={"hidden md:flex bg-[--md-sys-color-surface] text-[--md-sys-color-on-surface]"} 
             placeholder="Search" 
             ref={searchFocus}
             text={searchQuery}

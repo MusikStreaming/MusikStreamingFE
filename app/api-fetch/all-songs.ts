@@ -46,7 +46,7 @@ export default async function fetchAllSongs() {
             localStorage.removeItem("songs");
         }
         // xoá cache nếu đã quá 1 giờ
-        if (localStorage.getItem("songs") !== null || Date.now() - parseInt(localStorage.getItem("songsTime")!) < 3600000) {
+        if (localStorage.getItem("songs") !== null && Date.now() - parseInt(localStorage.getItem("songsTime")!) < 3600000) {
             try{
                 const data = AlternativeSongListSchema.parse(JSON.parse(localStorage.getItem("songs")!));
                 console.log(data)

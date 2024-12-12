@@ -4,11 +4,9 @@ import { useEffect, useState } from "react"
 import fetchAllSongs from "@/app/api-fetch/all-songs"
 import { CardProps } from "@/app/model/card-props"
 import { processCloudinaryUrl } from "@/app/api-fetch/cloudinary-url-processing"
-import VerticalCard from "@/app/components/info-cards/vertical-card"
+import { SongCard } from "@/app/components/info-cards/song-card"
 import Skeleton from "../loading/skeleton"
 import ErrorComponent from "./fetch-error"
-import { randomUUID } from "crypto"
-// import ErrorComponent from "./fetch-error"
 
 export default function Songs() {
     const [loading, setLoading] = useState(true);
@@ -51,7 +49,8 @@ export default function Songs() {
                         : undefined,
                     songID: song.id,
                     duration: song.duration ?? undefined,
-                    artists: song.artists.map(artist => ({ id: artist.artist.id, name: artist.artist.name }))
+                    artists: song.artists.map(artist => ({ id: artist.artist.id, name: artist.artist.name })),
+                    type: 'song'
                 }));
 
                 setSongs(cardData);
@@ -91,7 +90,7 @@ export default function Songs() {
     return (
         <div className="card-grid grid grid-flow-row">
             {songs.map((song, index) => (
-                <VerticalCard key={index} {...song} />
+                <SongCard key={index} {...song} />
             ))}
         </div>
     );
