@@ -124,21 +124,22 @@ export default function SongControl() {
             (isLoading || isEmpty) && "opacity-50",
             isLoading && "animate-pulse"
           )} onClick={handleImageClick}>
-            <div className="md:w-16 md:h-16">
+            <Link className="md:w-16 md:h-16" href={currentSong?.id ? `/song/${currentSong.id}` : "#"}>
               <Image
                 src={currentSong?.thumbnailurl || "/assets/placeholder.jpg"}
                 alt={currentSong?.title || "song-playing"}
                 width={64}
                 height={64}
+                priority={true}
+                sizes="(max-width: 640px) 32px, 64px"
                 className={twMerge(
                   "transition-opacity duration-200 w-8 h-8 md:w-[64px] md:h-[64px] object-cover rounded-sm md:rounded-none",
                   (isLoading || isEmpty) && "grayscale",
                   "cursor-pointer"
                 )}
-                onClick={handleImageClick}
                 placeholder="data:image/png;base64,/9j/4AAQSkZJRgABAQEBLAEsAAD/2wBDAAMCAgICAgMCAgIDAwMDBAYEBAQEBAgGBgUGCQgKCgkICQkKDA8MCgsOCwkJDRENDg8QEBEQCgwSExIQEw8QEBD/wAALCABAAEABAREA/8QAGwABAAIDAQEAAAAAAAAAAAAAAAEIBgcJBQD/xAAuEAABAwQCAQIEBgMBAAAAAAABAgMEAAUGBxESCBMhCRQiMRUjQUJRgRhhcZH/2gAIAQEAAD8A6p0pUE8DmqdWf4m2nL15Uf42w7PLMNy4Gxx8q+bQYr11BKfQDXHb0lOD0kvBR5WR9PUhdXFB5HNTSlKVge+cln4bpPPcqtUhcedacbuUuK8j7tvIjLKFj/iuD/VVT85da6k0T4Ox7DjGL2uHdcdm2OLiMluM2mWLqmUyovJdA7KdWht9biuSV8rJ55q8jClqZQpxHRakgqT/AASPcf8AtfSlKUrU3lZk+D4v48Z+9sHKINhtVxx+4Wv5qUr2L0iM4htCEj6nHCojhCQVHj2Fc/dOXPbXxMvILD86y6wSLHprU640r5Raipmdc2kIUUKXwA8844kFQA6tMDr7KXy51aA4FTSlKx3YeeY3q/Br7sPL5pi2bHYD1xmupT2UGm0lRCU/uWfZKU/qogfrXMPUepdpfFH2bI3zvu4XCx6dsU5yPYMeiuqQJISodmGT7cD2Aflcd1q/Lb69fyrdeEWea4xfWp0EM6xwX3Asov2LR7d+JsCW/HYuL5jLSz27r7MONfUAeSDyeeatH96mlKVVX4oEK9zvCXYTdkDhLQtz0pLZ9zGRPYU5/QABP+gaxrb8ORZ/GPRvj7pLIl41a9nzbLiYvsE9XY9pcgrlSXmlD7vPIaUOeR2Li/fk81oK8/DA0rcNpbG03iVwvdlvkHFLLlGE3J+eXSVrVJjSW5KeAFpMiO0olASpHrDrwAEm3fw9dl5rtLxWxS97Dkvy8gtrkyyTJb6uzskxJC2ULWr9y+iUpUoklSkkk8k1ZGlKV52RY9ZMtsFxxfJLaxcLTd4rsGdEfTy2+w4kocbUP4KSR/dVKtHi7tzUdnia2sQsO1tYWG8sX3FbdfLs9aMhxiSy56jCYs1ttxt9DaivgLDZ6rUgkoJSfP3HO37ePIDWlwsmN2/VVwzK133ADkE6e1eHGUutN3BC2o7BQj1kfIvekXFlHdf1JIHCrRab1NiejtaWLVuEtPptNijlptyQsLfkOKUVuvuqAAU444ta1EADlR4AHArNKUpUE8AmuQPnt59+UmsvKS+4BgGUOYjYsQdjNxYaYDDvz/dht0vvqdQouJX3ISkEJCQPbtyo2l3HuGVn2JeI0+fARA2Jl2c4zkv4AzyH2opjOi4O9FfUhhLb6/dX6KAPPB4uyOOBx9qmlKUrSu//AA90L5Kuw7js7Dy9ebcgNQ7zAkrhz2UAlQR6qD9aQSSErCgkkkAEmo054h6a0rlEvP7HBvF9zCayYz2SZLdXrpcvR446JddPDY49j0AJHsSR7VuulK//2Q=="
               />
-            </div>
+            </Link>
             {isLoading && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -253,7 +254,6 @@ export default function SongControl() {
           <ToggleIconButtonDotted onClick={toggleQueue} active={isQueueVisible}>
             <span className={twMerge(
               "material-symbols-outlined",
-              isDisabled && "opacity-50"
             )}>queue_music</span>
           </ToggleIconButtonDotted>
           <div className="volume flex items-center">

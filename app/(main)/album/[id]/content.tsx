@@ -125,7 +125,9 @@ export default function AlbumContent(params: { id: string }) {
                   }
                 }}
               />
-              <IconSmallButton>
+              <IconSmallButton onClick={() => {
+                navigator.clipboard.writeText(`${window.location.href}`);
+              }}>
                 <span className="material-symbols-outlined">share</span>
               </IconSmallButton>
               <ToggleButtonFilled>

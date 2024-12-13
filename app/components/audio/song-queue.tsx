@@ -2,6 +2,7 @@
 
 import { useMedia } from '@/app/contexts/media-context';
 import SongQueueCard from './song-queue-card';
+import { uniqueId } from 'lodash';
 
 export default function SongQueue() {
   const { currentSong, queue, removeFromQueue, queueIndex } = useMedia();
@@ -42,7 +43,7 @@ export default function SongQueue() {
             <div className="flex flex-col gap-2">
               {upcomingSongs.map((song) => (
                 <SongQueueCard
-                  key={`queue-${song.id}`}
+                  key={`queue-${song.id}-${uniqueId()}`}
                   song={song}
                   isPlaying={false}
                   onRemove={() => removeFromQueue(song.id)}
