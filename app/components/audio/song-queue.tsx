@@ -2,6 +2,7 @@
 
 import { useMedia } from '@/app/contexts/media-context';
 import SongQueueCard from './song-queue-card';
+import { uniqueId } from 'lodash';
 
 export default function SongQueue() {
   const { currentSong, queue, removeFromQueue, queueIndex } = useMedia();
@@ -22,7 +23,7 @@ export default function SongQueue() {
   const upcomingSongs = queue.slice(queueIndex + 1);
 
   return (
-    <div className="flex flex-col gap-4 md:max-h-[calc(100vh-220px)] max-h-[calc(100vh-328px)] overflow-y-hidden">
+    <div className="flex flex-col gap-4">
       <div className="h-full overflow-y-auto">
         {currentSong && (
           <div className="now-playing">
@@ -42,7 +43,7 @@ export default function SongQueue() {
             <div className="flex flex-col gap-2">
               {upcomingSongs.map((song) => (
                 <SongQueueCard
-                  key={`queue-${song.id}`}
+                  key={`queue-${song.id}-${uniqueId()}`}
                   song={song}
                   isPlaying={false}
                   onRemove={() => removeFromQueue(song.id)}

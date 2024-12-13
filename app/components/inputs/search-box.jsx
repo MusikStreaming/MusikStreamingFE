@@ -3,6 +3,7 @@ import TextButton from '@/app/components/buttons/text-button';
 import { useRouter } from 'next/navigation';
 import { usePathname } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
+import { twMerge } from 'tailwind-merge';
 
 /**
  * SearchBox component renders a search input box with a search button.
@@ -31,11 +32,11 @@ export default function SearchBox(props) {
   };
 
   return (
-    <div className={`search-box sm:grow sm:self-stretch sm:justify-stretch flex search-box rounded-full h-fit sm:h-14 sm:max-w-[720px] bg-[--md-sys-color-surface-container] text-[--md-sys-color-on-surface-container] ${props.className}`} role='search' onClick={()=>{if (pathname !== "/search") router.push("/search")}}>
-      <div className="state-layer sm:self-stretch relative rounded-full sm:pl-6 sm:pr-1 sm:gap-1 flex items-center sm:w-full">
+    <div className={twMerge('search-box', props.className, "grow self-stretch justify-stretch h-full min-h-14 max-w-[720px]", 'bg-[--md-sys-color-surface-container] text-[--md-sys-color-on-surface-container] rounded-full')} role='search' onClick={()=>{if (pathname !== "/search") router.push("/search")}}>
+      <div className="state-layer relative rounded-full pl-6 pr-1 gap-1 min-h-14 flex items-center w-full">
         <md-ripple />
         <input 
-          className='border-1 outline-none bg-transparent sm:self-stretch flex-grow hidden sm:flex' 
+          className='border-1 outline-none bg-transparent flex-grow' 
           type='text' 
           placeholder={props.placeholder} 
           value={props.text} 

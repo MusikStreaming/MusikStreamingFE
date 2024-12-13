@@ -113,7 +113,7 @@ export default function Content() {
           <Suspense fallback={<Loading />}>
             <Albums />
           </Suspense>
-        </div>
+        </div> 
       </div>
     );
   }

@@ -60,9 +60,19 @@ export default function ManagerDashboard() {
                 </h1>
                 <Link 
                     href="/"
-                    className="text-[--md-sys-color-primary] hover:text-[--md-sys-color-primary-hover] transition-colors"
+                    className="text-[--md-sys-color-primary] hover:text-[--md-sys-color-primary-hover] transition-colors hidden md:block"
                 >
                     Thoát chế độ quản lý
+                </Link>
+                <Link 
+                    href="/"
+                    aria-label='Exit manager mode'
+                    title='Exit manager mode'
+                    className="text-[--md-sys-color-primary] hover:text-[--md-sys-color-primary-hover] transition-colors block md:hidden too"
+                >
+                    <span className='material-symbols-outlined-filled'>
+                        logout
+                    </span>
                 </Link>
             </div>
 

@@ -21,7 +21,7 @@ export default function BottomNavBarItem(
             <Link href={props.href} className="bottom-nav-item flex flex-col justify-center items-center w-full h-full" >
                 <div className={`state-layer relative selected-${pathname === props.href} rounded-full`}>
                     <md-ripple></md-ripple>
-                    <div className={`icon flex flex-col items-center text-center py-3 px-6 ${pathname === props.href ? "text-[--md-sys-color-primary]" : "text-[--md-sys-color-on-surface]"}`}>
+                    <div className={`icon flex flex-col items-center text-center py-2 px-4 ${pathname === props.href ? "text-[--md-sys-color-primary]" : "text-[--md-sys-color-on-surface]"}`}>
                         <span className={`material-symbols-outlined${pathname === props.href ? "-filled" : ""}`}>{props.icon}</span>
                     </div>
                 </div>

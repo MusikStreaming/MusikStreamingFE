@@ -11,7 +11,7 @@ export default function Favorites(){
             <SongTable songs={likedSongs.map(song => ({ 
                 song: {
                     ...song,
-                    coverImage: song.thumbnailurl,
+                    thumbnailurl: song.thumbnailurl,
                     artists: song.artists?.map(a => ({ name: a.artist.name }))
                 }
             }))} showImage={true} />

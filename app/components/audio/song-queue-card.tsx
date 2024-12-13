@@ -15,7 +15,7 @@ export default function SongQueueCard({ song, isPlaying, onRemove }: SongQueueCa
       isPlaying && "bg-[--md-sys-color-surface-variant]"
     )}>
       <Image
-        src={song.coverImage || '/assets/placeholder.jpg'}
+        src={song.thumbnailurl || '/assets/placeholder.jpg'}
         alt={song.title}
         width={48}
         height={48}

@@ -1,5 +1,5 @@
 'use client';
-import ScalableSearchBox from '@/app/components/inputs/scalable-search-box';
+import SearchBox from '@/app/components/inputs/search-box';
 import { useRef, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import useScreenWidth from '@/app/hooks/useScreenWidth';
@@ -7,6 +7,7 @@ import BrowseContainer from './browse-container';
 import ResultMobile from './result-mobile';
 import ResultDesktop from './result-desktop';
 import { useSearch } from '@/app/hooks/useSearch';
+import { twMerge } from 'tailwind-merge';
 
 export default function SearchPage() {
     const pathname = usePathname();
@@ -22,8 +23,8 @@ export default function SearchPage() {
 
     return (
         <div className='flex flex-col w-full'>
-            <ScalableSearchBox
-                className='md:hidden bg-[--md-sys-color-surface] text-[--md-sys-color-on-surface]'
+            <SearchBox
+                className={twMerge('md:hidden', 'bg-[--md-sys-color-surface] text-[--md-sys-color-on-surface]')}
                 placeholder="Search"
                 autoFocus={true}
                 ref={searchFocus}

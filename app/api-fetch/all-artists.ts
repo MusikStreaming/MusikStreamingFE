@@ -22,7 +22,7 @@ export default async function fetchArtists() {
         throw new Error('API URL not set');
     }
     try {
-        if (localStorage.getItem("artists") !== null || Date.now() - parseInt(localStorage.getItem("artistsTime")!) < 3600000) {
+        if (localStorage.getItem("artists") !== null && Date.now() - parseInt(localStorage.getItem("artistsTime")!) < 3600000) {
             const data = ArtistSchema.parse(JSON.parse(localStorage.getItem("artists")!));
             return data["data"] as Artist[];
         }

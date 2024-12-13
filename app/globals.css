@@ -408,7 +408,7 @@ a{
   }
 }
 
-@media screen and (min-width: 768px) {
+/* @media screen and (min-width: 768px) {
   nav.bottom-nav-bar {
     display: none;
   }
@@ -418,7 +418,7 @@ a{
   .nav-rail {
     display: flex;
   }
-}
+} */
 
 /* Add these animation classes */
 @keyframes slideUp {

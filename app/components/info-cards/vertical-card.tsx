@@ -8,30 +8,12 @@ import { useMedia } from '@/app/contexts/media-context';
 import { CardProps } from '@/app/model/card-props';
 import TextButton from '../buttons/text-button';
 import Skeleton from '../loading/skeleton';
-
-import './cards.css';
 import getSong from '@/app/api-fetch/get-song';
+import fetchAlbumById from '@/app/api-fetch/album-by-id';
 import { hasCookie } from 'cookies-next';
 import { redirectToLogin } from '@/app/services/auth.service';
 
-/**
- * VerticalCard component displays content in a vertical card layout with an image, title, and subtitle.
- * It includes a play button overlay and navigation capabilities.
- * 
- * @component
- * @param {Object} props - The component props
- * @param {Object} props.img - The image object containing src and width properties
- * @param {string} props.img.src - The source URL of the image
- * @param {number} [props.img.width] - The width of the image in pixels
- * @param {string} props.title - The main title text to display
- * @param {string} props.subtitle - The secondary text to display
- * @param {string} props.href - The navigation link for the card
- * @param {string} [props.subHref] - The navigation link for the subtitle
- * @param {function} [props.onClick] - Optional click handler for the play button
- * 
- * @returns {JSX.Element} A vertical card component with image, title, subtitle, and play button
- */
-export default function VerticalCard({
+export default function GeneralCard({
   img,
   title,
   subtitle,
@@ -43,55 +25,16 @@ export default function VerticalCard({
   songID = undefined,
   duration = undefined,
   artists = undefined,
+  type,
+  onClick
 }: CardProps) {
   const router = useRouter();
-  const { currentSong, isPlaying, playSong, pauseSong, isLoading } = useMedia();
+  const { currentSong, isPlaying } = useMedia();
   
   router.prefetch(href);
   if (!isMultipleItemSub && subHrefItems) {
     subHref = subHrefItems[0];
   }
-
-  const getSongUrl = async (id: string) => {
-    const song = await getSong(id);
-    console.log(song);
-    return song.url;
-  };
-
-  const handlePlayClick = async (songID: string) => {
-    try {
-      if (!hasCookie('session')) {
-        redirectToLogin(window.location.pathname);
-        return;
-      }
-
-      if (currentSong?.id === songID && isPlaying) {
-        pauseSong();
-        return;
-      }
-
-      const songUrl = await getSongUrl(songID);
-      if (!songUrl) {
-        console.error('Failed to get song URL');
-        return;
-      }
-
-      playSong({
-        id: songID,
-        title: title,
-        url: songUrl,
-        coverImage: img.src,
-        duration: duration || 0,
-        thumbnailurl: img.src,
-        releasedate: "",
-        genre: '',
-        views: 0,
-        artists: artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
-      });
-    } catch (error) {
-      console.error('Error playing song:', error);
-    }
-  };
 
   return (
     <div 
@@ -121,7 +64,7 @@ export default function VerticalCard({
                 className="w-full h-full flex items-center justify-center bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary]" 
                 onClick={async (e: React.MouseEvent<HTMLButtonElement>) => {
                   e.stopPropagation();
-                  handlePlayClick(songID || '');
+                  if (onClick) onClick();
                 }}
               >
                 <span className="material-symbols-outlined-filled">{songID && songID === currentSong?.id ? (isPlaying ? 'pause' : 'play_arrow') : 'play_arrow'}</span>
@@ -153,3 +96,20 @@ export default function VerticalCard({
     </div>
   );
 }
+
+// export function ArtistCard(props: CardProps) {
+//   const { playArtist } = useMedia();
+
+//   const handlePlayClick = async () => {
+//     if (!hasCookie('session')) {
+//       redirectToLogin(window.location.pathname);
+//       return;
+//     }
+
+//     const artistSongs = await fetchArtistSongs(props.songID || '');
+
+//     playArtist(artistSongs);
+//   };
+
+//   return <GeneralCard {...props} onClick={handlePlayClick} />;
+// }

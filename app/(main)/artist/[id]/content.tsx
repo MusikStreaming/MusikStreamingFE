@@ -5,14 +5,18 @@ import { Artist } from '@/app/model/artist';
 import Image from 'next/image';
 import Skeleton from '@/app/components/loading/skeleton';
 import ErrorComponent from '@/app/components/api-fetch-container/fetch-error';
-import VerticalCard from '@/app/components/info-cards/vertical-card';
+// import AlbumCả from '@/app/components/info-cards/vertical-card';
+import { useRouter } from 'next/navigation';
+import TextButton from '@/app/components/buttons/text-button';
 import { Album } from '@/app/model/album';
 import { fetchAlbumsFromArtist } from '@/app/api-fetch/albums-from-artist';
+import { AlbumCard } from '@/app/components/info-cards/album-card';
 
 export default function ArtistContent({ params }: { params: Promise<{ id: string }> }) {
     const [artist, setArtist] = useState<Artist | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [albums, setAlbums] = useState<Album[]>([]);
+    const router = useRouter();
     const fetchData = useCallback(async () => {
         try {
             const data = await params;
@@ -44,6 +48,10 @@ export default function ArtistContent({ params }: { params: Promise<{ id: string
         return (
             // <Suspense fallback={<Loading/>}>
             <div className="flex flex-col gap-8">
+                <TextButton className='flex md:hidden text-[--md-sys-color-primary]' onClick={() => router.back()}>
+                    <span className='material-symbols-outlined'>arrow_back</span>
+                    Quay lại
+                </TextButton>
                 <div className='flex w-full'>
                     <div className='flex flex-col justify-start items-center w-full'>
                         <div className='flex items-center gap-4 w-full'>
@@ -74,7 +82,8 @@ export default function ArtistContent({ params }: { params: Promise<{ id: string
                     <div className='grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-4'>
                         {
                             albums.map((album) => (
-                                <VerticalCard
+                                <AlbumCard
+                                    type='album'
                                     key={album.id}
                                     subtitle={album.type}
                                     img={{
