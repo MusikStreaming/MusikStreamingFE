@@ -1,9 +1,9 @@
 "use client";
 import axios from "axios";
 import z from "zod";
-import { setCookie, deleteCookie } from "cookies-next/client";
+import { setCookie } from "cookies-next/client";
 import { redirect } from "next/navigation";
-import { AuthResponse } from "../model/schemas/auth-response";
+// import { AuthResponse } from "../model/schemas/auth-response";
 // import 
 
 interface SignUpData {
@@ -112,12 +112,13 @@ export async function signUp(incomingData: SignUpData): Promise<AuthResponse> {
 
     // Then set up local session through our API
     const localResponse = await axios.post(
-      `/api/auth/signin`,
+      `/api/auth/signup`,
       { 
         externalAuth: {
           session: {
             access_token: externalResponse.data.session.access_token,
-            expires_in: externalResponse.data.session.expires_in
+            expires_in: externalResponse.data.session.expires_in,
+            refresh_token: externalResponse.data.session.refresh_token
           },
           user: externalResponse.data.user
         }
@@ -130,7 +131,7 @@ export async function signUp(incomingData: SignUpData): Promise<AuthResponse> {
       }
     );
 
-    if (!localResponse.data.success) {
+    if (localResponse.status !== 200) {
       throw new Error('Failed to create local session');
     }
 
@@ -174,7 +175,8 @@ export async function login(data: LoginData): Promise<AuthResponse> {
         externalAuth: {
           session: {
             access_token: externalResponse.data.session.access_token,
-            expires_in: externalResponse.data.session.expires_in
+            expires_in: externalResponse.data.session.expires_in,
+            refresh_token: externalResponse.data.session.refresh_token
           },
           user: externalResponse.data.user
         }
@@ -198,7 +200,7 @@ export async function login(data: LoginData): Promise<AuthResponse> {
     if (axios.isAxiosError(error)) {
       console.error('Response data:', error.response?.data);
       const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message;
-      throw new Error(`Đăng nhập thất bại: ${errorMessage}`);
+      throw new Error(errorMessage);
     }
     
     throw new Error('Đăng nhập thất bại, vui lòng thử lại sau');
@@ -332,13 +334,11 @@ export const handleAuthCallback = async (data: AuthResponse): Promise<void> => {
     }
 
     setCookie("user_id", data.user.id, cookieOptions);
-    setCookie("role", data.user.role || "User", cookieOptions);
 
     // Store minimal user info in localStorage
     const userInfo = {
       id: data.user.id,
       username: data.user.username,
-      role: data.user.role,
     };
     localStorage.setItem("user", JSON.stringify(userInfo));
 

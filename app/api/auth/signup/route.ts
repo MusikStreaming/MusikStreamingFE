@@ -4,7 +4,6 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(request: NextRequest) {
     try {
         const data = await request.json();
-        // console.log('User data:', data);
         // const { username } = data.username!;
         // const {email_verified} = data.email_verified!;
         // if (!username || email_verified === null) {
@@ -27,6 +26,7 @@ export async function POST(request: NextRequest) {
             },
             success: true,
             redirectToManager: ['Artist Manager', 'Admin'].includes(data.externalAuth.user.role)
+
         });
         response.cookies.delete('session');
         response.cookies.delete('user_id');

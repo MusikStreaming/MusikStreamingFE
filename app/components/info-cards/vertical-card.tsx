@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -14,7 +13,6 @@ import './cards.css';
 import getSong from '@/app/api-fetch/get-song';
 import { hasCookie } from 'cookies-next';
 import { redirectToLogin } from '@/app/services/auth.service';
-import { Song } from '@/app/model/song';
 
 /**
  * VerticalCard component displays content in a vertical card layout with an image, title, and subtitle.
