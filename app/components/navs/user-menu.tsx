@@ -22,6 +22,8 @@ export default function UserMenu({ onLogout }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isManagerPath, setIsManagerPath] = useState(false);
   const [isManager, setIsManager] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdminPath, setIsAdminPath] = useState(false);
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [avatarUrl, setAvatarUrl] = useState <string | null>(null);
@@ -35,8 +37,10 @@ export default function UserMenu({ onLogout }: UserMenuProps) {
         if (!response.ok) {
           throw new Error('Failed to check manager status');
         }
-        const { manager: managerStatus, avatarUrl: avatar } = await response.json();
-        setIsManager(managerStatus);
+        const {admin, artistManager, avatarUrl, role} = await response.json();
+        setIsManager(artistManager);
+        setIsAdmin(admin);
+        setAvatarUrl(avatarUrl);
         // set
       } catch (error) {
         console.error('Error checking manager status:', error);
@@ -49,6 +53,27 @@ export default function UserMenu({ onLogout }: UserMenuProps) {
   }, [pathname]);
 
   // setAvatarUrl(getCookie('avatarurl'));
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        const response = await fetch('/api/auth/user-info', {
+          credentials: 'include'
+        });
+        if (!response.ok) {
+          throw new Error('Failed to check admin status');
+        }
+        const {admin, artistManager, avatarUrl, role} = await response.json();
+        setIsManager(artistManager);
+        setIsAdmin(admin);
+        setAvatarUrl(avatarUrl);
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        setIsAdmin(false);
+      }
+    };
+    checkAdminStatus();
+    setIsAdminPath(pathname?.startsWith('/admin'));
+  }, [pathname]);
 
   const handleLogout = async () => {
     try {
@@ -81,10 +106,11 @@ export default function UserMenu({ onLogout }: UserMenuProps) {
 useEffect(() => {
   const setAvatar = async () => {
     const data = await getCookie('avatarurl') || '/assets/default-avatar.png';
-    setAvatarUrl(data);
+    if (avatarUrl === null)
+      setAvatarUrl(data);
   };
   setAvatar();
-}, []);
+}, [avatarUrl]);
 
 return (
   <div className="relative">
@@ -107,7 +133,7 @@ return (
         <div className="py-1 rounded-xl" role="menu">
           {isManager && (
             <Link
-              href={isManagerPath ? "/" : "/manager"}
+              href={isManager ? (isManagerPath ? '/' : '/manager') : (isAdmin ? (isAdminPath ? '/' : '/admin') : '/')}
               className="px-4 py-2 text-sm hover:bg-[--md-sys-color-surface-variant] rounded-md flex items-center gap-2"
               role="menuitem"
               onClick={() => setIsOpen(false)}

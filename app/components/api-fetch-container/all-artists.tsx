@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import VerticalCard from "../info-cards/vertical-card";
 import ErrorComponent from "./fetch-error";
@@ -10,56 +10,36 @@ import { CardProps } from "@/app/model/card-props";
 import fetchArtists from "@/app/api-fetch/all-artists";
 import { processCloudinaryUrl } from "@/app/api-fetch/cloudinary-url-processing";
 
-import { Artist } from "@/app/model/artist";
 import Skeleton from "../loading/skeleton";
 
 export default function Artists() {
-  // useEffect to fetch data
-  const [data, setData] = useState<Artist[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<unknown>(null);
-
-  const loadArtists = async () => {
-    try {
-      setIsLoading(true);
-      const artists = await fetchArtists();
-      if (artists) {
-        setData(artists);
-      } else {
-        throw new Error('No artists data received');
-      }
+  const queryClient = useQueryClient();
+  const {data, error, isLoading} = useQuery({queryKey: ["artists"], queryFn: fetchArtists});
+  const refresh = useMutation({
+    mutationFn: fetchArtists,
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ["artists"]});
     }
-    catch (e) {
-      console.error('Error fetching artists:', e);
-      setError(e);
-    }
-    finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadArtists();
-  }, []);
+  });
 
   if (error) {
     return (
       <ErrorComponent onReloadClick={() => {
-        // fetchArtists();
-        setError(null);
-        setIsLoading(true);
-        loadArtists();
+        refresh.mutate();
       }} />
     );
   }
 
   if (isLoading) {
-    <div className="card-scroll-inner flex gap-4 flex-wrap">
-      <Skeleton className="w-[100px] h-[140px]"/>
-      <Skeleton className="w-[100px] h-[140px]"/>
-      <Skeleton className="w-[100px] h-[140px]"/>
-      <Skeleton className="w-[100px] h-[140px]"/>
-    </div>
+    return (
+      <div className="card-grid grid grid-flow-row">
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="aspect-square">
+            <Skeleton className="w-full h-full rounded-lg"/>
+          </div>
+        ))}
+      </div>
+    );
   }
 
   try {
@@ -68,10 +48,6 @@ export default function Artists() {
     if (!data) {
       return (
         <ErrorComponent onReloadClick={() => {
-          // fetchArtists();
-          setError(null);
-          setIsLoading(true);
-          loadArtists();
         }} />
       );
     }
@@ -90,14 +66,10 @@ export default function Artists() {
       });
     });
     return (
-      <div className="card-scroll-inner grid grid-cols-2 gap-3 md:grid-cols-3 lg:flex lg:gap-3">
-        {cards.map((card, index) => {
-          return (
-          // <Suspense key={index} fallback={<Skeleton className="w-[100px] h-[140px]"/>}>
-            <VerticalCard key={index} {...card} />
-          // </Suspense>
-          );
-        })}
+      <div className="card-grid grid grid-flow-row">
+        {cards.map((card, index) => (
+            <VerticalCard key={card.href + index} {...card} />
+        ))}
       </div>
     );
   }
@@ -105,10 +77,7 @@ export default function Artists() {
     console.error('Error fetching artists:', e);
     return (
       <ErrorComponent onReloadClick={() => {
-        // fetchArtists();
-        setError(null);
-        setIsLoading(true);
-        loadArtists();
+        refresh.mutate();
       }} />
     )
   }

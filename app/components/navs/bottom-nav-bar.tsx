@@ -68,7 +68,7 @@ export default function BottomNavBar(
   const pathname = usePathname();
   return (
     // Container with responsive hiding on md breakpoint
-    <nav className={`${props.className} bottom-nav-bar bg-[--md-sys-color-surface] block p-3 z-50 md:hidden text-sm`}>
+    <nav className={`${props.className} bottom-nav-bar w-full bg-[--md-sys-color-surface] block p-3 z-50 md:hidden text-sm`}>
       <div className="flex items-center justify-around w-full">
         {/* Map through items object to render navigation items */}
         {

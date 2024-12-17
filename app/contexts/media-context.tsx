@@ -8,6 +8,7 @@
 import { createContext, useContext, useRef, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCookie, hasCookie } from 'cookies-next/client';
+import updateHistory from '../api-fetch/update-history';
 import { debounce } from 'lodash';
 import { Song } from '@/app/model/song';
 import getSong from '@/app/api-fetch/get-song';
@@ -254,39 +255,42 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
 
   const playSong = useCallback(async (song: Song) => {
     if (!isAuthenticated) return;
-    
-    // If the song is not in queue, add it and set as current
-    if (!queue.some(s => s.id === song.id)) {
-      setQueue(prev => [...prev, song]);
-      setQueueIndex(queue.length);
-    }
-
-    if (currentSong?.id === song.id && audioRef.current) {
-      audioRef.current.play();
-      setIsPlaying(true);
-      return;
-    }
-
     setIsLoading(true);
-    setCurrentSong(song);
 
     try {
-      let audioUrl = song.url;
+      // If song is already in queue, just play it
+      const songIndex = queue.findIndex(s => s.id === song.id);
+      if (songIndex !== -1) {
+        setQueueIndex(songIndex);
+      } else {
+        // Add to queue if not present
+        setQueue(prev => [...prev, song]);
+        setQueueIndex(queue.length);
+      }
+
+      setCurrentSong(song);
       let audioBlob: Blob | null = null;
 
       // Try to get from cache first
-      audioBlob = await getCachedSong(song.id);
-      
+      try {
+        audioBlob = await getCachedSong(song.id);
+      } catch (error) {
+        console.error('Cache error:', error);
+      }
+
       if (!audioBlob) {
         // If not in cache, fetch and cache
         const songData = await getSong(song.id);
-        audioUrl = songData.url;
-        const response = await fetch(audioUrl);
+        const response = await fetch(songData.url);
         audioBlob = await response.blob();
-        await cacheSong(song.id, audioBlob);
+        try {
+          await cacheSong(song.id, audioBlob);
+        } catch (error) {
+          console.error('Cache save error:', error);
+        }
       }
 
-      if (audioRef.current) {
+      if (audioRef.current && audioBlob) {
         const blobUrl = URL.createObjectURL(audioBlob);
         audioRef.current.src = blobUrl;
         audioRef.current.load();
@@ -296,10 +300,13 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
         updateMediaSession(song);
         setIsPlaying(true);
 
-        // Save current state
-        sessionStorage.setItem(CURRENT_SONG_KEY, JSON.stringify(song));
-        sessionStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(queue));
-        sessionStorage.setItem(QUEUE_INDEX_KEY, String(queueIndex));
+        // Save state
+        await updateHistory(song.id);
+        await saveQueueToCache({
+          queue: [...queue, song],
+          currentIndex: queueIndex,
+          currentSong: song
+        });
       }
     } catch (error) {
       console.error('Error playing song:', error);
@@ -307,7 +314,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated, queue, volume, queueIndex, updateMediaSession]);
+  }, [isAuthenticated, queue, volume, queueIndex, updateMediaSession, getCachedSong, cacheSong]);
 
   const playPreviousSong = useCallback(() => {
     if (queueIndex > 0) {
@@ -322,34 +329,73 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
 
   const playNextSong = useCallback(() => {
     if (queue.length > queueIndex + 1) {
-      // Move current song to backup queue if it exists
-      if (currentSong) {
-        setBackupQueue(prev => [...prev, currentSong]);
-      }
-      
-      // Simply move to next song in queue
       const nextIndex = queueIndex + 1;
       const nextSong = queue[nextIndex];
       setQueueIndex(nextIndex);
       playSong(nextSong);
     } else if (backupQueue.length > 0 && isLoop) {
-      // If at end of queue and have backup, reset with backup
+      // Reset queue with backup if looping
       setQueue(backupQueue);
       setBackupQueue([]);
       setQueueIndex(0);
-      playSong(backupQueue[0]);
+      // if (backupQueue[0]) {
+      //   playSong(backupQueue[0]);
+      // }
     }
-  }, [queue, queueIndex, currentSong, backupQueue, playSong, isLoop]);
+  }, [queue, queueIndex, backupQueue, isLoop, playSong]);
 
-  const playList = useCallback((songs: Song[]) => {
+  const playList = useCallback(async (songs: Song[], startIndex: number = 0) => {
     if (!isAuthenticated || songs.length === 0) return;
     
-    // Clear both queues when starting new album
-    setBackupQueue([]);
+    const songToPlay = songs[startIndex];
+    if (!songToPlay) return;
+
+    // Update queue first
     setQueue(songs);
-    setQueueIndex(0);
-    playSong(songs[0]);
-  }, [isAuthenticated, playSong]);
+    setQueueIndex(startIndex);
+    setBackupQueue([]);
+    
+    try {
+      setIsLoading(true);
+      // Play the song immediately if URL is provided
+      if (songToPlay.url) {
+        setCurrentSong(songToPlay);
+        if (audioRef.current) {
+          audioRef.current.src = songToPlay.url;
+          audioRef.current.load();
+          await audioRef.current.play();
+          setIsPlaying(true);
+          updateMediaSession(songToPlay);
+        }
+      } else {
+        // Fetch URL if not provided
+        const song = await getSong(songToPlay.id);
+        const songWithUrl = { ...songToPlay, url: song.url };
+        setCurrentSong(songWithUrl);
+        if (audioRef.current) {
+          audioRef.current.src = song.url;
+          audioRef.current.load();
+          await audioRef.current.play();
+          setIsPlaying(true);
+          updateMediaSession(songWithUrl);
+        }
+        // Update the queue with the fetched URL
+        setQueue(prev => prev.map((s, i) => 
+          i === startIndex ? songWithUrl : s
+        ));
+      }
+      
+      // Cache the next song in the queue
+      if (songs.length > startIndex + 1) {
+        cacheNextSong();
+      }
+    } catch (error) {
+      console.error('Error playing song:', error);
+      setIsPlaying(false);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isAuthenticated, updateMediaSession, cacheNextSong]);
 
   const addToQueue = useCallback((song: Song) => {
     setQueue(prev => [...prev, song]);
@@ -444,28 +490,39 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
     if (isAuthenticated) {
       const loadState = async () => {
         try {
-          // Try to load from IndexedDB first
           const cachedQueue = await loadQueueFromCache();
           if (cachedQueue) {
             setQueue(cachedQueue.queue);
             setQueueIndex(cachedQueue.currentIndex);
             if (cachedQueue.currentSong) {
               setCurrentSong(cachedQueue.currentSong);
-              playSong(cachedQueue.currentSong);
+              // Prepare the audio source without autoplay
+              const audioBlob = await getCachedSong(cachedQueue.currentSong.id);
+              if (audioBlob && audioRef.current) {
+                const blobUrl = URL.createObjectURL(audioBlob);
+                audioRef.current.src = blobUrl;
+                audioRef.current.load();
+                audioRef.current.volume = volume;
+                updateMediaSession(cachedQueue.currentSong);
+                setIsPlaying(false); // Ensure we start paused
+              } else if (cachedQueue.currentSong) {
+                // If no cached audio, just prepare the song state
+                // but don't start playback
+                const songData = await getSong(cachedQueue.currentSong.id);
+                const response = await fetch(songData.url);
+                const blob = await response.blob();
+                const blobUrl = URL.createObjectURL(blob);
+                if (audioRef.current) {
+                  audioRef.current.src = blobUrl;
+                  audioRef.current.load();
+                  audioRef.current.volume = volume;
+                }
+                // Cache for future use
+                await cacheSong(cachedQueue.currentSong.id, blob);
+              }
             }
           } else {
-            // Fall back to session storage
-            const savedQueue = sessionStorage.getItem(QUEUE_STORAGE_KEY);
-            const savedIndex = sessionStorage.getItem(QUEUE_INDEX_KEY);
-            const savedSong = sessionStorage.getItem(CURRENT_SONG_KEY);
-
-            if (savedQueue) setQueue(JSON.parse(savedQueue));
-            if (savedIndex) setQueueIndex(Number(savedIndex));
-            if (savedSong) {
-              const song = JSON.parse(savedSong);
-              setCurrentSong(song);
-              playSong(song);
-            }
+            // ...existing session storage fallback code...
           }
         } catch (error) {
           console.error('Error loading cached queue:', error);
@@ -474,7 +531,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
 
       loadState();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, volume, updateMediaSession, getCachedSong, cacheSong]);
 
   useEffect(() => {
     const audio = audioRef.current;

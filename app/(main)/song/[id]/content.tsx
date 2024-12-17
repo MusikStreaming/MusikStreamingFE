@@ -20,9 +20,9 @@ import { useMedia } from '@/app/contexts/media-context';
 import { useLiked } from '@/app/contexts/liked-context';
 import TextButton from '@/app/components/buttons/text-button';
 import { AlbumDetails } from '@/app/model/album-details';
-import VerticalCard from '@/app/components/info-cards/vertical-card';
 import Link from 'next/link';
 import { SongCard } from '@/app/components/info-cards/song-card';
+import PlainTooltip from '@/app/components/tooltips/plain-tooltip';
 
 const mapSongToPlayable = (song: SongDetails) => ({
   id: song.id,
@@ -65,6 +65,7 @@ export default function SongContent(params: { id: string; initialData: SongDetai
   const [song, setSong] = useState<SongDetails | undefined>(params.initialData || undefined);
   const [albums, setAlbums] = useState<AlbumDetails[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [shareTooltip, setShareTooltip] = useState("Chia sẻ");
   const router = useRouter();
   const {
     playSong,
@@ -74,7 +75,11 @@ export default function SongContent(params: { id: string; initialData: SongDetai
     progress,
     seekTo,
     isLoading,
+    clearQueue,
     queue,
+    isQueueVisible,
+    toggleQueue,
+    removeFromQueue,
   } = useMedia();
   const { likedSongs, addLikedSong, removeLikedSong } = useLiked();
   const fetchSongData = useCallback(async () => {
@@ -121,6 +126,32 @@ export default function SongContent(params: { id: string; initialData: SongDetai
 
   const hasNoCurrentSong = !currentSong;
   const isPlaybackDisabled = hasNoCurrentSong || isLoading;
+  const isPlayingOtherSong = currentSong?.id !== song?.id;
+  const isThisSongButPaused = currentSong?.id === song?.id && !isPlaying;
+  const handlePlayClick = async () => {
+    if (song) {
+      if (isPlaybackDisabled || isPlayingOtherSong || isThisSongButPaused) {
+        const songUrl = await fetchSongById(song.id);
+        if (songUrl) {
+          clearQueue();
+          playSong(mapSongToPlayable(song));
+        }
+      } else {
+        pauseSong();
+      }
+    }
+  }
+
+  const handleShare = () => {
+    if (song && window.location) {
+      navigator.clipboard.writeText(window.location.href);
+      setShareTooltip("Đã sao chép link");
+      // Reset tooltip after 2 seconds
+      setTimeout(() => {
+        setShareTooltip("Chia sẻ");
+      }, 1000);
+    }
+  };
 
   if (error) {
     return <ErrorComponent onReloadClick={fetchSongData} />;
@@ -154,43 +185,45 @@ export default function SongContent(params: { id: string; initialData: SongDetai
                 <Skeleton className='h-10 w-2/3' />
               }
               <div className="mt-4 flex justify-start items-center gap-4">
-                <PlayButton
-                  className="bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary] w-12 h-12"
-                  // play this song
-                  // or resume playback if this song is paused
-                  // or pause if this song is playing
-                  onClick={() => {
-                    return song && (isPlaying && currentSong?.id === song?.id ? pauseSong() : playSong(mapSongToPlayable(song)));
-                  }}
-                  isPlaying={isPlaying && currentSong?.id === song?.id}
-                  songId={song?.id}
-                />
-                <IconSmallButton onClick={() => {
-                  if (song && window.location) {
-                    navigator.clipboard.writeText(window.location.href);
-                  }
-                }}>
-                  <span className="material-symbols-outlined">share</span>
-                </IconSmallButton>
-                <ToggleButtonFilled
-                  active={song && likedSongs.some(s => s.id === song.id)}
-                  onClick={() => song && (likedSongs.some(s => s.id === song.id)
-                    ? removeLikedSong({
-                      ...song,
-                      thumbnailurl: song.thumbnailurl || '/assets/placeholder.jpg',
-                      artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
-                    })
-                    : addLikedSong({
-                      ...song,
-                      thumbnailurl: song.thumbnailurl || '/assets/placeholder.jpg',
-                      artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
-                    })
-                  )}>
-                  favorite
-                </ToggleButtonFilled>
-                <IconSmallButton>
-                  <span className="material-symbols-outlined">more_vert</span>
-                </IconSmallButton>
+                <PlainTooltip content={isPlaying && currentSong?.id === song?.id ? 'Dừng' : 'Phát'}>
+                  <PlayButton
+                    className="bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary] w-12 h-12"
+                    onClick={handlePlayClick}
+                    isPlaying={isPlaying && currentSong?.id === song?.id}
+                    songId={song?.id}
+                  />
+                </PlainTooltip>
+                <PlainTooltip content={shareTooltip}>
+                  <IconSmallButton 
+                    onClick={handleShare}
+                    onMouseLeave={() => setShareTooltip("Chia sẻ")}
+                  >
+                    <span className="material-symbols-outlined">share</span>
+                  </IconSmallButton>
+                </PlainTooltip>
+                <PlainTooltip content="Thích">
+                  <ToggleButtonFilled
+                    active={song && likedSongs.some(s => s.id === song.id)}
+                    onClick={() => song && (likedSongs.some(s => s.id === song.id)
+                      ? removeLikedSong({
+                        ...song,
+                        thumbnailurl: song.thumbnailurl || '/assets/placeholder.jpg',
+                        artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
+                      })
+                      : addLikedSong({
+                        ...song,
+                        thumbnailurl: song.thumbnailurl || '/assets/placeholder.jpg',
+                        artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
+                      })
+                    )}>
+                    favorite
+                  </ToggleButtonFilled>
+                </PlainTooltip>
+                <PlainTooltip content="Lựa chọn khác">
+                  <IconSmallButton>
+                    <span className="material-symbols-outlined">more_vert</span>
+                  </IconSmallButton>
+                </PlainTooltip>
               </div>
             </div>
           </div>
@@ -287,45 +320,95 @@ export default function SongContent(params: { id: string; initialData: SongDetai
                 </div>
               </div>
               <div className="flex justify-between items-center gap-4 w-full">
-                <IconSmallButton>
-                  <span className="material-symbols-outlined">shuffle</span>
-                </IconSmallButton>
-                <IconSmallButton>
-                  <span className="material-symbols-outlined">skip_previous</span>
-                </IconSmallButton>
+                <PlainTooltip content="Trộn bài">
+                  <IconSmallButton>
+                    <span className="material-symbols-outlined">shuffle</span>
+                  </IconSmallButton>
+                </PlainTooltip>
+                <PlainTooltip content="Bài trước">
+                  <IconSmallButton>
+                    <span className="material-symbols-outlined">skip_previous</span>
+                  </IconSmallButton>
+                </PlainTooltip>
                 <PlayButton
                   className="bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary] w-12 h-12"
                   onClick={() => song && (isPlaying && currentSong?.id === song?.id ? pauseSong() : playSong(mapSongToPlayable(song)))}
                   isPlaying={isPlaying && currentSong?.id === song?.id}
                   songId={song?.id}
                 />
-                <IconSmallButton>
-                  <span className="material-symbols-outlined">skip_next</span>
-                </IconSmallButton>
-                <IconSmallButton>
-                  <span className="material-symbols-outlined">repeat</span>
-                </IconSmallButton>
+                <PlainTooltip content="Bài sau">
+                  <IconSmallButton>
+                    <span className="material-symbols-outlined">skip_next</span>
+                  </IconSmallButton>
+                </PlainTooltip>
+                <PlainTooltip content="Lặp lại">
+                  <IconSmallButton>
+                    <span className="material-symbols-outlined">repeat</span>
+                  </IconSmallButton>
+                </PlainTooltip>
               </div>
               <div className="additional flex justify-between items-center gap-4 w-full">
-                <IconSmallButton>
-                  <span className="material-symbols-outlined">queue_music</span>
-                </IconSmallButton>
+                <PlainTooltip content="Danh sách phát">
+                  <IconSmallButton onClick={toggleQueue}>
+                    <span className="material-symbols-outlined">queue_music</span>
+                  </IconSmallButton>
+                </PlainTooltip>
               </div>
             </div>
-            {/* <div className="flex flex-col gap-3 w-full pt-6 items-center">
-              <p className="">Ngày phát hành: {processDatetime(song?.releasedate || '')}</p>
-              <p className="">Lượt xem: {song?.views.toLocaleString()}</p>
-            </div> */}
+            {/* {isQueueVisible && (
+              <div className="fixed bottom-[72px] left-0 right-0 bg-[--md-sys-color-surface] border-t border-[--md-sys-color-outline] p-4 z-50 max-h-[60vh] overflow-y-auto">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-bold">Danh sách phát</h3>
+                  <IconSmallButton onClick={toggleQueue}>
+                    <span className="material-symbols-outlined">close</span>
+                  </IconSmallButton>
+                </div>
+                {queue.length > 0 ? (
+                  <div className="flex flex-col gap-2">
+                    {queue.map((song, index) => (
+                      <div 
+                        key={song.id} 
+                        className={`flex items-center justify-between p-2 rounded ${
+                          currentSong?.id === song.id ? 'bg-[--md-sys-color-primary-container]' : ''
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Image
+                            src={song.thumbnailurl || '/assets/placeholder.jpg'}
+                            alt={song.title}
+                            width={40}
+                            height={40}
+                            className="rounded"
+                          />
+                          <div>
+                            <p className="font-medium">{song.title}</p>
+                            <p className="text-sm text-[--md-sys-color-on-surface-variant]">
+                              {song.artists?.map(a => a.artist.name).join(', ')}
+                            </p>
+                          </div>
+                        </div>
+                        <IconSmallButton onClick={() => removeFromQueue(song.id)}>
+                          <span className="material-symbols-outlined">remove</span>
+                        </IconSmallButton>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-[--md-sys-color-on-surface-variant]">
+                    Danh sách phát trống
+                  </p>
+                )}
+              </div>
+            )} */}
           </div>
 
         </div>
         <div className="flex flex-col gap-3 w-full">
           <h2 className="text-lg font-bold">Lời bài hát</h2>
         </div>
-        <div className='flex flex-col'>
+        {/* <div className='flex flex-col'>
           <h2 className='text-lg font-bold'>Danh sách phát</h2>
-
-        </div>
+        </div> */}
         <div className="flex flex-col w-full overflow-hidden">
           {
             albums.map((album, index) => (

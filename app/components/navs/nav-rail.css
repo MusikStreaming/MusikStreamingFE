@@ -67,11 +67,11 @@
 }
 
 .nav-rail {
-    max-height: calc(100vh - 196px);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     overflow-y: auto;
     overflow-x: hidden;
     will-change: width;
+    height: 100%; /* Changed: fill container height */
 }
 
 .nav-rail-extended {

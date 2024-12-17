@@ -3,6 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import AddSong from './add-song';
 import AddAlbum from './add-album';
+import { Suspense } from 'react';
 
 export default function AddDiscographyItem() {
   const searchParams = useSearchParams();
@@ -13,11 +14,13 @@ export default function AddDiscographyItem() {
       <h1 className="text-2xl font-bold">
         {type === 'album' ? 'Add New Album' : 'Add New Song'}
       </h1>
-      {type === 'album' ? (
-        <AddAlbum />
-      ) : (
-        <AddSong />
-      )}
+      <Suspense>
+        {type === 'album' ? (
+          <AddAlbum />
+        ) : (
+          <AddSong />
+        )}
+      </Suspense>
     </div>
   );
 } 

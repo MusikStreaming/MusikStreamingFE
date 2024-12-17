@@ -1,4 +1,7 @@
 // return a empty page
+import { Suspense } from "react";
 export default function SettingsPage() {
-  return <div></div>;
+  return <Suspense>
+    <div></div>
+  </Suspense>;
 }

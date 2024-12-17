@@ -50,23 +50,23 @@ export default function SongControl() {
   const titleRef = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
-    const checkAuth = () => {
-      const session = getCookie("session");
-      setIsAuthenticated(!!session);
-    };
+    // const checkAuth = () => {
+    //   const session = getCookie("session");
+    //   setIsAuthenticated(!!session);
+    // };
 
     const handleResize = () => {
-      setShouldHide(pathname.includes('/song') && window.innerWidth < 768);
+      setShouldHide(pathname.includes('/song') && window.innerWidth < 768 || pathname.includes('/manager'));
     };
 
-    checkAuth();
+    // checkAuth();
     handleResize(); // Initial check
 
-    window.addEventListener('storage', checkAuth);
+    // window.addEventListener('storage', checkAuth);
     window.addEventListener('resize', handleResize);
 
     return () => {
-      window.removeEventListener('storage', checkAuth);
+      // window.removeEventListener('storage', checkAuth);
       window.removeEventListener('resize', handleResize);
     };
   }, [pathname]);
@@ -104,6 +104,12 @@ export default function SongControl() {
     };
   }, [currentSong]); // Re-check when song changes
 
+  useEffect(() => {
+    if (pathname.includes('/manager')) {
+      pauseSong();
+    }
+  })
+
   const handleImageClick = useCallback((e: React.MouseEvent) => {
     if (currentSong?.id) {
       handleSongTitleClick(e);
@@ -113,7 +119,7 @@ export default function SongControl() {
   return (
     <div className={twMerge(
       'song-playing z-[1000] bg-[--md-sys-color-inverse-on-surface] flex-col transition-transform duration-300',
-      shouldHide && 'hidden'
+      shouldHide && 'hidden',
     )} onClick={() => {
       if (window.innerWidth < 768 && currentSong?.id) router.push(`/song/${currentSong.id}`)}
     }>
