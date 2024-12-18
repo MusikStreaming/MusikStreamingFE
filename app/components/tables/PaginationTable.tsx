@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
 
 export interface Column<T> {
   header: string;
@@ -113,7 +113,7 @@ export default function PaginationTable<T>({
         <table className="min-w-full divide-y divide-[--md-sys-color-outline] relative">
           <thead className="sticky top-0 z-10">
             <tr className={`transition-colors duration-200 ${
-              isScrolled ? 'bg-[--md-sys-color-surface-container]' : 'bg-transparent'
+              isScrolled ? 'bg-[--md-sys-color-surface-container] opacity-95' : 'bg-transparent'
             }`}>
               {columns.map((column, index) => (
                 <th key={index} className="px-6 py-3 text-left">

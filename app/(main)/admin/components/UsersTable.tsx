@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getCookie } from 'cookies-next';
 import { useState } from 'react';
+import Skeleton from '@/app/components/loading/skeleton';
 import PaginationTable from '@/app/components/tables/PaginationTable';
 
 interface User {
@@ -36,6 +37,17 @@ export default function UsersTable() {
     staleTime: 2000,
   });
 
+  if (isLoading) return
+      <div className="space-y-4">
+      {[...Array(limit)].map((_, index) => (
+        <div key={index} className="flex space-x-4">
+          <Skeleton className="w-8 h-8 rounded-full" />
+          <Skeleton className="w-24 h-4" />
+          <Skeleton className="w-24 h-4" />
+          <Skeleton className="w-24 h-4" />
+        </div>
+      ))}
+      </div>
   if (!users) return <div>Failed to load users.</div>;
 
   const userList = Array.isArray(users) ? users : users.data;
