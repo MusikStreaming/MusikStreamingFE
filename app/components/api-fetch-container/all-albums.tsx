@@ -11,7 +11,11 @@ import ErrorComponent from "./fetch-error"
 
 export default function Albums() {
     const queryClient = useQueryClient();
-    const {data: albums, error, isLoading: loading} = useQuery({queryKey: ["albums"], queryFn:fetchAllAlbums});
+    const {data: albums, error, isLoading: loading} = useQuery({
+        queryKey: ["albums"], 
+        queryFn:fetchAllAlbums,
+        staleTime: 5000
+    });
     const refresh = useMutation({
         mutationFn: fetchAllAlbums,
         onSuccess: () => {

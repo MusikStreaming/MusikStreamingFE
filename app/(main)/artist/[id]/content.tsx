@@ -52,7 +52,8 @@ export default function ArtistContent({ params }: { params: Promise<{ id: string
         queryFn: async () => {
             const { id } = await params;
             return fetchAlbumsFromArtist(id);
-        }
+        },
+        staleTime: 3600000
     });
 
     // Fetch artist details using react-query

@@ -60,6 +60,24 @@ const managerItems : {[key: string]: BottomNavItemData} = {
   }
 }
 
+const adminItems: { [key: string]: BottomNavItemData } = {
+  'admin_panel_dashboard': {
+    text: 'Admin Dashboard',
+    icon: 'admin_panel_settings',
+    href: '/admin',
+  },
+  'user_management': {
+    text: 'User Management',
+    icon: 'group',
+    href: '/admin/users',
+  },
+  'settings': {
+    text: 'Admin Settings',
+    icon: 'settings',
+    href: '/admin/settings',
+  }
+};
+
 export default function BottomNavBar(
   props: {
     className?: string,
@@ -72,27 +90,38 @@ export default function BottomNavBar(
       <div className="flex items-center justify-around w-full">
         {/* Map through items object to render navigation items */}
         {
-          !pathname.includes('/manager') ?
-            Object.keys(items).map((key: string, index: number) => {
-              return (
-                <BottomNavBarItem
-                  key={`${items[key].text} ${index}`}
-                  icon={key}
-                  text={items[key]['text']}
-                  href={items[key]['href']}
-                />
-              );
-            })
-            : Object.keys(managerItems).map((key: string, index: number) => {
-              return (
-                <BottomNavBarItem
-                  key={`${managerItems[key].text} ${index}`}
-                  icon={key}
-                  text={managerItems[key]['text']}
-                  href={managerItems[key]['href']}
-                />
-              );
-            })
+          pathname.includes('/admin') ?
+          Object.keys(adminItems).map((key: string, index: number) => {
+            return (
+              <BottomNavBarItem
+                key={`${adminItems[key].text} ${index}`}
+                icon={adminItems[key]['icon']!}
+                text={adminItems[key]['text']}
+                href={adminItems[key]['href']}
+              />
+            );
+          })
+          : pathname.includes('/manager') ?
+          Object.keys(managerItems).map((key: string, index: number) => {
+            return (
+              <BottomNavBarItem
+                key={`${managerItems[key].text} ${index}`}
+                icon={key}
+                text={managerItems[key]['text']}
+                href={managerItems[key]['href']}
+              />
+            );
+          })
+          : Object.keys(items).map((key: string, index: number) => {
+            return (
+              <BottomNavBarItem
+                key={`${items[key].text} ${index}`}
+                icon={items[key]['icon']!}
+                text={items[key]['text']}
+                href={items[key]['href']}
+              />
+            );
+          })
         }
       </div>
     </nav>

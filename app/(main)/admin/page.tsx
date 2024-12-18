@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import UsersTable from './components/UsersTable';
 import SongsTable from './components/SongsTable';
 import AlbumsTable from './components/AlbumsTable';
@@ -8,6 +9,27 @@ import PlaylistsTable from './components/PlaylistsTable';
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('users');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    async function checkAdmin() {
+      const response = await fetch('/api/auth/admin');
+      const data = await response.json();
+
+      if (!data.admin) {
+        router.push('/'); // Redirect to home if not admin
+      } else {
+        setIsAdmin(true);
+      }
+    }
+
+    checkAdmin();
+  }, [router]);
+
+  if (!isAdmin) {
+    return null; // Render nothing while checking admin status
+  }
 
   return (
     <div>

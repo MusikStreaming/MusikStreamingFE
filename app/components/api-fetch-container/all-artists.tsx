@@ -14,7 +14,11 @@ import Skeleton from "../loading/skeleton";
 
 export default function Artists() {
   const queryClient = useQueryClient();
-  const {data, error, isLoading} = useQuery({queryKey: ["artists"], queryFn: fetchArtists});
+  const {data, error, isLoading} = useQuery({
+    queryKey: ["artists"], 
+    queryFn: fetchArtists,
+    staleTime: 5000
+  });
   const refresh = useMutation({
     mutationFn: fetchArtists,
     onSuccess: () => {

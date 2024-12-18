@@ -8,7 +8,11 @@ import Skeleton from "../loading/skeleton"
 import { useQuery } from "@tanstack/react-query"
 
 export default function Songs() {
-    const { data: songs, error, isLoading: loading } = useQuery({queryKey: ["songs"], queryFn:fetchAllSongs});
+    const { data: songs, error, isLoading: loading } = useQuery({
+        queryKey: ["songs"], 
+        queryFn:fetchAllSongs,
+        staleTime: 5000
+    });
 
     if (error) {
         return <div className="text-error">{error.message}</div>;

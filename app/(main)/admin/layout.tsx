@@ -1,30 +1,31 @@
-'use client';
+// 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
+// import { useQuery } from '@tanstack/react-query';
+// import { useRouter } from 'next/navigation';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
+  // const router = useRouter();
 
-  const { data: userStatus, isLoading } = useQuery({
-    queryKey: ['userStatus'],
-    queryFn: async () => {
-      const response = await fetch('/api/auth/user-info');
-      return response.json();
-    },
-    onError: () => router.push('/'),
-    onSuccess: (data) => {
-      if (!data.admin) router.push('/');
-    }
-  });
+  // const { data: userStatus, isLoading, isError } = useQuery({
+  //   queryKey: ['userStatus'],
+  //   queryFn: async () => {
+  //     const response = await fetch('/api/auth/admin');
+  //     return response.json();
+  //   },
+  // });
 
-  if (isLoading) {
-    return <div>Checking authorization...</div>;
-  }
+  // if (isLoading) {
+  //   return <div>Checking authorization...</div>;
+  // }
 
-  if (!userStatus?.admin) {
-    return null;
-  }
+  // if (isError || !userStatus) {
+  //   router.push('/');
+  //   return null;
+  // }
+
+  // if (!userStatus?.admin) {
+  //   return null;
+  // }
 
   return (
     <div className="p-4">

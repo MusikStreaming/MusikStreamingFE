@@ -5,6 +5,7 @@ import axios from 'axios';
 import z from 'zod';
 
 const ArtistSchema = z.object({
+    count: z.number(),
     data: z.array(z.object({
         id: z.string(),
         name: z.string(),
@@ -22,25 +23,16 @@ export default async function fetchArtists() {
         throw new Error('API URL not set');
     }
     try {
-        if (localStorage.getItem("artists") !== null && Date.now() - parseInt(localStorage.getItem("artistsTime")!) < 3600000) {
-            const data = ArtistSchema.parse(JSON.parse(localStorage.getItem("artists")!));
-            return data["data"] as Artist[];
-        }
-        else {
-            const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/v1/artist`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-            
-            localStorage.setItem("artists", JSON.stringify(res.data));
-            const data = ArtistSchema.parse(res.data);
-            return data["data"] as Artist[];
-        }
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/v1/artist`, {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        const data = ArtistSchema.parse(res.data);
+        return data["data"] as Artist[];
     }
     catch {
-        localStorage.removeItem("artists");
-        localStorage.removeItem("artistsTime");
         return;
     }
 }

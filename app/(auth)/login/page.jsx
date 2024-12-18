@@ -63,6 +63,8 @@ export default function LoginPage() {
             }
 
             // Correctly handle the returnUrl
+            // fetch the user credentials
+
             const returnUrl = new URLSearchParams(window.location.search).get('returnUrl') || '/';
             const isValidUrl = (url) => {
                 try {

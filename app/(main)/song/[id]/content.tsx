@@ -76,10 +76,7 @@ export default function SongContent(params: { id: string; initialData: SongDetai
     seekTo,
     isLoading,
     clearQueue,
-    queue,
-    isQueueVisible,
     toggleQueue,
-    removeFromQueue,
   } = useMedia();
   const { likedSongs, addLikedSong, removeLikedSong } = useLiked();
   const fetchSongData = useCallback(async () => {
@@ -413,7 +410,7 @@ export default function SongContent(params: { id: string; initialData: SongDetai
           {
             albums.map((album, index) => (
               index === 0 && <div key={album?.id} className="flex flex-col gap-3 w-full">
-                <p className="text-lg">Các bài hát cùng album <Link href={`/album/${album?.id}`} className="font-medium hover:underline hover:text-[--md-sys-color-primary]">{album?.title}</Link></p>
+                <p className="text-lg">Các bài hát cùng album <Link href={`/album/${album?.id}`} className="font-bold underline hover:underline hover:text-[--md-sys-color-primary]">{album?.title}</Link></p>
                 <div className="card-scroll grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-4">
                   {
                     album?.songs?.map(song => (

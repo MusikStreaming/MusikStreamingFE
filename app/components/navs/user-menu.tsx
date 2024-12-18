@@ -26,52 +26,50 @@ export default function UserMenu({ onLogout }: UserMenuProps) {
   const [isAdminPath, setIsAdminPath] = useState(false);
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
-  const [avatarUrl, setAvatarUrl] = useState <string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    const checkManagerStatus = async () => {
+    const checkUserStatus = async () => {
       try {
         const response = await fetch('/api/auth/user-info', {
           credentials: 'include'
         });
         if (!response.ok) {
-          throw new Error('Failed to check manager status');
+          throw new Error('Failed to check user status');
         }
-        const {admin, artistManager, avatarUrl, role} = await response.json();
+        const { artistManager, avatarUrl } = await response.json();
         setIsManager(artistManager);
-        setIsAdmin(admin);
         setAvatarUrl(avatarUrl);
-        // set
       } catch (error) {
-        console.error('Error checking manager status:', error);
+        console.error('Error checking user status:', error);
         setIsManager(false);
       }
     };
 
-    checkManagerStatus();
+    checkUserStatus();
     setIsManagerPath(pathname?.startsWith('/manager'));
+    // setIsAdminPath(pathname?.startsWith('/admin'));
   }, [pathname]);
 
-  // setAvatarUrl(getCookie('avatarurl'));
   useEffect(() => {
-    const checkAdminStatus = async () => {
+    const checkAdmin = async () => {
       try {
-        const response = await fetch('/api/auth/user-info', {
+        const response = await fetch('/api/auth/admin', {
           credentials: 'include'
         });
         if (!response.ok) {
           throw new Error('Failed to check admin status');
         }
-        const {admin, artistManager, avatarUrl, role} = await response.json();
+        const { admin, artistManager } = await response.json();
         setIsManager(artistManager);
         setIsAdmin(admin);
-        setAvatarUrl(avatarUrl);
       } catch (error) {
         console.error('Error checking admin status:', error);
+        setIsManager(false);
         setIsAdmin(false);
       }
     };
-    checkAdminStatus();
+    checkAdmin();
     setIsAdminPath(pathname?.startsWith('/admin'));
   }, [pathname]);
 
@@ -91,6 +89,7 @@ export default function UserMenu({ onLogout }: UserMenuProps) {
 
       // Clear client state
       setIsManager(false);
+      setIsAdmin(false);
       setUser(null);
 
       // Notify parent
@@ -103,69 +102,83 @@ export default function UserMenu({ onLogout }: UserMenuProps) {
     }
   };
 
-useEffect(() => {
-  const setAvatar = async () => {
-    const data = await getCookie('avatarurl') || '/assets/default-avatar.png';
-    if (avatarUrl === null)
-      setAvatarUrl(data);
-  };
-  setAvatar();
-}, [avatarUrl]);
+  useEffect(() => {
+    const setAvatar = async () => {
+      const data = await getCookie('avatarurl') || '/assets/default-avatar.png';
+      if (avatarUrl === null)
+        setAvatarUrl(data);
+    };
+    setAvatar();
+  }, [avatarUrl]);
 
-return (
-  <div className="relative">
-    <button
-      onClick={() => setIsOpen(!isOpen)}
-      className="flex items-center justify-center w-10 h-10 rounded-full overflow-hidden border-2 border-[--md-sys-color-outline]"
-      title="Open user menu"
-      aria-label="Open user menu"
-    >
-      <Image
-        src={avatarUrl!}
-        alt="User avatar"
-        width={40}
-        height={40}
-      />
-    </button>
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center justify-center w-10 h-10 rounded-full overflow-hidden border-2 border-[--md-sys-color-outline]"
+        title="Open user menu"
+        aria-label="Open user menu"
+      >
+        <Image
+          src={avatarUrl!}
+          alt="User avatar"
+          width={40}
+          height={40}
+        />
+      </button>
 
-    {isOpen && (
-      <div className="absolute right-0 mt-2 w-48 rounded-xl shadow-lg bg-[--md-sys-color-surface] ring-1 ring-black ring-opacity-5 px-2">
-        <div className="py-1 rounded-xl" role="menu">
-          {isManager && (
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-48 rounded-xl shadow-lg bg-[--md-sys-color-surface] ring-1 ring-black ring-opacity-5 px-2">
+          <div className="py-1 rounded-xl max-h-60 overflow-y-auto" role="menu">
+            {isAdmin ? (
+              <Link
+                href={isAdminPath ? '/' : '/admin'}
+                className="px-4 py-2 text-sm hover:bg-[--md-sys-color-surface-variant] rounded-md flex items-center gap-2"
+                role="menuitem"
+                onClick={() => setIsOpen(false)}
+              >
+                <span className="material-symbols-outlined">
+                  {isAdminPath ? "exit_to_app" : "admin_panel_settings"}
+                </span>
+                <span className="text-sm font-medium">
+                  {isAdminPath ? "Thoát khỏi trang quản trị" : "Vào trang dành cho quản trị viên"}
+                </span>
+              </Link>
+            ) : isManager && (
+              <Link
+                href={isManagerPath ? '/' : '/manager'}
+                className="px-4 py-2 text-sm hover:bg-[--md-sys-color-surface-variant] rounded-md flex items-center gap-2"
+                role="menuitem"
+                onClick={() => setIsOpen(false)}
+              >
+                <span className="material-symbols-outlined">
+                  {isManagerPath ? "exit_to_app" : "dashboard"}
+                </span>
+                <span className="text-sm font-medium">
+                  {isManagerPath ? "Thoát khỏi chế độ quản lý" : "Quản lý dành cho nghệ sĩ"}
+                </span>
+              </Link>
+            )}
             <Link
-              href={isManager ? (isManagerPath ? '/' : '/manager') : (isAdmin ? (isAdminPath ? '/' : '/admin') : '/')}
+              href={pathname === "/manager" ? "/manager/settings" : "/settings"}
               className="px-4 py-2 text-sm hover:bg-[--md-sys-color-surface-variant] rounded-md flex items-center gap-2"
               role="menuitem"
               onClick={() => setIsOpen(false)}
             >
-              <span className="material-symbols-outlined">
-                {isManagerPath ? "exit_to_app" : "dashboard"}
-              </span>
-              <span className="text-sm font-medium">
-                {isManagerPath ? "Thoát chế độ quản lý" : "Bảng điều khiển"}
-              </span>
+              <span className="material-symbols-outlined">settings</span>
+              <span className="text-sm font-medium">Cài đặt</span>
             </Link>
-          )}
-          <Link
-            href={pathname === "/manager" ? "/manager/settings" : "/settings"}
-            className="px-4 py-2 text-sm hover:bg-[--md-sys-color-surface-variant] rounded-md flex items-center gap-2"
-            role="menuitem"
-            onClick={() => setIsOpen(false)}
-          >
-            <span className="material-symbols-outlined">settings</span>
-            <span className="text-sm font-medium">Cài đặt</span>
-          </Link>
-          <button
-            onClick={handleLogout}
-            className="w-full text-left px-4 py-2 text-sm text-[--md-sys-color-error] hover:bg-[--md-sys-color-surface-variant] rounded-md flex items-center gap-2"
-            role="menuitem"
-          >
-            <span className="material-symbols-outlined">logout</span>
-            <span className="text-sm font-medium">Đăng xuất</span>
-          </button>
+            <button
+              onClick={handleLogout}
+              className="w-full text-left px-4 py-2 text-sm text-[--md-sys-color-error] hover:bg-[--md-sys-color-surface-variant] rounded-md flex items-center gap-2"
+              role="menuitem"
+            >
+              <span className="material-symbols-outlined">logout</span>
+              <span className="text-sm font-medium">Đăng xuất</span>
+            </button>
+          </div>
         </div>
-      </div>
-    )}
-  </div>
-);
+      )}
+    </div>
+  );
 }

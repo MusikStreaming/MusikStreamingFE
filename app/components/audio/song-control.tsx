@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { useMedia } from '@/app/contexts/media-context';
 import { formatDuration } from '@/app/utils/time';
 import { twMerge } from 'tailwind-merge';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, HtmlHTMLAttributes } from 'react';
 import { getCookie } from 'cookies-next/client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -46,8 +46,10 @@ export default function SongControl() {
   const [isMuted, setIsMuted] = useState(false);
   const [volumeBeforeMute, setVolumeBeforeMute] = useState(volume);
 
-  const [isOverflowing, setIsOverflowing] = useState(false);
+  const [isTitleOverflowing, setIstitleOverflowing] = useState(false);
   const titleRef = useRef<HTMLParagraphElement>(null);
+  const subRef = useRef<HTMLParagraphElement>(null);
+  const [isSubOverflowing, setSubOverflowing] = useState(false);
 
   useEffect(() => {
     // const checkAuth = () => {
@@ -56,7 +58,7 @@ export default function SongControl() {
     // };
 
     const handleResize = () => {
-      setShouldHide(pathname.includes('/song') && window.innerWidth < 768 || pathname.includes('/manager'));
+      setShouldHide(pathname.includes('/song') && window.innerWidth < 768 || pathname.includes('/manager') || pathname.includes('/admin'));
     };
 
     // checkAuth();
@@ -92,7 +94,12 @@ export default function SongControl() {
     const checkOverflow = () => {
       if (titleRef.current) {
         const isTextOverflowing = titleRef.current.scrollWidth > titleRef.current.clientWidth;
-        setIsOverflowing(isTextOverflowing);
+        setIstitleOverflowing(isTextOverflowing);
+      }
+      if (subRef.current) {
+        setSubOverflowing(
+          subRef.current.scrollWidth > subRef.current.clientWidth
+        )
       }
     };
 
@@ -124,7 +131,7 @@ export default function SongControl() {
       if (window.innerWidth < 768 && currentSong?.id) router.push(`/song/${currentSong.id}`)}
     }>
       <div className="p-4 gap-1 md:gap-4 flex flex-wrap items-center justify-between">
-        <div className="song-title flex items-center gap-2 w-fit md:w-1/4">
+        <div className="song-title flex items-center gap-2 w-1/2 md:w-1/4">
           <div className={twMerge(
             "relative cursor-pointer",
             (isLoading || isEmpty) && "opacity-50",
@@ -157,7 +164,7 @@ export default function SongControl() {
               ref={titleRef}
               className={twMerge(
                 "song-title-text block whitespace-nowrap text-nowrap",
-                isOverflowing && "animate-marquee"
+                isTitleOverflowing && "animate-marquee"
               )}
             >
               <Link
@@ -170,7 +177,12 @@ export default function SongControl() {
               </Link>
             </p>
             {currentSong?.artists && currentSong.artists.length > 0 && (
-              <p className="text-xs md:text-sm text-[--md-sys-color-outline]">
+              <p
+               ref={subRef}
+               className={twMerge(
+                "text-xs md:text-sm text-[--md-sys-color-outline] whitespace-nowrap text-nowrap",
+                isSubOverflowing && "animate-marquee"
+                )}>
                 {[...currentSong.artists].map((artist, index, array) => (
                   <span key={artist.artist.id}>
                     <Link
