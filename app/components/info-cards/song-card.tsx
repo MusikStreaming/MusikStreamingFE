@@ -21,8 +21,12 @@ export function SongCard(props: CardProps) {
       id: props.songID!,
       duration: props.duration!,
       title: props.title!,
-      artists: props.artists!.map(artist => ({ artist })),
-      // albums: props.album!,
+      artists: props.artists!.map(artist => ({ 
+        artist: {
+          id: artist.id || '',
+          name: artist.name || ''
+        }
+      })),
       thumbnailurl: props.img.src
     }
     playSong(song);
