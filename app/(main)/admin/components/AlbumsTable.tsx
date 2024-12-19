@@ -63,7 +63,7 @@ export default function AlbumsTable() {
   if (!albums || !Array.isArray(albums.data)) return <div>Failed to load albums.</div>;
 
   return (
-    <div className="overflow-x-auto">
+    <div className="flex items-center">
       <PaginationTable
         data={albums.data}
         columns={[

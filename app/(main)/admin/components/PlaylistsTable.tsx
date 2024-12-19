@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCookie } from 'cookies-next';
+import PaginationTable from '@/app/components/tables/PaginationTable';
 
 interface Playlist {
   id: string;
@@ -63,62 +64,31 @@ export default function PlaylistsTable() {
     deleteMutation.mutate(id);
   };
 
-  if (isLoading) return <div>Loading playlists...</div>;
-
-  if (!playlists || !Array.isArray(playlists.data)) return <div>Failed to load playlists.</div>;
-
-  const totalPages = Math.ceil(playlists.total / limit);
-
-  console.log('playlists: ', playlists);
+  if (!playlists?.data) return <div>No playlists available.</div>;
 
   return (
     <div className="overflow-x-auto">
-      <div className="overflow-x-auto max-h-96 overflow-y-auto">
-        <table className="min-w-full divide-y divide-[--md-sys-color-outline]">
-          <thead>
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Owner</th>
-              {/* <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Songs</th> */}
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[--md-sys-color-outline]">
-            {playlists.data.map((playlist) => (
-              <tr key={playlist.id}>
-                <td className="px-6 py-4 whitespace-nowrap">{playlist.title}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{playlist.owner.username}</td>
-                {/* <td className="px-6 py-4 whitespace-nowrap">{playlist.songCount}</td> */}
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <button
-                    onClick={() => handleDelete(playlist.id)}
-                    className="text-[--md-sys-color-error]"
-                  >
-                    <span className='material-symbols-outlined'>Delete</span>
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="flex justify-between items-center mt-4">
-        <button
-          className="px-4 py-2 bg-gray-300 rounded"
-          onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-          disabled={page === 1}
-        >
-          Previous
-        </button>
-        <span>Page {page} of {totalPages}</span>
-        <button
-          className="px-4 py-2 bg-gray-300 rounded"
-          onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
-          disabled={page === totalPages}
-        >
-          Next
-        </button>
-      </div>
+      <PaginationTable
+        data={playlists.data}
+        columns={[
+          { header: 'Name', accessor: 'title' },
+          { header: 'Owner', accessor: (playlist: Playlist) => playlist.owner.username },
+          { header: 'Type', accessor: 'type' }
+        ]}
+        page={page}
+        onPageChange={setPage}
+        rowActions={(playlist: Playlist) => (
+          <button
+            onClick={() => handleDelete(playlist.id)}
+            className="text-[--md-sys-color-error]"
+          >
+            <span className='material-symbols-outlined'>delete</span>
+          </button>
+        )}
+        showPageInput={true}
+        isLoading={isLoading}
+        totalPages={playlists ? Math.ceil(playlists.total / limit) : undefined}
+      />
     </div>
   );
 }

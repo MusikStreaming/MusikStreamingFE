@@ -20,7 +20,7 @@ interface UsersResponse {
 
 export default function UsersTable() {
   const [page, setPage] = useState(1);
-  const [limit] = useState(20);
+  const [limit] = useState(10);
 
   const { data: users, isLoading } = useQuery<User[] | UsersResponse>({
     queryKey: ['users', page, limit],
@@ -54,20 +54,44 @@ export default function UsersTable() {
   const totalPages = Array.isArray(users) ? undefined : Math.ceil(users.count / limit);
 
   return (
-    <div>
+    <div className=''>
       <PaginationTable
         data={userList}
         columns={[
-          { header: 'ID', accessor: 'id' },
-          { header: 'Username', accessor: 'username' },
-          { header: 'Email', accessor: 'email' },
-          { header: 'Role', accessor: 'role' }
+          { 
+            header: 'ID', 
+            accessor: 'id',
+            enableSorting: true,
+            enableFiltering: true
+          },
+          { 
+            header: 'Username', 
+            accessor: 'username',
+            enableSorting: true,
+            enableFiltering: true
+          },
+          { 
+            header: 'Email', 
+            accessor: 'email',
+            enableSorting: true,
+            enableFiltering: true
+          },
+          { 
+            header: 'Role', 
+            accessor: 'role',
+            enableSorting: true,
+            enableFiltering: true
+          }
         ]}
         page={page}
         onPageChange={setPage}
         showPageInput={true}
         isLoading={isLoading}
         totalPages={totalPages}
+        enableSelection={true}
+        onSelectionChange={(selectedUsers) => {
+          console.log('Selected users:', selectedUsers);
+        }}
       />
     </div>
   );
