@@ -9,10 +9,8 @@ export interface SearchSchema {
       duration: number | null;
       views?: number | null;
       artists?: {
-        artist: {
           id?: string | null;
           name?: string;
-        };
       }[];
       releasedate?: string | null;
       genre?: string | null;

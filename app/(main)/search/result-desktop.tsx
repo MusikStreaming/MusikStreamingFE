@@ -37,7 +37,7 @@ export default function ResultDesktop({ query }: ResultDesktopProps) {
     <Suspense>
       <div className="flex flex-col gap-4">
         <h2 className="text-2xl font-bold">Search results for &quot;{query}&quot;</h2>
-        <div className="flex flex-row gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {albums.length > 0 && (
             <div className="flex flex-col rounded-lg bg-[--md-sys-color-surface-container-highest] p-4 gap-4">
               <h3 className="text-xl font-bold">Albums</h3>
@@ -77,7 +77,7 @@ export default function ResultDesktop({ query }: ResultDesktopProps) {
                     )}
                     <div className="flex flex-col gap-1">
                       <p className="text-sm font-bold">{song.title}</p>
-                      <p className="text-sm">{song.artists?.map(artist => artist.artist.name).join(", ") || "Unknown Artist"}</p>
+                      <p className="text-sm">{song.artists?.map(artist => artist.name).join(", ") || "Unknown Artist"}</p>
                     </div>
                   </div>
                 ))}

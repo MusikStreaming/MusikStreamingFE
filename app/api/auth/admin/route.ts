@@ -50,7 +50,6 @@ export async function GET() {
     }
 
     const userData: UserResponse = await response.json();
-    console.log(userData);
     if (userData.data.role !== 'Admin') {
       return NextResponse.json(
         {
