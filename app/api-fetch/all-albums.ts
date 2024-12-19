@@ -2,8 +2,6 @@
 import z from 'zod';
 import axios from 'axios';
 
-import type { Album } from '@/app/model/album';
-
 const AlbumSchema = z.array(z.object({
     id: z.string(),
     title: z.string(),
@@ -20,41 +18,7 @@ const AlternativeAlbumSchema = z.object({
 });
 
 export default async function fetchAllAlbums() {
-    const CACHE_TIME_MS = 3600000;
-    const CACHE_KEY = {
-        ALBUMS: "albums",
-        ALBUMS_TIME: "albumsTime"
-    }
-    if (!process.env.NEXT_PUBLIC_API_URL) {
-        console.warn('API URL not set, using fallback URL');
-    }
     try {
-        if (typeof window !== 'undefined') {
-            const storedAlbums = localStorage.getItem(CACHE_KEY.ALBUMS);
-            const storedTime = localStorage.getItem(CACHE_KEY.ALBUMS_TIME);
-            
-            if (storedAlbums && storedTime && Date.now() - Number.parseInt(storedTime) < CACHE_TIME_MS) {
-            console.log("Using cached albums data");
-            try {
-                const parsedData = JSON.parse(storedAlbums);
-                console.log("Parsed cached data:", parsedData);
-                
-                if (Array.isArray(parsedData)) {
-                    const data = AlbumSchema.parse(parsedData);
-                    return data;
-                } else if (parsedData.data) {
-                    const data = AlternativeAlbumSchema.parse(parsedData);
-                    return data.data;
-                }
-            } catch (error) {
-                console.error("Error parsing cached data:", error);
-                // Clear invalid cache
-                    localStorage.removeItem(CACHE_KEY.ALBUMS);
-                    localStorage.removeItem(CACHE_KEY.ALBUMS_TIME);
-                }
-            }
-        }
-
         console.log("Fetching fresh albums data");
         const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/v1/collection/albums?page=1&limit=10`, {
             headers: {
@@ -67,11 +31,6 @@ export default async function fetchAllAlbums() {
 
         if (!res.data) {
             throw new Error("No data received from API");
-        }
-
-        if (typeof window !== 'undefined') {
-            localStorage.setItem(CACHE_KEY.ALBUMS, JSON.stringify(res.data));
-            localStorage.setItem(CACHE_KEY.ALBUMS_TIME, Date.now().toString());
         }
 
         if (Array.isArray(res.data)) {
@@ -96,8 +55,6 @@ export default async function fetchAllAlbums() {
     }
     catch (error) {
         console.error("Error fetching albums:", error);
-        localStorage.removeItem(CACHE_KEY.ALBUMS);
-        localStorage.removeItem(CACHE_KEY.ALBUMS_TIME);
         throw error; // Re-throw to be handled by the component
     }
 }

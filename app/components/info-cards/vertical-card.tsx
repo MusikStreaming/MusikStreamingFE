@@ -38,7 +38,7 @@ export default function GeneralCard({
 
   return (
     <div 
-      className="vertical-card song-card rounded-lg bg-[--md-sys-color-outline-variant] flex flex-col items-center justify-start overflow-hidden w-full max-w-[280px] sm:max-w-[200px] h-full" 
+      className="vertical-card song-card rounded-lg bg-[--md-sys-color-outline-variant] flex flex-col items-center justify-start overflow-hidden w-full max-w-[280px] sm:max-w-[200px] h-full cursor-pointer" 
       onClick={() => router.push(href)}
     >
       <div className="cover-img relative w-full aspect-square overflow-hidden bg-[--md-sys-color-surface-container]">

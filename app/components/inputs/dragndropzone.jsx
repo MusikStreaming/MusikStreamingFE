@@ -1,7 +1,7 @@
 import { useDropzone } from 'react-dropzone';
 import Image from 'next/image';
 
-export default function DragNDropZone({ onDrop, avatarPreview: imgPreview, supportText, supportedTypes }) {
+export default function DragNDropZone({ onDrop, avatarPreview: imgPreview, supportText, supportedTypes, icon_text="add_photo_alternate" }) {
     const { getRootProps, getInputProps } = useDropzone({ onDrop });
     
     return (
@@ -18,11 +18,11 @@ export default function DragNDropZone({ onDrop, avatarPreview: imgPreview, suppo
               />
           ) : (
               <div className="w-full h-full flex items-center justify-center bg-[--md-sys-color-surface-variant]">
-                  <span className="material-symbols-outlined">add_photo_alternate</span>
+                  <span className="material-symbols-outlined">{icon_text}</span>
               </div>
           )}
       </div>
-      <span className="text-sm text-[--md-sys-color-on-surface-variant]">
+      <span className="text-sm text-[--md-sys-color-on-surface-variant] text-center">
           {supportText}
       </span>
   </div>

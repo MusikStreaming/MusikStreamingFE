@@ -7,6 +7,8 @@
  * @param {Function} [props.onClick] - Optional click handler for the button
  * @param {React.ReactNode} props.children - Child elements to be rendered inside the button
  * @param {bool} [props.disabled] - Optional flag to disable the button
+ * @param {Function} [props.onMouseEnter] - Optional mouse enter handler
+ * @param {Function} [props.onMouseLeave] - Optional mouse leave handler
  *  @returns {JSX.Element} The rendered TextButton component
  */
 export default function IconSmallButton(props) {

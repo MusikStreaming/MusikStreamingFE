@@ -43,50 +43,9 @@ export const AlternativeArtistSchema = z.object({
  */
 export default async function fetchArtistById(id: string) {
     console.log(`Fetching artist with ID: ${id}`);
-    if (localStorage) {
-        try {
-            if (localStorage.getItem("artist-" + id) !== null && localStorage.getItem("artistTime-" + id) === null) {
-                localStorage.removeItem("artist-" + id);
-            }
-            if (localStorage.getItem("artist-" + id) !== null || Date.now() - parseInt(localStorage.getItem("artistTime-" + id)!) < 3600000) {
-                try{
-                    const data = ArtistSchema.parse(JSON.parse(localStorage.getItem("artist-" + id)!));
-                    return data[0] as Artist;
-                } catch {
-                    const data = AlternativeArtistSchema.parse(JSON.parse(localStorage.getItem("artist-" + id)!));
-                    return data.data[0] as Artist;
-                }
-            }
-            else {
-                const response = await axios.get(`${process.env.API_URL}/v1/artist/${id}`, {
-                    headers: {
-                        'Cache-Control': 'max-age=3600000, stale-while-revalidate',
-                    }
-                });
-                try {
-                    const data = ArtistSchema.parse(response.data);
-                    return data[0] as Artist;
-                }
-                catch {
-                    const data = AlternativeArtistSchema.parse(response.data);
-                    return data.data[0] as Artist;
-                }
-                finally{
-                    localStorage.setItem("artist-" + id, JSON.stringify(response.data));
-                    localStorage.setItem("artistTime-" + id, Date.now().toString());
-                }
-            }
-        } catch (error) {
-            localStorage.removeItem("artist-" + id);
-            localStorage.removeItem("artistTime-" + id);
-            console.error(error);
-            return null;
-        }
-    }
-    else {
         // server render
         try {
-            const response = await axios.get(`${process.env.API_URL}/v1/artist/${id}`);
+            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/v1/artist/${id}`);
             try {
                 const data = ArtistSchema.parse(response.data);
                 return data[0] as Artist;
@@ -100,4 +59,4 @@ export default async function fetchArtistById(id: string) {
             return null;
         }
     }
-}
+// }

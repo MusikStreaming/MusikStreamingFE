@@ -1,6 +1,6 @@
 'use client';
 import SearchBox from '@/app/components/inputs/search-box';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, Suspense } from 'react';
 import { usePathname } from 'next/navigation';
 import useScreenWidth from '@/app/hooks/useScreenWidth';
 import BrowseContainer from './browse-container';
@@ -8,6 +8,7 @@ import ResultMobile from './result-mobile';
 import ResultDesktop from './result-desktop';
 import { useSearch } from '@/app/hooks/useSearch';
 import { twMerge } from 'tailwind-merge';
+import Loading from './loading';
 
 export default function SearchPage() {
     const pathname = usePathname();
@@ -32,14 +33,16 @@ export default function SearchPage() {
                 onChange={handleSearchChange}
             />
             <div className="p-4">
-                {searchQuery?.trim() ? (
-                    screenWidth < 768 ? <ResultMobile query={searchQuery} /> : <ResultDesktop query={searchQuery} />
-                ) : (
-                    <>
-                        <h2 className="text-2xl font-bold mb-6">Discover</h2>
-                        <BrowseContainer />
-                    </>
-                )}
+                <Suspense>
+                    {searchQuery?.trim() ? (
+                        screenWidth < 768 ? <ResultMobile query={searchQuery} /> : <ResultDesktop query={searchQuery} />
+                    ) : (
+                        <>
+                            <h2 className="text-2xl font-bold mb-6">Discover</h2>
+                            <BrowseContainer />
+                        </>
+                    )}
+                </Suspense>
             </div>
         </div>
     );
