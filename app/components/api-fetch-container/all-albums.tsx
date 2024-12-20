@@ -14,7 +14,7 @@ export default function Albums() {
     const {data: albums, error, isLoading: loading} = useQuery({
         queryKey: ["albums"], 
         queryFn:fetchAllAlbums,
-        staleTime: 5000
+        staleTime: 5000 * 60
     });
     const refresh = useMutation({
         mutationFn: fetchAllAlbums,

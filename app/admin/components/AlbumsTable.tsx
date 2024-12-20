@@ -60,8 +60,6 @@ export default function AlbumsTable() {
     deleteMutation.mutate(id);
   };
 
-  if (!albums || !Array.isArray(albums.data)) return <div>Failed to load albums.</div>;
-
   return (
     <div className="flex items-center">
       <PaginationTable

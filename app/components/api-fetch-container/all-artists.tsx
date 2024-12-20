@@ -17,7 +17,7 @@ export default function Artists() {
   const {data, error, isLoading} = useQuery({
     queryKey: ["artists"], 
     queryFn: fetchArtists,
-    staleTime: 5000
+    staleTime: 5000 * 60
   });
   const refresh = useMutation({
     mutationFn: fetchArtists,
