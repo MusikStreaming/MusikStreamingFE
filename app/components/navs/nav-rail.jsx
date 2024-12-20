@@ -263,6 +263,11 @@ export default function NavRail({ className, items: customItems }) {
     
     const showPinnedSection = !customItems; // Only show pinned section when using default items
 
+    const shouldHide = pathname.includes('/login') || pathname === '/sign-up' 
+                    || pathname === '/forgot-password' 
+                    || pathname === '/new-password'
+                    || pathname === '/verify-email'
+                    || pathname.includes('/auth');
     return (                                                                 
         <div 
             ref={navRef}
@@ -279,6 +284,7 @@ export default function NavRail({ className, items: customItems }) {
                     'w-[80px] min-w-[80px] max-w-[80px]'
                 }
                 ${animationDirection}
+                ${shouldHide ? 'hidden' : ''}
             `}
         >
             <div 

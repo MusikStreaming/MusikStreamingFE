@@ -58,7 +58,16 @@ export default function SongControl() {
     // };
 
     const handleResize = () => {
-      setShouldHide(pathname.includes('/song') && window.innerWidth < 768 || pathname.includes('/manager') || pathname.includes('/admin'));
+      setShouldHide(
+        (pathname.includes('/song') && window.innerWidth < 768) 
+        || pathname.includes('/manager') 
+        || pathname.includes('/admin') 
+        || pathname.includes('/login') 
+        || pathname.includes('/sign-up') 
+        || pathname.includes('/forgot-password') 
+        || pathname.includes('/new-password') 
+        || pathname.includes('/verify-email') 
+        || pathname.includes('/auth'));
     };
 
     // checkAuth();
