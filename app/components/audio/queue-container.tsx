@@ -28,7 +28,7 @@ const slideInAnimation = `
 
 export default function QueueContainer() {
   const { isQueueVisible, toggleQueue, currentSong, queue } = useMedia();
-  const [width, setWidth] = useState(320); // Default width (w-80 = 320px)
+  const [width, setWidth] = useState(500); // Default width (w-80 = 320px)
   const [isDragging, setIsDragging] = useState(false);
 
   const handleMouseDown = useCallback(() => {
@@ -38,7 +38,7 @@ export default function QueueContainer() {
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (isDragging) {
       const newWidth = window.innerWidth - e.clientX;
-      const clampedWidth = Math.min(Math.max(newWidth, 280), 480);
+      const clampedWidth = Math.min(Math.max(newWidth, 280), 600);
       setWidth(clampedWidth);
       document.documentElement.style.setProperty('--queue-width', `${clampedWidth}px`);
     }
@@ -65,9 +65,10 @@ export default function QueueContainer() {
       {/* Desktop queue */}
       <div 
         className={twMerge(
-          "song-queue-container max-h-[calc(100vh-228px)] overflow-y-auto bg-[--md-sys-color-surface] relative w-[var(--queue-width,320px)]",
+          "song-queue-container max-h-[calc(100vh-228px)] overflow-y-auto bg-[--md-sys-color-surface] relative w-[var(--queue-width,500px)]",
           isQueueVisible ? twJoin(
             "md:block",
+            "hidden",
             "animate-[slideIn_0.3s_ease-out]"
           ) : twJoin(
             "hidden",

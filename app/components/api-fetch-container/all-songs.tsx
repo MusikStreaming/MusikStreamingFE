@@ -1,34 +1,37 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import fetchAllSongs from "@/app/api-fetch/all-songs"
 import { CardProps } from "@/app/model/card-props"
 import { processCloudinaryUrl } from "@/app/api-fetch/cloudinary-url-processing"
 import { SongCard } from "@/app/components/info-cards/song-card"
 import Skeleton from "../loading/skeleton"
-import ErrorComponent from "./fetch-error"
+import { useQuery } from "@tanstack/react-query"
 
 export default function Songs() {
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [songs, setSongs] = useState<CardProps[]>([]);
+    const { data: songs, error, isLoading: loading } = useQuery({
+        queryKey: ["songs"], 
+        queryFn:fetchAllSongs,
+        staleTime: 5000
+    });
 
-    useEffect(() => {
-        let mounted = true;
+    if (error) {
+        return <div className="text-error">{error.message}</div>;
+    }
 
-        async function loadSongs() {
-            try {
-                setLoading(true);
-                const songsData = await fetchAllSongs();
-                
-                if (!mounted) return;
-                
-                if (!songsData) {
-                    setError('No songs found');
-                    return;
-                }
+    if (loading) {
+        return (
+            <div className="card-grid grid grid-flow-row">
+                {[...Array(21)].map((_, i) => (
+                    <Skeleton key={i} className="w-[140px] h-[200px]"/>
+                ))}
+            </div>
+        );
+    }
 
-                const cardData: CardProps[] = songsData.map((song) => ({
+    return (
+        <div className="card-grid grid grid-flow-row">
+            {songs && songs.map((song, index) => {
+                const cardData: CardProps = {
                     img: {
                         src: processCloudinaryUrl(song.thumbnailurl, 200, 200, "songs"),
                         alt: song.title,
@@ -51,47 +54,9 @@ export default function Songs() {
                     duration: song.duration ?? undefined,
                     artists: song.artists.map(artist => ({ id: artist.artist.id, name: artist.artist.name })),
                     type: 'song'
-                }));
-
-                setSongs(cardData);
-            } catch (error) {
-                if (mounted) {
-                    console.error('Error loading songs:', error);
-                    setError(error instanceof Error ? error.message : 'Failed to load songs');
-                }
-            } finally {
-                if (mounted) {
-                    setLoading(false);
-                }
-            }
-        }
-
-        loadSongs();
-
-        return () => {
-            mounted = false;
-        };
-    }, []);
-
-    if (error) {
-        return <div className="text-error">{error}</div>;
-    }
-
-    if (loading) {
-        return (
-            <div className="card-grid grid grid-flow-row">
-                {[...Array(21)].map((_, i) => (
-                    <Skeleton key={i} className="w-[140px] h-[200px]"/>
-                ))}
-            </div>
-        );
-    }
-
-    return (
-        <div className="card-grid grid grid-flow-row">
-            {songs.map((song, index) => (
-                <SongCard key={index} {...song} />
-            ))}
+                };
+                return <SongCard key={index} {...cardData} />;
+            })}
         </div>
     );
 }

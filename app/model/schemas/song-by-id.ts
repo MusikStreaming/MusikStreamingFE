@@ -6,7 +6,7 @@ export const SongSchema = z.object({
     thumbnailurl: z.string().optional(),
     duration: z.number(),
     releasedate: z.string(),
-    genre: z.string(),
+    genre: z.string().nullable(),
     views: z.number(),
     albums: z.array(
         z.object({

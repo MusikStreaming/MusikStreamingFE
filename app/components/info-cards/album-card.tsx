@@ -23,7 +23,12 @@ export function AlbumCard(props: CardProps) {
             title: s.song.title,
             duration: s.song.duration || null,
             thumbnailurl: s.song.thumbnailurl || '/assets/placeholder.jpg',
-            artists: s.song.artists?.map(a => ({ artist: { id: '', name: a.name } })) || []
+            artists: s.song.artists?.map(a => ({ 
+              artist: {
+                id: a.id || "#",  // Make sure we're using the artist's actual ID
+                name: a.name || ''
+              }
+            })) || []
           };
         });
         // Use playList which will handle both adding songs to queue and playing first song

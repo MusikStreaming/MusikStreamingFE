@@ -1,12 +1,11 @@
 // app/utils/album.ts
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import {useQuery } from '@tanstack/react-query';
 import fetchAlbumById from '@/app/api-fetch/album-by-id';
 import ErrorComponent from '@/app/components/api-fetch-container/fetch-error';
-import { AlbumDetails } from '@/app/model/album-details';
 import Skeleton from '@/app/components/loading/skeleton';
 import PlayButton from '@/app/components/buttons/play-button-main';
 import IconSmallButton from '@/app/components/buttons/icon-small-button';
@@ -27,34 +26,40 @@ function formatDuration(duration: number) {
 }
 
 export default function AlbumContent(params: { id: string }) {
-  const [album, setAlbum] = useState<AlbumDetails | undefined>();
-  const [error, setError] = useState<string | null>(null);
+  const { data: album, error, refetch } = useQuery({
+    queryKey: ['album', params as { id: string }],
+    queryFn: async () => {
+      return fetchAlbumById(params.id);
+    }
+  });
+  // const [album, setAlbum] = useState<AlbumDetails | undefined>();
+  // const [error, setError] = useState<string | null>(null);
   const { playList } = useMedia();
   const router = useRouter();
 
-  const fetchData = useCallback(async () => {
-    try {
-      const {id} = params;
-      const albumData = await fetchAlbumById(id);
-      if (!albumData) {
-        throw new Error('Album not found');
-      }
-      setAlbum(albumData);
-    } catch (e) {
-      console.error('Error fetching album:', e);
-      setError(e instanceof Error ? e.message : 'Failed to load album');
-    }
-  }, [params]);
+  // const fetchData = useCallback(async () => {
+  //   try {
+  //     const {id} = params;
+  //     const albumData = await fetchAlbumById(id);
+  //     if (!albumData) {
+  //       throw new Error('Album not found');
+  //     }
+  //     setAlbum(albumData);
+  //   } catch (e) {
+  //     console.error('Error fetching album:', e);
+  //     setError(e instanceof Error ? e.message : 'Failed to load album');
+  //   }
+  // }, [params]);
 
-  useEffect(() => {
-    fetchData().catch(e => {
-      console.error('Error in album fetch effect:', e);
-      setError(e instanceof Error ? e.message : 'Failed to load album');
-    });
-  }, [fetchData, params.id]);
+  // useEffect(() => {
+  //   fetchData().catch(e => {
+  //     console.error('Error in album fetch effect:', e);
+  //     setError(e instanceof Error ? e.message : 'Failed to load album');
+  //   });
+  // }, [fetchData, params.id]);
 
   if (error) {
-    return <ErrorComponent onReloadClick={fetchData} />;
+    return <ErrorComponent onReloadClick={refetch} />;
   }
 
   try {
@@ -115,7 +120,7 @@ export default function AlbumContent(params: { id: string }) {
                         title: s.song.title,
                         duration: s.song.duration || null,
                         thumbnailurl: s.song.thumbnailurl || '/assets/placeholder.jpg',
-                        artists: s.song.artists?.map(a => ({ artist: { id: '', name: a.name } })) || []
+                        artists: s.song.artists?.map(a => ({ artist: { id: a.id || '#', name: a.name } })) || []
                       };
                     });
                     
@@ -169,6 +174,6 @@ export default function AlbumContent(params: { id: string }) {
     );
   } catch (e) {
     console.error(e);
-    return <ErrorComponent onReloadClick={fetchData} />;
+    return <ErrorComponent onReloadClick={refetch} />;
   }
 }
