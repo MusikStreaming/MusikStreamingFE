@@ -26,7 +26,7 @@ export default function PlaylistsTable() {
   const [limit] = useState(10);
   const queryClient = useQueryClient();
 
-  const { data: playlists, isLoading } = useQuery<PlaylistsResponse>({
+  const { data: playlists, isLoading, isError } = useQuery<PlaylistsResponse>({
     queryKey: ['playlists', page, limit],
     queryFn: async () => {
       const token = getCookie('session_token');
@@ -69,7 +69,7 @@ export default function PlaylistsTable() {
   return (
     <div className="overflow-x-auto">
       <PaginationTable
-        data={playlists.data}
+        data={playlists?.data || []}
         columns={[
           { header: 'Name', accessor: 'title' },
           { header: 'Owner', accessor: (playlist: Playlist) => playlist.owner.username },
@@ -86,8 +86,10 @@ export default function PlaylistsTable() {
           </button>
         )}
         showPageInput={true}
-        isLoading={isLoading}
-        totalPages={playlists ? Math.ceil(playlists.total / limit) : undefined}
+        isLoading={isLoading || deleteMutation.isPending}
+        isError={isError}
+        errorMessage="Failed to load playlists."
+        totalPages={playlists?.total ? Math.ceil(playlists.total / limit) : undefined}
       />
     </div>
   );

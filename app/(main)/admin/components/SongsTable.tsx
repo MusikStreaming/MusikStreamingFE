@@ -105,9 +105,9 @@ export default function SongsTable() {
     refetch();
   };
 
-  if (isLoading) return <div>Loading songs...</div>;
-  if (isError) return <div>Failed to load songs.</div>;
-  if (!songs?.data) return <div>No songs found.</div>;
+  // if (isLoading) return <div>Loading songs...</div>;
+  // if (isError) return <div>Failed to load songs.</div>;
+  // if (!songs?.data) return <div>No songs found.</div>;
 
   return (
     <div>
@@ -138,7 +138,7 @@ export default function SongsTable() {
       </div>
 
       <PaginationTable
-        data={songs.data}
+        data={songs?.data || []}
         columns={[
           { header: 'Title', accessor: 'title' },
           {
@@ -178,8 +178,10 @@ export default function SongsTable() {
         )}
         onRowClick={handleRowClick}
         showPageInput={true}
-        isLoading={isLoading}
-        totalPages={Math.ceil(songs.count / limit)}
+        isLoading={isLoading || deleteMutation.isPending}
+        isError={isError}
+        errorMessage="Failed to load songs."
+        totalPages={songs?.count ? Math.ceil(songs.count / limit) : undefined}
       />
 
       <AddSongDialog

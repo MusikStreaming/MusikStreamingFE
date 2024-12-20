@@ -22,7 +22,7 @@ export default function UsersTable() {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
 
-  const { data: users, isLoading } = useQuery<User[] | UsersResponse>({
+  const { data: users, isLoading, isError } = useQuery<User[] | UsersResponse>({
     queryKey: ['users', page, limit],
     queryFn: async () => {
       const token = getCookie('session_token');
@@ -37,21 +37,8 @@ export default function UsersTable() {
     staleTime: 2000,
   });
 
-  if (isLoading) return
-      <div className="space-y-4">
-      {[...Array(limit)].map((_, index) => (
-        <div key={index} className="flex space-x-4">
-          <Skeleton className="w-8 h-8 rounded-full" />
-          <Skeleton className="w-24 h-4" />
-          <Skeleton className="w-24 h-4" />
-          <Skeleton className="w-24 h-4" />
-        </div>
-      ))}
-      </div>
-  if (!users) return <div>Failed to load users.</div>;
-
-  const userList = Array.isArray(users) ? users : users.data;
-  const totalPages = Array.isArray(users) ? undefined : Math.ceil(users.count / limit);
+  const userList = Array.isArray(users) ? users : users?.data || [];
+  const totalPages = Array.isArray(users) ? undefined : users?.count ? Math.ceil(users.count / limit) : undefined;
 
   return (
     <div className=''>
@@ -87,6 +74,8 @@ export default function UsersTable() {
         onPageChange={setPage}
         showPageInput={true}
         isLoading={isLoading}
+        isError={isError}
+        errorMessage="Failed to load users."
         totalPages={totalPages}
         enableSelection={true}
         onSelectionChange={(selectedUsers) => {

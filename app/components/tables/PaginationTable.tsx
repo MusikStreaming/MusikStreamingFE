@@ -23,6 +23,7 @@ import {
   TableRow,
 } from "@/app/components/tables/table";
 import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
+import TableSkeleton from './TableSkeleton';
 
 export interface Column<T> {
   header: string;
@@ -43,6 +44,8 @@ interface PaginationTableProps<T> {
   totalPages?: number;
   enableSelection?: boolean;
   onSelectionChange?: (selectedRows: T[]) => void;
+  isError?: boolean;
+  errorMessage?: string;
 }
 
 const FilterInput = React.memo(function FilterInput<T>({
@@ -75,6 +78,88 @@ const FilterInput = React.memo(function FilterInput<T>({
   );
 });
 
+const PaginationControls = React.memo(({ 
+  page, 
+  totalPages, 
+  onPageChange,
+  showPageInput = false,
+  disabled = false
+}: { 
+  page: number;
+  totalPages?: number;
+  onPageChange: (page: number) => void;
+  showPageInput?: boolean;
+  disabled?: boolean;
+}) => {
+  const [pageInput, setPageInput] = useState(page.toString());
+
+  useEffect(() => {
+    setPageInput(page.toString());
+  }, [page]);
+
+  const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPageInput(e.target.value);
+  };
+
+  const handlePageInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      const newPage = parseInt(pageInput);
+      if (!isNaN(newPage) && newPage > 0 && (!totalPages || newPage <= totalPages)) {
+        onPageChange(newPage);
+      }
+    }
+  };
+
+  const handlePreviousPage = () => {
+    const newPage = Math.max(1, page - 1);
+    onPageChange(newPage);
+  };
+
+  const handleNextPage = () => {
+    if (!totalPages || page < totalPages) {
+      onPageChange(page + 1);
+    }
+  };
+
+  return (
+    <div className="mt-4 flex justify-between items-center">
+      <button
+        onClick={handlePreviousPage}
+        disabled={disabled || page === 1}
+        className="px-4 py-2 bg-[--md-sys-color-surface-variant] rounded-md disabled:opacity-50"
+      >
+        Previous
+      </button>
+      {showPageInput && (
+        <div className="flex items-center gap-2">
+          <span>Page</span>
+          <input
+            type="number"
+            value={pageInput}
+            onChange={handlePageInputChange}
+            onKeyDown={handlePageInputKeyDown}
+            disabled={disabled}
+            className="w-16 px-2 py-1 rounded-md bg-[--md-sys-color-surface-container-highest] disabled:opacity-50"
+            min="1"
+            max={totalPages}
+            aria-label="Page number input"
+          />
+          {totalPages && <span>of {totalPages}</span>}
+        </div>
+      )}
+      <button
+        onClick={handleNextPage}
+        disabled={disabled || (totalPages ? page >= totalPages : false)}
+        className="px-4 py-2 bg-[--md-sys-color-surface-variant] rounded-md disabled:opacity-50"
+      >
+        Next
+      </button>
+    </div>
+  );
+});
+
+PaginationControls.displayName = 'PaginationControls';
+
 export default function PaginationTable<T>({
   data,
   columns,
@@ -87,8 +172,9 @@ export default function PaginationTable<T>({
   totalPages,
   enableSelection = false,
   onSelectionChange,
+  isError = false,
+  errorMessage = 'An error occurred while loading data.',
 }: PaginationTableProps<T>) {
-  const [pageInput, setPageInput] = useState(page.toString());
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [rowSelection, setRowSelection] = useState({});
@@ -204,132 +290,87 @@ export default function PaginationTable<T>({
   });
 
   useEffect(() => {
-    setPageInput(page.toString());
-  }, [page]);
-
-  useEffect(() => {
     if (onSelectionChange) {
       const selectedRows = table.getSelectedRowModel().rows.map((row) => row.original);
       onSelectionChange(selectedRows);
     }
   }, [rowSelection, table, onSelectionChange]);
 
-  const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPageInput(e.target.value);
-  };
-
-  const handlePageInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      const newPage = parseInt(pageInput);
-      if (!isNaN(newPage) && newPage > 0 && (!totalPages || newPage <= totalPages)) {
-        onPageChange(newPage);
-      }
-    }
-  };
-
-  const handlePreviousPage = () => {
-    const newPage = Math.max(1, page - 1);
-    onPageChange(newPage);
-  };
-
-  const handleNextPage = () => {
-    if (!totalPages || page < totalPages) {
-      onPageChange(page + 1);
-    }
-  };
-
   return (
     <div className="flex flex-col">
       <div className="flex-1 flex flex-col">
-        <div className="flex-1 overflow-auto">
-          <Table className="w-full">
-            <TableHeader className="sticky top-0 bg-[--md-sys-color-surface-container] z-10">
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead 
-                      key={header.id}
-                      className="first:pl-2 last:pr-2"
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(header.column.columnDef.header, header.getContext())}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={table.getAllColumns().length} className="h-24 text-center">
-                    Loading...
-                  </TableCell>
-                </TableRow>
-              ) : table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row, index) => (
-                  <TableRow
-                    key={row.id}
-                    onClick={() => onRowClick?.(row.original)}
-                    className={`
-                      ${index % 2 === 0 ? 'bg-[--md-sys-color-surface]' : 'bg-[--md-sys-color-surface-container-highest]'}
-                      ${onRowClick ? 'cursor-pointer hover:bg-[--md-sys-color-surface-variant]' : ''}
-                      transition-colors
-                    `}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell 
-                        key={cell.id}
+        <div className="flex-1 overflow-auto min-h-[300px] relative">
+          {isLoading && (
+            <div className="absolute inset-0 bg-[--md-sys-color-surface] bg-opacity-50 z-20">
+              <TableSkeleton 
+                columns={table.getAllColumns().length} 
+                rows={data.length || 10}
+              />
+            </div>
+          )}
+          {isError ? (
+            <div className="text-center py-8 text-[--md-sys-color-error]">
+              {errorMessage}
+            </div>
+          ) : (
+            <Table className="w-full">
+              <TableHeader className="sticky top-0 bg-[--md-sys-color-surface-container] z-10">
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => (
+                      <TableHead 
+                        key={header.id}
                         className="first:pl-2 last:pr-2"
                       >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(header.column.columnDef.header, header.getContext())}
+                      </TableHead>
                     ))}
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={table.getAllColumns().length} className="h-24 text-center">
-                    No results.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row, index) => (
+                    <TableRow
+                      key={row.id}
+                      onClick={() => onRowClick?.(row.original)}
+                      className={`
+                        ${index % 2 === 0 ? 'bg-[--md-sys-color-surface]' : 'bg-[--md-sys-color-surface-container-highest]'}
+                        ${onRowClick ? 'cursor-pointer hover:bg-[--md-sys-color-surface-variant]' : ''}
+                        transition-colors
+                      `}
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell 
+                          key={cell.id}
+                          className="first:pl-2 last:pr-2"
+                        >
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={table.getAllColumns().length} className="h-24 text-center">
+                      No results.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
         </div>
       </div>
-      <div className="mt-4 flex justify-between items-center">
-        <button
-          onClick={handlePreviousPage}
-          disabled={page === 1}
-          className="px-4 py-2 bg-[--md-sys-color-surface-variant] rounded-md disabled:opacity-50"
-        >
-          Previous
-        </button>
-        {showPageInput && (
-          <div className="flex items-center gap-2">
-            <span>Page</span>
-            <input
-              type="number"
-              value={pageInput}
-              onChange={handlePageInputChange}
-              onKeyDown={handlePageInputKeyDown}
-              className="w-16 px-2 py-1 rounded-md bg-[--md-sys-color-surface-container-highest]"
-              min="1"
-              max={totalPages}
-              aria-label="Page number input"
-            />
-            {totalPages && <span>of {totalPages}</span>}
-          </div>
-        )}
-        <button
-          onClick={handleNextPage}
-          disabled={totalPages ? page >= totalPages : false}
-          className="px-4 py-2 bg-[--md-sys-color-surface-variant] rounded-md disabled:opacity-50"
-        >
-          Next
-        </button>
-      </div>
+      <PaginationControls 
+        page={page}
+        totalPages={totalPages}
+        onPageChange={onPageChange}
+        showPageInput={showPageInput}
+        disabled={isError} // Only disable on error, not on loading
+      />
     </div>
   );
 }

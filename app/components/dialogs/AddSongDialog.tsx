@@ -91,6 +91,10 @@ const AddSongDialog: React.FC<AddSongDialogProps> = ({ isOpen, onClose, onSucces
       const audio = new Audio(URL.createObjectURL(file));
       audio.onloadedmetadata = () => {
         setSongData(prev => ({ ...prev, duration: Math.round(audio.duration) }));
+        if (songData.title === '') {
+          console.log(file.name.split('.'))
+          setSongData(prev => ({ ...prev, title: file.name.split('.').slice(0, -1).join('.') }));
+        }
       };
     }
   };
@@ -136,7 +140,9 @@ const AddSongDialog: React.FC<AddSongDialogProps> = ({ isOpen, onClose, onSucces
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'cache-control': 'no-cache'
+          'cache-control': 'no-cache',
+          'cross-origin-resource-policy': 'cross-origin',
+          'access-control-allow-origin': '*'
         },
         body: formData
       });
@@ -144,15 +150,22 @@ const AddSongDialog: React.FC<AddSongDialogProps> = ({ isOpen, onClose, onSucces
       if (!response.ok) throw new Error('Failed to create song');
 
       const result: AddSongResponse = await response.json();
+      console.log(result)
 
       // Then, if we have an audio file, upload it
       if (audioFile) {
         const uploadResponse = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/v1/song/${result.data.id}/presigned/upload`,
           {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 
+              'Authorization': `Bearer ${token}`,
+              'cache-control': 'no-cache',
+              'mode': 'no-cors',             
+              'access-control-allow-origin': '*' 
+            }
           }
         );
+        console.log(uploadResponse)
 
         if (!uploadResponse.ok) throw new Error('Failed to get upload URL');
 
@@ -163,7 +176,8 @@ const AddSongDialog: React.FC<AddSongDialogProps> = ({ isOpen, onClose, onSucces
           headers: {
             'Content-Type': audioFile.type,
             'cache-control': 'no-cache'
-          }
+          },
+          mode: 'no-cors' // Add this line
         });
       }
 
@@ -299,7 +313,7 @@ const AddSongDialog: React.FC<AddSongDialogProps> = ({ isOpen, onClose, onSucces
             <button
             type='button'
             onClick={handleSave}
-            disabled={!songData.title || songData.artists.length === 0 || isLoading}
+            disabled={!songData.title || !audioFile || songData.artists.length === 0 || isLoading}
             className="px-4 py-2 bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary] rounded-md disabled:opacity-50 flex items-center gap-2"
             >
             {isLoading && (

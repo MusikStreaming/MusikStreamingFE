@@ -22,7 +22,7 @@ export default function AlbumsTable() {
   const [limit] = useState(10);
   const queryClient = useQueryClient();
 
-  const { data: albums, isLoading } = useQuery<AlbumsResponse>({
+  const { data: albums, isLoading, isError } = useQuery<AlbumsResponse>({
     queryKey: ['albums', page, limit],
     queryFn: async () => {
       const token = getCookie('session_token');
@@ -65,12 +65,16 @@ export default function AlbumsTable() {
   return (
     <div className="flex items-center">
       <PaginationTable
-        data={albums.data}
+        data={albums?.data || []}
         columns={[
           { header: 'Title', accessor: 'title' },
           { header: 'Artist', accessor: 'artist' },
           { header: 'Release Date', accessor: 'releaseDate' }
         ]}
+        isLoading={isLoading || deleteMutation.isPending}
+        isError={isError}
+        errorMessage="Failed to load albums."
+        totalPages={albums?.total ? Math.ceil(albums.total / limit) : undefined}
         page={page}
         onPageChange={setPage}
         rowActions={(album: Album) => (
@@ -82,8 +86,6 @@ export default function AlbumsTable() {
           </button>
         )}
         showPageInput={true}
-        isLoading={isLoading}
-        totalPages={Math.ceil(albums.total / limit)}
       />
     </div>
   );
