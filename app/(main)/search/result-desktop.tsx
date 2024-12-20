@@ -14,10 +14,10 @@ export default function ResultDesktop({ query }: ResultDesktopProps) {
     queryKey: ['search', query],
     queryFn: async () => await search(query),
     enabled: query.length > 0,
-    staleTime: 1000 * 60 * 5, // Cache results for 5 minutes
+    staleTime: 30000 , // Cache results for 30 seconds
   });
 
-  if (query.length === 0) {
+  if (query.trim().length === 0) {
     return <p>Please enter a search term</p>;
   }
 

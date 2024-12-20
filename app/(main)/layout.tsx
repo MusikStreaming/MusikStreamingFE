@@ -55,7 +55,11 @@ const compose = (providers: Array<React.ComponentType<{ children: React.ReactNod
   return ComposedComponent;
 };
 
-const Providers = compose([ReactQueryProvider, MediaProvider, LikedProvider]);
+const Providers = compose([
+  ReactQueryProvider, 
+  MediaProvider, 
+  LikedProvider
+]);
 
 /**
  * RootLayout component.
