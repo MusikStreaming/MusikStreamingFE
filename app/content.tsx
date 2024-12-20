@@ -7,12 +7,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Suspense } from "react";
 import Loading from "./loading";
 import fetchHistory, {HistoryItem} from "@/app/api-fetch/get-history";
-import { useMedia } from "../contexts/media-context";
+import { useMedia } from "./contexts/media-context";
 
 import Artists from "@/app/components/api-fetch-container/all-artists";
 import Songs from "@/app/components/api-fetch-container/all-songs";
 import Albums from "@/app/components/api-fetch-container/all-albums";
-import HorizontalCard from "../components/info-cards/horizontal-card";
+import HorizontalCard from "./components/info-cards/horizontal-card";
 
 export default function Content() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
