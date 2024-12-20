@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
     title: "MusikStreaming | Library",
@@ -11,6 +12,8 @@ export default function LibraryLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div>{children}</div>
+        <Suspense>
+            <div>{children}</div>
+        </Suspense>
     )
 }
