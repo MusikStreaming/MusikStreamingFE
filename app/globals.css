@@ -190,30 +190,17 @@
 body {
   color: var(--md-sys-color-on-surface);
   background: var(--md-sys-color-surface);
-  /* overflow-y: hidden; */
-  @apply sm:overflow-auto md:overflow-auto lg:overflow-y-auto;
-  /* transition: all .5s ease-in-out; */
-  /* font-family: 'Inter', 'Times New Roman', Arial, Helvetica, sans-serif; */
+  @apply min-h-screen flex flex-col;
 }
 
-/* html, body{
-  height: 100%;
+/* // Remove or comment out these sections if they exist */
+/* .body-button{
+  height: 200vh;
 } */
 
-.body-button{
-  height: 200vh;
-}
-
-@media (min-width: 768px){
-  .center-scroll{
-    overflow-y: scroll;
-    max-height: calc(100vh - var(--desktop-content-offset));
-  }
-}
-
-.center-scroll{
+/* .center-scroll{
   height: max-content;
-}
+} */
 
 ::-webkit-scrollbar {
   width: 8px;
@@ -408,7 +395,7 @@ a{
   }
 }
 
-@media screen and (min-width: 768px) {
+/* @media screen and (min-width: 768px) {
   nav.bottom-nav-bar {
     display: none;
   }
@@ -418,7 +405,7 @@ a{
   .nav-rail {
     display: flex;
   }
-}
+} */
 
 /* Add these animation classes */
 @keyframes slideUp {
@@ -447,7 +434,14 @@ a{
   animation: slideDown 0.3s ease-in forwards;
 }
 
-.nav-rail{
+.nav-rail {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Remove or update these classes since we're handling height differently */
+/* .nav-rail{
   height: calc(100vh- var(--mobile-content-offset));
 }
 
@@ -455,4 +449,4 @@ a{
   .nav-rail{
     height: calc(100vh- var(--desktop-content-offset));
   }
-}
+} */

@@ -18,6 +18,10 @@ export async function POST(request: NextRequest) {
     // Clear session cookie
     const response = NextResponse.json({ success: true });
     response.cookies.delete('session');
+    response.cookies.delete('session_token');
+    response.cookies.delete('user_id');
+    response.cookies.delete('username');
+    response.cookies.delete('avatarurl');
     
     return response;
   } catch (error) {

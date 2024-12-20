@@ -1,11 +1,11 @@
 // app/utils/album.ts
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import {useQuery } from '@tanstack/react-query';
 import fetchAlbumById from '@/app/api-fetch/album-by-id';
 import ErrorComponent from '@/app/components/api-fetch-container/fetch-error';
-import { AlbumDetails } from '@/app/model/album-details';
 import Skeleton from '@/app/components/loading/skeleton';
 import PlayButton from '@/app/components/buttons/play-button-main';
 import IconSmallButton from '@/app/components/buttons/icon-small-button';
@@ -16,6 +16,7 @@ import { processCloudinaryUrl } from "@/app/api-fetch/cloudinary-url-processing"
 // import { formatDuration } from '@/app/utils/time';
 import { calculateAlbumDuration, countAlbumSongs, formatSongCount } from '@/app/utils/album';
 import { useMedia } from '@/app/contexts/media-context';
+import TextButton from '@/app/components/buttons/text-button';
 
 function formatDuration(duration: number) {
   const hours = Math.floor(duration / 3600);
@@ -25,38 +26,49 @@ function formatDuration(duration: number) {
 }
 
 export default function AlbumContent(params: { id: string }) {
-  const [album, setAlbum] = useState<AlbumDetails | undefined>();
-  const [error, setError] = useState<string | null>(null);
-  const { playAlbum } = useMedia();
-
-  const fetchData = useCallback(async () => {
-    try {
-      const {id} = params;
-      const albumData = await fetchAlbumById(id);
-      if (!albumData) {
-        throw new Error('Album not found');
-      }
-      setAlbum(albumData);
-    } catch (e) {
-      console.error('Error fetching album:', e);
-      setError(e instanceof Error ? e.message : 'Failed to load album');
+  const { data: album, error, refetch } = useQuery({
+    queryKey: ['album', params as { id: string }],
+    queryFn: async () => {
+      return fetchAlbumById(params.id);
     }
-  }, [params]);
+  });
+  // const [album, setAlbum] = useState<AlbumDetails | undefined>();
+  // const [error, setError] = useState<string | null>(null);
+  const { playList } = useMedia();
+  const router = useRouter();
 
-  useEffect(() => {
-    fetchData().catch(e => {
-      console.error('Error in album fetch effect:', e);
-      setError(e instanceof Error ? e.message : 'Failed to load album');
-    });
-  }, [fetchData, params.id]);
+  // const fetchData = useCallback(async () => {
+  //   try {
+  //     const {id} = params;
+  //     const albumData = await fetchAlbumById(id);
+  //     if (!albumData) {
+  //       throw new Error('Album not found');
+  //     }
+  //     setAlbum(albumData);
+  //   } catch (e) {
+  //     console.error('Error fetching album:', e);
+  //     setError(e instanceof Error ? e.message : 'Failed to load album');
+  //   }
+  // }, [params]);
+
+  // useEffect(() => {
+  //   fetchData().catch(e => {
+  //     console.error('Error in album fetch effect:', e);
+  //     setError(e instanceof Error ? e.message : 'Failed to load album');
+  //   });
+  // }, [fetchData, params.id]);
 
   if (error) {
-    return <ErrorComponent onReloadClick={fetchData} />;
+    return <ErrorComponent onReloadClick={refetch} />;
   }
 
   try {
     return (
-      <div className='flex flex-col w-full gap-8 p-4'>
+      <div className='flex flex-col w-full gap-8 md:p-4'>
+        <TextButton className='flex md:hidden text-[--md-sys-color-primary]' onClick={() => router.back()}>
+          <span className='material-symbols-outlined'>arrow_back</span>
+          Quay lại
+        </TextButton>
         {/* Hero Section */}
         <div className='flex flex-col md:flex-row items-center gap-6'>
           {album ? 
@@ -107,19 +119,20 @@ export default function AlbumContent(params: { id: string }) {
                         id: s.song.id,
                         title: s.song.title,
                         duration: s.song.duration || null,
-                        coverImage: s.song.thumbnailurl || '/assets/placeholder.jpg',
-                        thumbnailurl: s.song.thumbnailurl || '',
-                        artists: s.song.artists?.map(a => ({ artist: { id: '', name: a.name } })) || []
+                        thumbnailurl: s.song.thumbnailurl || '/assets/placeholder.jpg',
+                        artists: s.song.artists?.map(a => ({ artist: { id: a.id || '#', name: a.name } })) || []
                       };
                     });
                     
-                    playAlbum(mappedSongs);
+                    playList(mappedSongs);
                   } catch (e) {
                     console.error('Error playing album:', e);
                   }
                 }}
               />
-              <IconSmallButton>
+              <IconSmallButton onClick={() => {
+                navigator.clipboard.writeText(`${window.location.href}`);
+              }}>
                 <span className="material-symbols-outlined">share</span>
               </IconSmallButton>
               <ToggleButtonFilled>
@@ -140,7 +153,7 @@ export default function AlbumContent(params: { id: string }) {
               title: song.song.title,
               duration: song.song.duration,
               views: song.song.views,
-              coverImage: song.song.thumbnailurl,
+              thumbnailurl: song.song.thumbnailurl,
               artists: song.song.artists?.map(a => ({ name: a.name })) || []
             }
           }))} />
@@ -161,6 +174,6 @@ export default function AlbumContent(params: { id: string }) {
     );
   } catch (e) {
     console.error(e);
-    return <ErrorComponent onReloadClick={fetchData} />;
+    return <ErrorComponent onReloadClick={refetch} />;
   }
 }

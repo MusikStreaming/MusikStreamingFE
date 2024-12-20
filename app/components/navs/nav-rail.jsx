@@ -38,6 +38,54 @@ const items = {
     },
   };
 
+  const managerItems = {
+    'dashboard': {
+        text: 'Bảng điều khiển',
+        icon: 'dashboard',
+        badgevalue: 0,
+        href: '/manager',
+        type: 0
+    },
+    'album': {
+        text: 'Discography',
+        icon: 'album',
+        badgevalue: 0,
+        href: '/manager/discography',
+        type: 0
+    },
+    'settings': {
+        text: 'Cài đặt',
+        icon: 'settings',
+        badgevalue: 0,
+        href: '/manager/settings',
+        type: 0
+    }
+}
+
+const adminItems = {
+    'admin_dashboard': {
+        text: 'Admin Dashboard',
+        icon: 'admin_panel_settings',
+        badgevalue: 0,
+        href: '/admin',
+        type: 0
+    },
+    'user_management': {
+        text: 'User Management',
+        icon: 'group',
+        badgevalue: 0,
+        href: '/admin/users',
+        type: 0
+    },
+    'admin_settings': {
+        text: 'Admin Settings',
+        icon: 'settings',
+        badgevalue: 0,
+        href: '/admin/settings',
+        type: 0
+    }
+};
+
 /**
  * NavRail component renders a navigation rail with common and pinned items.
  * @param {Object} props - Component properties.
@@ -225,8 +273,6 @@ export default function NavRail({ className, items: customItems }) {
                 relative flex-col
                 bg-[--md-sys-color-surface-container-low] rounded-2xl
                 overflow-y-auto overflow-x-hidden
-                md:h-[calc(100vh-220px)]
-                h-[calc(100vh-328px)]
                 transition-all duration-200 ease-in-out
                 ${extended ? 
                     'min-w-[280px] max-w-[600px] w-[20vw]' : 
@@ -263,43 +309,70 @@ export default function NavRail({ className, items: customItems }) {
                 </button>
                 <div className="flex-col mb-4">
                     {
-                        Object.keys(navigationItems).map((key) => {
+                        pathname.includes('/admin') ?
+                        Object.keys(adminItems).map((key) => {
+                            const item = adminItems[key];
+                            return <NavRailCommonItem
+                                key={key}
+                                icon={item.icon}
+                                text={item.text}
+                                showBadge={item.badgevalue > 0}
+                                badgevalue={item.badgevalue}
+                                selected={pathname === item.href}
+                                href={item.href}
+                                extended={extended}
+                            />
+                        })
+                        : pathname.includes('/manager') ?
+                        Object.keys(managerItems).map((key) => {
+                            const item = managerItems[key];
+                            return <NavRailCommonItem
+                                key={key}
+                                icon={key}
+                                text={item.text}
+                                showBadge={item.badgevalue > 0}
+                                badgevalue={item.badgevalue}
+                                selected={pathname === item.href}
+                                href={item.href}
+                                extended={extended}
+                            />
+                        })
+                        : Object.keys(navigationItems).map((key) => {
                             const item = navigationItems[key];
-                            
                             const imgSrc = item.img?.src || "/favicon.ico";
-                            if (navigationItems[key].type === 0)
+                            if (item.type === 0)
                                 return <NavRailCommonItem
                                     key={key}
                                     icon={key}
-                                    text={navigationItems[key].text}
-                                    showBadge={navigationItems[key].badgevalue > 0}
-                                    badgevalue={navigationItems[key].badgevalue}
-                                    selected={pathname === navigationItems[key].href}
-                                    href={navigationItems[key].href}
+                                    text={item.text}
+                                    showBadge={item.badgevalue > 0}
+                                    badgevalue={item.badgevalue}
+                                    selected={pathname === item.href}
+                                    href={item.href}
                                     extended={extended}
                                 />
-                            else if (navigationItems[key].type === 1)
+                            else if (item.type === 1)
                                 return <NavRailPinnedItem
                                     key={key}
                                     imgSrc={imgSrc}
-                                    text={navigationItems[key].text}
-                                    width={navigationItems[key].img.width}
-                                    selected={pathname === navigationItems[key].href}
-                                    href={navigationItems[key].href}
+                                    text={item.text}
+                                    width={item.img.width}
+                                    selected={pathname === item.href}
+                                    href={item.href}
                                     extended={extended}
                                 />
                         })
                     }
                 </div>
                 
-                {showPinnedSection && (
+                {showPinnedSection && !pathname.includes('/manager') && !pathname.includes('/admin') && (
                     <>
                         <div className="px-4">
                             <hr className="border-[--md-sys-color-outline-variant]"/>
                         </div>
                         <div className={`flex-col ${extended ? "gap-0" : "gap-2"} h-fit flex`}>
                             {
-                                (hasCookie('session')) &&
+                                (hasCookie('session')) ? 
                                 Object.keys(pinnedItems).map((key) => {
                                     const pinned = pinnedItems[key];
                                     const imgSrc = pinned.img?.src || "/favicon.ico";
@@ -307,13 +380,14 @@ export default function NavRail({ className, items: customItems }) {
                                     return <NavRailPinnedItem
                                         key={key}
                                         imgSrc={imgSrc}
-                                        text={pinnedItems[key].text}
-                                        width={pinnedItems[key].img.width}
-                                        href={pinnedItems[key].href}
+                                        text={pinned.text}
+                                        width={pinned.img.width}
+                                        href={pinned.href}
                                         extended={extended}
-                                        selected={pathname === pinnedItems[key].href}
+                                        selected={pathname === pinned.href}
                                     />
                                 })
+                                : null
                             }
                         </div>
                     </>

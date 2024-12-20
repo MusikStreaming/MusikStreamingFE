@@ -21,6 +21,8 @@ export default function AddAlbum() {
         return { ...state, visibility: action.payload };
       case 'SET_ALBUM_COVER':
         return { ...state, albumCover: action.payload };
+      case 'SET_ARTIST':
+        return { ...state, artistId: action.payload };
       default:
         return state;
     }
@@ -35,6 +37,7 @@ export default function AddAlbum() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [albumCoverPreview, setAlbumCoverPreview] = useState(null);
   const [submitStatus, setSubmitStatus] = useState({ type: '', message: '' });
+  const [artists, setArtists] = useState([]);
 
   const onDropAlbumCover = useCallback((acceptedFiles) => {
     if (!Array.isArray(acceptedFiles) || acceptedFiles.length === 0) {
@@ -61,6 +64,14 @@ export default function AddAlbum() {
       debouncedSearchArtist.cancel();
     };
   }, [debouncedSearchArtist]);
+
+  useEffect(() => {
+    // TODO: Fetch artists list
+    setArtists([
+      { id: 1, name: 'Artist 1' },
+      { id: 2, name: 'Artist 2' },
+    ]);
+  }, []);
 
   const handleAddAlbum = async () => {
     try {
@@ -145,6 +156,16 @@ export default function AddAlbum() {
           }}
           tabIndex="0"
           aria-labelledby="visibility-label"
+        />
+      </div>
+
+      <div role="group" aria-label="Artist selection">
+        <label className="text-[--md-sys-color-on-surface-variant]" id="artist-label">Artist</label>
+        <Dropdown 
+          options={artists.map(a => ({ value: a.id, label: a.name }))}
+          onChange={(value) => formDispatch({ type: 'SET_ARTIST', payload: value })}
+          tabIndex="0"
+          aria-labelledby="artist-label"
         />
       </div>
 

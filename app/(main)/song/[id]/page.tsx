@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 export default async function SongPage({ params }: { params: Promise<{ id: string }> }) {
   const id = (await params).id;
   const data = await fetchSongByIdServer(id);
-  const initialData = data?.thumbnailurl ? data : null;
+  const initialData = data?.thumbnailurl ? { ...data, genre: data.genre ?? '' } : null;
   
   return (
     <div className="w-full max-w-full">

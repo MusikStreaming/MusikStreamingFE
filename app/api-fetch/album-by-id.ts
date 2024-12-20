@@ -39,6 +39,14 @@ const AlternativeAlbumSchema = z.object({
 
 export default async function fetchAlbumById(id: string): Promise<AlbumDetails> {
   try {
+    if (localStorage && localStorage.getItem(
+      `playlist-${id}`
+    )) {
+      console.log("Fetching album with ID:", id, "from local storage");
+      const data = JSON.parse(localStorage.getItem(`playlist-${id}`) as string);
+      console.log("Successfully fetched album data from local storage:", data);
+      return data;
+    }
     console.log("Fetching album with ID:", id);
     const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/v1/collection/${id}`);
     console.log("Raw API response:", res.data);
@@ -47,6 +55,7 @@ export default async function fetchAlbumById(id: string): Promise<AlbumDetails> 
       console.log("Attempting to parse with AlbumSchema");
       const data = AlbumSchema.parse(res.data);
       console.log("Successfully parsed album data:", data);
+      localStorage.setItem(`playlist-${id}`, JSON.stringify(data));
       return data;
     } catch (parseError) {
       console.log("Failed to parse with AlbumSchema, trying AlternativeAlbumSchema");
@@ -54,6 +63,7 @@ export default async function fetchAlbumById(id: string): Promise<AlbumDetails> 
       
       const alternativeData = AlternativeAlbumSchema.parse(res.data);
       console.log("Successfully parsed with AlternativeAlbumSchema:", alternativeData.data);
+      localStorage.setItem(`playlist-${id}`, JSON.stringify(alternativeData.data));
       return alternativeData.data;
     }
   } catch (error) {

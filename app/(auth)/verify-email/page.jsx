@@ -11,7 +11,6 @@ export default function VerifyEmailPage() {
         <h1 className='text-2xl font-bold'>Cảm ơn bạn đã đăng ký dịch vụ MusikStreaming</h1>
         <div className="flex flex-col gap-2">
             <p className='text-sm text-[--md-sys-color-on-surface-variant]'>Chúng tôi đã gửi email xác nhận đến email của bạn. Vui lòng kiểm tra email và xác nhận để hoàn tất quá trình đăng ký.</p>
-            <p className='text-sm text-[--md-sys-color-on-surface-variant]'>Bạn có thể tiếp tục sử dụng dịch vụ trong vòng 24 giờ tới mà không cần xác thực email. Sau 24 giờ, bạn cần xác thực email để tiếp tục sử dụng dịch vụ.</p>
         </div>
         <div className="flex flex-col gap-4">
             <div className='bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary] rounded-full p-2 flex items-center gap-2'>
