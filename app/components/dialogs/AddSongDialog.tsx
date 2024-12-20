@@ -105,13 +105,25 @@ const AddSongDialog: React.FC<AddSongDialogProps> = ({ isOpen, onClose, onSucces
     }
   };
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleSave = async () => {
+    setIsLoading(true);
     const token = getCookie('session_token');
     const formData = new FormData();
 
     formData.append('title', songData.title);
     formData.append('genre', songData.genre);
     formData.append('releasedate', songData.releasedate);
+    if (audioFile) {
+      const audio = new Audio(URL.createObjectURL(audioFile));
+      await new Promise((resolve) => {
+        audio.onloadedmetadata = () => {
+          setSongData(prev => ({ ...prev, duration: Math.round(audio.duration) }));
+          resolve(undefined);
+        };
+      });
+    }
     formData.append('duration', songData.duration.toString());
     formData.append('artists', songData.artists.map(a => a.id).join(','));
     if (songData.file) {
@@ -122,7 +134,7 @@ const AddSongDialog: React.FC<AddSongDialogProps> = ({ isOpen, onClose, onSucces
       // First, create the song metadata
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/song`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Authorization': `Bearer ${token}`,
           'cache-control': 'no-cache'
         },
@@ -148,7 +160,7 @@ const AddSongDialog: React.FC<AddSongDialogProps> = ({ isOpen, onClose, onSucces
         await fetch(url, {
           method: 'PUT',
           body: audioFile,
-          headers: { 
+          headers: {
             'Content-Type': audioFile.type,
             'cache-control': 'no-cache'
           }
@@ -159,6 +171,8 @@ const AddSongDialog: React.FC<AddSongDialogProps> = ({ isOpen, onClose, onSucces
       onClose();
     } catch (error) {
       console.error('Error creating song:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -215,6 +229,7 @@ const AddSongDialog: React.FC<AddSongDialogProps> = ({ isOpen, onClose, onSucces
               <div key={artist.id} className="flex items-center justify-center gap-2 bg-[--md-sys-color-surface-container] px-2 py-1 rounded-md">
                 <span>{artist.name}</span>
                 <button
+                  type="button"
                   onClick={() => setSongData({
                     ...songData,
                     artists: songData.artists.filter(a => a.id !== artist.id)
@@ -242,6 +257,7 @@ const AddSongDialog: React.FC<AddSongDialogProps> = ({ isOpen, onClose, onSucces
                 <div
                   key={artist.id}
                   onClick={() => handleArtistAdd(artist)}
+                  onKeyDown={() => handleArtistAdd(artist)}
                   className="px-4 py-2 cursor-pointer hover:bg-[--md-sys-color-surface-container]"
                 >
                   {artist.name}
@@ -280,14 +296,19 @@ const AddSongDialog: React.FC<AddSongDialogProps> = ({ isOpen, onClose, onSucces
         </div>
 
         <div className="flex justify-end gap-2 mt-4">
-          <button
+            <button
+            type='button'
             onClick={handleSave}
-            disabled={!songData.title || songData.artists.length === 0}
-            className="px-4 py-2 bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary] rounded-md disabled:opacity-50"
-          >
+            disabled={!songData.title || songData.artists.length === 0 || isLoading}
+            className="px-4 py-2 bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary] rounded-md disabled:opacity-50 flex items-center gap-2"
+            >
+            {isLoading && (
+              <span className="animate-spin material-symbols-outlined">progress_activity</span>
+            )}
             Add Song
-          </button>
+            </button>
           <button
+            type='button'
             onClick={onClose}
             className="px-4 py-2 bg-[--md-sys-color-surface-variant] text-[--md-sys-color-on-surface-variant] rounded-md"
           >

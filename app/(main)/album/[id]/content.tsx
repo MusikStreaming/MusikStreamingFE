@@ -120,7 +120,7 @@ export default function AlbumContent(params: { id: string }) {
                         title: s.song.title,
                         duration: s.song.duration || null,
                         thumbnailurl: s.song.thumbnailurl || '/assets/placeholder.jpg',
-                        artists: s.song.artists?.map(a => ({ artist: { id: '', name: a.name } })) || []
+                        artists: s.song.artists?.map(a => ({ artist: { id: a.id || '#', name: a.name } })) || []
                       };
                     });
                     

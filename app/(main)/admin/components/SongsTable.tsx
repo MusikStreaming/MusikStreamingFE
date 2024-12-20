@@ -79,7 +79,17 @@ export default function SongsTable() {
 
   const handleDelete = (id: string) => {
     if (!confirm('Are you sure you want to delete this song?')) return;
-    deleteMutation.mutate(id);
+    
+    // Disable the delete button while mutation is in progress
+    if (deleteMutation.isPending) return;
+    
+    // Show optimistic updates or loading state
+    deleteMutation.mutate(id, {
+      onError: (error) => {
+        // Optionally show error toast/message
+        console.error('Failed to delete song:', error);
+      }
+    });
   };
 
   const handleRowClick = (song: Song) => {

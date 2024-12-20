@@ -17,6 +17,7 @@ export type AlbumDetails = {
       duration?: number | null;
       views?: number | null;
       artists?: {
+        id?: string;
         name: string;
       }[];
     }

@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { getCookie } from 'cookies-next';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Input from '../inputs/outlined-input';
 import { Song } from '@/app/model/song';
 
@@ -35,6 +36,7 @@ interface EditSongDialogProps {
 }
 
 const EditSongDialog: React.FC<EditSongDialogProps> = ({ isOpen, onClose, onSuccess, song }) => {
+  const queryClient = useQueryClient();
   const [songData, setSongData] = useState<EditSongData>({
     id: song.id,
     title: song.title,
@@ -44,42 +46,55 @@ const EditSongDialog: React.FC<EditSongDialogProps> = ({ isOpen, onClose, onSucc
     duration: song.duration || 0
   });
   const [artistSearch, setArtistSearch] = useState('');
-  const [artistResults, setArtistResults] = useState<SearchArtist[]>([]);
   const [selectedArtists, setSelectedArtists] = useState(song.artists);
 
-  useEffect(() => {
-    const searchArtists = async () => {
-      console.log(artistSearch);
-      if (!artistSearch) {
-        setArtistResults([]);
-        return;
-      }
-
+  // Query for searching artists
+  const { data: artistResults = [] } = useQuery<SearchArtist[]>({
+    queryKey: ['artistSearch', artistSearch],
+    queryFn: async () => {
+      if (!artistSearch) return [];
       const token = getCookie('session_token');
-      try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/v1/search/${artistSearch}/artists`,
-          {
-            headers: { 
-              'Authorization': `Bearer ${token}`,
-              'cache-control': 'no-cache'
-            }
-            
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/v1/search/${artistSearch}/artists`,
+        {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'cache-control': 'no-cache'
           }
-        );
-        if (response.ok) {
-          const data = await response.json() as SearchArtistResponse;
-          setArtistResults(data.data.artists);
-          console.log(artistResults);
         }
-      } catch (error) {
-        console.error('Error searching artists:', error);
-      }
-    };
+      );
+      if (!response.ok) throw new Error('Failed to search artists');
+      const data = await response.json() as SearchArtistResponse;
+      return data.data.artists;
+    },
+    enabled: artistSearch.length > 0,
+    staleTime: 10000
+  });
 
-    const debounce = setTimeout(searchArtists, 300);
-    return () => clearTimeout(debounce);
-  }, [artistSearch, artistResults]);
+  // Mutation for updating song
+  const updateSongMutation = useMutation({
+    mutationFn: async (data: EditSongData) => {
+      const token = getCookie('session_token');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/song/${song.id}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+      if (!response.ok) throw new Error('Failed to update song');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['songs'] });
+      onSuccess();
+      onClose();
+    },
+    onError: (error) => {
+      console.error('Error updating song:', error);
+    }
+  });
 
   const handleArtistAdd = (artist: SearchArtist) => {
     if (!songData.artists.includes(artist.id)) {
@@ -88,36 +103,12 @@ const EditSongDialog: React.FC<EditSongDialogProps> = ({ isOpen, onClose, onSucc
         artists: [...prev.artists, artist.id]
       }));
       setSelectedArtists(prev => [...prev, { artist: { id: artist.id, name: artist.name } }]);
-      console.log(songData.artists);
       setArtistSearch('');
     }
   };
 
-  const handleSave = async () => {
-    const token = getCookie('session_token');
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/song/${song.id}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          title: songData.title,
-          artists: songData.artists,
-          releasedate: songData.releasedate,
-          genre: songData.genre,
-          duration: songData.duration
-        })
-      });
-
-      if (!response.ok) throw new Error('Failed to update song');
-
-      onSuccess();
-      onClose();
-    } catch (error) {
-      console.error('Error updating song:', error);
-    }
+  const handleSave = () => {
+    updateSongMutation.mutate(songData);
   };
 
   if (!isOpen) return null;
@@ -208,9 +199,12 @@ const EditSongDialog: React.FC<EditSongDialogProps> = ({ isOpen, onClose, onSucc
       <div className="flex justify-end gap-2 mt-4">
         <button
           onClick={handleSave}
-          disabled={!songData.title || songData.artists.length === 0}
-          className="px-4 py-2 bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary] rounded-md disabled:opacity-50"
+          disabled={updateSongMutation.isPending || !songData.title || songData.artists.length === 0}
+          className="px-4 py-2 bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary] rounded-md disabled:opacity-50 flex items-center gap-2"
         >
+          {updateSongMutation.isPending && (
+            <div className="animate-spin h-4 w-4 border-2 border-[--md-sys-color-on-primary] border-t-transparent rounded-full" />
+          )}
           Save Changes
         </button>
         <button

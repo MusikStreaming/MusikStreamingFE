@@ -25,7 +25,7 @@ export function AlbumCard(props: CardProps) {
             thumbnailurl: s.song.thumbnailurl || '/assets/placeholder.jpg',
             artists: s.song.artists?.map(a => ({ 
               artist: {
-                id: '',  // Make sure we're using the artist's actual ID
+                id: a.id || "#",  // Make sure we're using the artist's actual ID
                 name: a.name || ''
               }
             })) || []
