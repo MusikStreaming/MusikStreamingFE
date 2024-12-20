@@ -1,4 +1,4 @@
-;
+'use client'
 import TextButton from '@/app/components/buttons/text-button';
 import { useRouter } from 'next/navigation';
 import { usePathname } from 'next/navigation';

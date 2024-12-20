@@ -5,7 +5,7 @@
  */
 
 import { Inter } from "next/font/google";
-import "../globals.css";
+import "./globals.css";
 // import "material-symbols/outlined.css";
 import NavBar from "@/app/components/navs/nav-bar";
 import NavRail from "@/app/components/navs/nav-rail";
@@ -15,7 +15,8 @@ import type { Metadata } from "next";
 import { MediaProvider } from "@/app/contexts/media-context";
 import QueueContainer from '@/app/components/audio/queue-container';
 import { LikedProvider } from "@/app/contexts/liked-context";
-import ReactQueryProvider from "../contexts/query-provider";
+import ReactQueryProvider from "./contexts/query-provider";
+import { Suspense } from "react";
 
 const inter = Inter({
   weight: ["400", "500", "600", "700"],
@@ -74,22 +75,24 @@ export default function RootLayout({ children }: RootLayoutProps): JSX.Element {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </head>
       <body className={`${inter.className} antialiased flex flex-col h-screen`}>
-        <Providers>
-          <NavBar />
-          <div className="flex p-4 md:gap-4 flex-1 overflow-hidden">
-            <NavRail />
-            <div className="flex-1 overflow-hidden rounded-xl">
-              <div className="h-full w-full bg-[--md-sys-color-surface-container-low] rounded-xl md:rounded-l-xl px-2 md:px-4 py-6 overflow-y-auto">
-                {children}
-              </div>
+        <Suspense>
+          <Providers>
+            <NavBar />
+            <div className="flex p-4 md:gap-4 flex-1 overflow-hidden">
+              <NavRail />
+                <div className="flex-1 overflow-hidden rounded-xl">
+                  <div className="h-full w-full bg-[--md-sys-color-surface-container-low] rounded-xl md:rounded-l-xl px-2 md:px-4 py-6 overflow-y-auto">
+                    {children}
+                  </div>
+                </div>
+              <QueueContainer />
             </div>
-            <QueueContainer />
-          </div>
-          <div className="shrink-0">
-            <SongControl />
-            <BottomNavBar />
-          </div>
-        </Providers>
+            <div className="shrink-0">
+              <SongControl />
+              <BottomNavBar />
+            </div>
+          </Providers>
+        </Suspense>
       </body>
     </html>
   );
