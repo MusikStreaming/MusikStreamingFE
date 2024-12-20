@@ -69,9 +69,14 @@ export default function NavBar() {
     redirectToLogin(pathname);
   };
 
+  const shouldHide = pathname === '/login' || pathname === '/sign-up'
+                    || pathname === '/forgot-password' || pathname === '/new-password' 
+                    || pathname === '/verify-email'
+                    || pathname.includes('/auth');
+
   return (
     <Suspense>
-      <div className="nav-bar flex flex-grow-0 pl-4 md:pl-0 pt-3 items-center justify-between w-full top-0 max-h-24 sticky bg-inherit z-[1000]" autoFocus={true}>
+      <div className={`nav-bar flex flex-grow-0 pl-4 md:pl-0 pt-3 items-center justify-between w-full top-0 max-h-24 sticky bg-inherit z-[1000] ${shouldHide ? "hidden" : ""}`} autoFocus={true}>
         <div className='flex mr-3'>
           <div className="nav-bar-button-container hidden md:flex md:p-3 md:gap-3 md:items-center">
             <IconSmallButton className="app-bar-button" onClick={() => {

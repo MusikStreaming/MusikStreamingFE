@@ -11,7 +11,7 @@ export default function Songs() {
     const { data: songs, error, isLoading: loading } = useQuery({
         queryKey: ["songs"], 
         queryFn:fetchAllSongs,
-        staleTime: 5000
+        staleTime: 5000 * 60
     });
 
     if (error) {

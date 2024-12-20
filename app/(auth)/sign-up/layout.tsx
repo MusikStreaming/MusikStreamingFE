@@ -16,7 +16,7 @@ export default function SignupPageLayout({
   children: React.ReactNode;  
 }>){  
   return (  
-      <main className="auth-layout auth-layout--login" role="main" aria-label="Login page">  
+      <main className="w-full h-full flex items-center justify-center" role="main" aria-label="Login page">  
       {children}  
       </main>  
   )  
