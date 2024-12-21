@@ -70,6 +70,7 @@ export default function SongContent(params: { id: string; initialData: SongDetai
   const {
     playSong,
     pauseSong,
+    resumeSong,
     isPlaying,
     currentSong,
     progress,
@@ -127,12 +128,14 @@ export default function SongContent(params: { id: string; initialData: SongDetai
   const isThisSongButPaused = currentSong?.id === song?.id && !isPlaying;
   const handlePlayClick = async () => {
     if (song) {
-      if (isPlaybackDisabled || isPlayingOtherSong || isThisSongButPaused) {
-        const songUrl = await fetchSongById(song.id);
-        if (songUrl) {
-          clearQueue();
-          playSong(mapSongToPlayable(song));
-        }
+      console.log(`isPlaybackDisabled: ${isPlaybackDisabled}`);
+      console.log(`isPlayingOtherSong: ${isPlayingOtherSong}`);
+      console.log(`isThisSongButPaused: ${isThisSongButPaused}`);
+      if (isPlaybackDisabled || isPlayingOtherSong) {
+        clearQueue();
+        playSong(mapSongToPlayable(song));
+      } else if (isThisSongButPaused) {
+        resumeSong() // Resume the song
       } else {
         pauseSong();
       }
@@ -329,7 +332,7 @@ export default function SongContent(params: { id: string; initialData: SongDetai
                 </PlainTooltip>
                 <PlayButton
                   className="bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary] w-12 h-12"
-                  onClick={() => song && (isPlaying && currentSong?.id === song?.id ? pauseSong() : playSong(mapSongToPlayable(song)))}
+                  onClick={handlePlayClick}
                   isPlaying={isPlaying && currentSong?.id === song?.id}
                   songId={song?.id}
                 />
