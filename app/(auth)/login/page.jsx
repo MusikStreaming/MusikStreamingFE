@@ -76,7 +76,10 @@ export default function LoginPage() {
                     return false;
                 }
             };
-            window.location.href = isValidUrl(sanitizedReturnUrl) ? sanitizedReturnUrl : '/';
+            const isRelativeUrl = (url) => {
+                return url.startsWith('/');
+            };
+            window.location.href = isValidUrl(sanitizedReturnUrl) && isRelativeUrl(sanitizedReturnUrl) ? sanitizedReturnUrl : '/';
 
             return { success: true };
         } catch (error) {
