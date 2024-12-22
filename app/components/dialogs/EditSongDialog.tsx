@@ -3,6 +3,7 @@ import { getCookie } from 'cookies-next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Input from '../inputs/outlined-input';
 import { Song } from '@/app/model/song';
+import DialogFrame from './dialog-frame';
 
 interface SearchArtist {
   id: string;
@@ -114,10 +115,8 @@ const EditSongDialog: React.FC<EditSongDialogProps> = ({ isOpen, onClose, onSucc
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-[--md-sys-color-surface] p-6 rounded-md w-96">
+    <DialogFrame>
         <h2 className="text-xl font-bold mb-4">Edit Song</h2>
-
         <Input
           type="text"
           value={songData.title}
@@ -214,8 +213,7 @@ const EditSongDialog: React.FC<EditSongDialogProps> = ({ isOpen, onClose, onSucc
           Cancel
         </button>
       </div>
-    </div>
-    </div >
+    </DialogFrame>
   );
 };
 

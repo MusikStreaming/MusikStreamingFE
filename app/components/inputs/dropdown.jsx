@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import OutlinedIcon from '../icons/outlined-icon';
 
 const Dropdown = ({ options, defaultValue, onChange }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,15 +14,13 @@ const Dropdown = ({ options, defaultValue, onChange }) => {
   return (
     <div className="relative border border-[--md-sys-color-outline] rounded-md focus-within:border-[--md-sys-color-primary]">
       <button
-        className="w-full px-4 py-2 text-left bg-[--md-sys-color-surface] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[--md-sys-color-primary] text-[--md-sys-color-on-surface]"
+        className="w-full px-4 py-2 text-left bg-[--md-sys-color-surface] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[--md-sys-color-primary] text-[--md-sys-color-on-surface] transition-all duration-100 ease-in-out" 
         onClick={() => setIsOpen(!isOpen)}
         type="button"
       >
         <md-ripple />
-        {selectedOption.label || selectedOption}
-        <span className="absolute inset-y-0 right-0 flex items-center pr-2">
-          <span className="material-symbols-outlined">expand_more</span>
-        </span>
+        {selectedOption?.label || selectedOption}
+        <OutlinedIcon icon={isOpen ? "expand_less" : "expand_more"} className='absolute inset-y-0 right-0 flex items-center pr-2'/>
       </button>
 
       {isOpen && (
@@ -34,7 +33,7 @@ const Dropdown = ({ options, defaultValue, onChange }) => {
                 onClick={() => handleSelect(option)}
               >
                 <md-ripple />
-                {option.label || option}
+                {option?.label || option}
               </li>
             ))}
           </ul>

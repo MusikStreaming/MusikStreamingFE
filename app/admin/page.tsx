@@ -6,6 +6,7 @@ import UsersTable from './components/UsersTable';
 import SongsTable from './components/SongsTable';
 import AlbumsTable from './components/AlbumsTable';
 import PlaylistsTable from './components/PlaylistsTable';
+import ArtistTable from './components/ArtistTable';
 import { Suspense } from 'react';
 
 export default function AdminPage() {
@@ -35,8 +36,8 @@ export default function AdminPage() {
   return (
     <Suspense>
       <div>
-        <div className="flex gap-4 mb-4">
-          {['users', 'songs', 'albums', 'playlists'].map((tab) => (
+        <div className="flex gap-4 mb-4 w-full overflow-x-auto">
+          {['users', 'artists', 'songs', 'albums', 'playlists'].map((tab) => (
             <button
               key={tab}
               className={`px-4 py-2 rounded ${
@@ -51,6 +52,7 @@ export default function AdminPage() {
           ))}
         </div>
         {activeTab === 'users' && <UsersTable />}
+        {activeTab === 'artists' && <ArtistTable/>}
         {activeTab === 'songs' && <SongsTable />}
         {activeTab === 'albums' && <AlbumsTable />}
         {activeTab === 'playlists' && <PlaylistsTable />}

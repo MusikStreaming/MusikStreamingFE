@@ -10,6 +10,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { redirectToLogin } from '@/app/services/auth.service';
 import Image from 'next/image';
 import { useSearch } from '@/app/hooks/useSearch';
+import OutlinedIcon from '../icons/outlined-icon';
 
 export default function NavBar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -82,16 +83,12 @@ export default function NavBar() {
             <IconSmallButton className="app-bar-button" onClick={() => {
               router.back();
             }}>
-              <span className="material-symbols-outlined">
-                arrow_back
-              </span>
+              <OutlinedIcon icon='arrow_back'/>
             </IconSmallButton>
             <IconSmallButton onClick={() => {
               router.forward();
             }}>
-              <span className="material-symbols-outlined">
-                arrow_forward
-              </span>
+              <OutlinedIcon icon='arrow_forward'/>
             </IconSmallButton>
           </div>
           <div className="nav-bar-title-container flex items-center gap-3">

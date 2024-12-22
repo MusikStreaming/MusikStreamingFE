@@ -24,6 +24,7 @@ import {
 } from "@/app/components/tables/table";
 import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
 import TableSkeleton from './TableSkeleton';
+import OutlinedIcon from '../icons/outlined-icon';
 
 export interface Column<T> {
   header: string;
@@ -126,9 +127,10 @@ const PaginationControls = React.memo(({
       <button
         onClick={handlePreviousPage}
         disabled={disabled || page === 1}
-        className="px-4 py-2 bg-[--md-sys-color-surface-variant] rounded-md disabled:opacity-50"
+        className="px-4 py-2 bg-[--md-sys-color-surface-variant] rounded-md disabled:opacity-50 flex"
+        aria-label='Previous page'
       >
-        Previous
+        <OutlinedIcon icon='arrow_back'/>
       </button>
       {showPageInput && (
         <div className="flex items-center gap-2">
@@ -150,9 +152,10 @@ const PaginationControls = React.memo(({
       <button
         onClick={handleNextPage}
         disabled={disabled || (totalPages ? page >= totalPages : false)}
-        className="px-4 py-2 bg-[--md-sys-color-surface-variant] rounded-md disabled:opacity-50"
+        className="px-4 py-2 bg-[--md-sys-color-surface-variant] rounded-md disabled:opacity-50 flex"
+        aria-label='Next page'
       >
-        Next
+        <OutlinedIcon icon="arrow_forward"/>
       </button>
     </div>
   );

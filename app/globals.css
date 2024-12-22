@@ -210,7 +210,7 @@ body {
 
 /* Track */
 ::-webkit-scrollbar-track {
-  width: 8px;
+  width: 4px;
   background: var(--md-sys-color-surface-container); 
   border-radius: 9999px;
 }
@@ -224,7 +224,7 @@ body {
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-  width: 8px;
+  width: 4px;
   background: var(--md-sys-color-outline);
 }
 

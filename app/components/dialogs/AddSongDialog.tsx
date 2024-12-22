@@ -3,11 +3,13 @@ import { getCookie } from 'cookies-next';
 import Input from '../inputs/outlined-input';
 import { formatDuration } from '@/app/utils/time';
 import DragNDropZone from '../inputs/dragndropzone';
+import DialogFrame from './dialog-frame';
+import ArtistChip from '../inputs/artist-chip';
 
 interface SearchArtist {
   id: string;
   name: string;
-  avatarurl: string;
+  avatarurl?: string;
 }
 
 interface SearchArtistResponse {
@@ -64,6 +66,7 @@ const AddSongDialog: React.FC<AddSongDialogProps> = ({ isOpen, onClose, onSucces
       }
 
       const token = getCookie('session_token');
+      console.log(token)
       try {
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/v1/search/${artistSearch}/artists`,
@@ -103,10 +106,17 @@ const AddSongDialog: React.FC<AddSongDialogProps> = ({ isOpen, onClose, onSucces
     if (!songData.artists.find(a => a.id === artist.id)) {
       setSongData(prev => ({
         ...prev,
-        artists: [...prev.artists, { id: artist.id, name: artist.name }]
+        artists: [...prev.artists, { id: artist.id, name: artist.name, avatarurl: artist.avatarurl }]
       }));
       setArtistSearch('');
     }
+  };
+
+  const handleArtistDelete = (artist: SearchArtist) => {
+    setSongData(prev => ({
+      ...prev,
+      artists: prev.artists.filter(a => a.id !== artist.id)
+    }));
   };
 
   const [isLoading, setIsLoading] = useState(false);
@@ -114,6 +124,7 @@ const AddSongDialog: React.FC<AddSongDialogProps> = ({ isOpen, onClose, onSucces
   const handleSave = async () => {
     setIsLoading(true);
     const token = getCookie('session_token');
+    console.log(token)
     const formData = new FormData();
 
     formData.append('title', songData.title);
@@ -177,7 +188,6 @@ const AddSongDialog: React.FC<AddSongDialogProps> = ({ isOpen, onClose, onSucces
             'Content-Type': audioFile.type,
             'cache-control': 'no-cache'
           },
-          mode: 'no-cors' // Add this line
         });
       }
 
@@ -193,8 +203,7 @@ const AddSongDialog: React.FC<AddSongDialogProps> = ({ isOpen, onClose, onSucces
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-[--md-sys-color-surface] p-6 rounded-md w-96 flex flex-col gap-4">
+    <DialogFrame>
         <h2 className="text-xl font-bold ">Add New Song</h2>
 
         <DragNDropZone
@@ -240,19 +249,11 @@ const AddSongDialog: React.FC<AddSongDialogProps> = ({ isOpen, onClose, onSucces
         <div className="">
           <div className="flex flex-wrap gap-2 mb-2">
             {songData.artists.map((artist) => (
-              <div key={artist.id} className="flex items-center justify-center gap-2 bg-[--md-sys-color-surface-container] px-2 py-1 rounded-md">
-                <span>{artist.name}</span>
-                <button
-                  type="button"
-                  onClick={() => setSongData({
-                    ...songData,
-                    artists: songData.artists.filter(a => a.id !== artist.id)
-                  })}
-                  className="text-red-500 flex"
-                >
-                  <span className='material-symbols-outlined'>close</span>
-                </button>
-              </div>
+              <ArtistChip
+                key={artist.id}
+                artist={artist}
+                onDeleteClick={handleArtistDelete}
+              />
             ))}
           </div>
           <Input
@@ -329,8 +330,7 @@ const AddSongDialog: React.FC<AddSongDialogProps> = ({ isOpen, onClose, onSucces
             Cancel
           </button>
         </div>
-      </div>
-    </div>
+      </DialogFrame>
   );
 };
 

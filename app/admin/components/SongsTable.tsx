@@ -9,6 +9,7 @@ import PaginationTable from '@/app/components/tables/PaginationTable';
 import AddSongDialog from '@/app/components/dialogs/AddSongDialog';
 import EditSongDialog from '@/app/components/dialogs/EditSongDialog';
 import TextButton from '@/app/components/buttons/text-button';
+import OutlinedIcon from "@/app/components/icons/outlined-icon";
 
 interface Artist {
   artist: {
@@ -165,14 +166,16 @@ export default function SongsTable() {
             <button
               onClick={(e) => { e.stopPropagation(); handleRowClick(song); }}
               className="text-[--md-sys-color-primary]"
+              aria-label='Edit song'
             >
-              <span className='material-symbols-outlined'>edit</span>
+              <OutlinedIcon icon="edit" />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); handleDelete(song.id); }}
               className="text-[--md-sys-color-error]"
+              aria-label='Delete song'
             >
-              <span className='material-symbols-outlined'>delete</span>
+              <OutlinedIcon icon="delete" />
             </button>
           </div>
         )}

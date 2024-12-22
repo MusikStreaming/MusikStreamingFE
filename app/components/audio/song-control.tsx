@@ -15,6 +15,8 @@ import ToggleIconButtonDotted from '@/app/components/buttons/toggle-icon-button-
 import { useLiked } from '@/app/contexts/liked-context';
 import { Song } from '@/app/model/song';
 import ToggleButtonFilled from '../buttons/toggle-button';
+import OutlinedIcon from "@/app/components/icons/outlined-icon";
+import OutlinedFilledIcon from "@/app/components/icons/outlined-filled-icon";
 
 export default function SongControl() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -59,14 +61,14 @@ export default function SongControl() {
 
     const handleResize = () => {
       setShouldHide(
-        (pathname.includes('/song') && window.innerWidth < 768) 
-        || pathname.includes('/manager') 
-        || pathname.includes('/admin') 
-        || pathname.includes('/login') 
-        || pathname.includes('/sign-up') 
-        || pathname.includes('/forgot-password') 
-        || pathname.includes('/new-password') 
-        || pathname.includes('/verify-email') 
+        (pathname.includes('/song') && window.innerWidth < 768)
+        || pathname.includes('/manager')
+        || pathname.includes('/admin')
+        || pathname.includes('/login')
+        || pathname.includes('/sign-up')
+        || pathname.includes('/forgot-password')
+        || pathname.includes('/new-password')
+        || pathname.includes('/verify-email')
         || pathname.includes('/auth'));
     };
 
@@ -137,7 +139,8 @@ export default function SongControl() {
       'song-playing z-[1000] bg-[--md-sys-color-inverse-on-surface] flex-col transition-transform duration-300',
       shouldHide && 'hidden',
     )} onClick={() => {
-      if (window.innerWidth < 768 && currentSong?.id) router.push(`/song/${currentSong.id}`)}
+      if (window.innerWidth < 768 && currentSong?.id) router.push(`/song/${currentSong.id}`)
+    }
     }>
       <div className="p-4 gap-1 md:gap-4 flex flex-wrap items-center justify-between">
         <div className="song-title flex items-center gap-2 w-1/2 md:w-1/4">
@@ -169,7 +172,7 @@ export default function SongControl() {
             )}
           </div>
           <div className="song-title-info text-xs md:text-base md:w-full w-2/3 md:max-w-[300px] overflow-hidden">
-            <p 
+            <p
               ref={titleRef}
               className={twMerge(
                 "song-title-text block whitespace-nowrap text-nowrap",
@@ -187,10 +190,10 @@ export default function SongControl() {
             </p>
             {currentSong?.artists && currentSong.artists.length > 0 && (
               <p
-               ref={subRef}
-               className={twMerge(
-                "text-xs md:text-sm text-[--md-sys-color-outline] whitespace-nowrap text-nowrap",
-                isSubOverflowing && "animate-marquee"
+                ref={subRef}
+                className={twMerge(
+                  "text-xs md:text-sm text-[--md-sys-color-outline] whitespace-nowrap text-nowrap",
+                  isSubOverflowing && "animate-marquee"
                 )}>
                 {[...currentSong.artists].map((artist, index, array) => (
                   <span key={artist.artist.id}>
@@ -213,14 +216,13 @@ export default function SongControl() {
         </div>
         <div className="song-controls-container flex-col w-1/3">
           <div className="song-controls flex items-center justify-end md:justify-center gap-0 md:gap-4">
-            <IconSmallButton disabled={isDisabled} onClick={(e: React.MouseEvent)=>{
+            <IconSmallButton disabled={isDisabled} onClick={(e: React.MouseEvent) => {
               e.preventDefault()
               playPreviousSong()
             }}>
-              <span className={twMerge(
-                "material-symbols-outlined-filled",
+              <OutlinedFilledIcon icon="skip_previous" className={twMerge(
                 isDisabled && "opacity-50"
-              )}>skip_previous</span>
+              )} />
             </IconSmallButton>
             <PlayButton
               className={twMerge(
@@ -229,7 +231,7 @@ export default function SongControl() {
               )}
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
-                if (isPlaying) 
+                if (isPlaying)
                   pauseSong()
                 else resumeSong();
               }}
@@ -238,14 +240,13 @@ export default function SongControl() {
               songId={currentSong?.id}
             />
             <IconSmallButton disabled={isDisabled} onClick={
-              (e: React.MouseEvent)=>{
+              (e: React.MouseEvent) => {
                 e.stopPropagation()
                 playNextSong()
               }}>
-              <span className={twMerge(
-                "material-symbols-outlined-filled",
+              <OutlinedFilledIcon icon="skip_next" className={twMerge(
                 isDisabled && "opacity-50"
-              )}>skip_next</span>
+              )} />
             </IconSmallButton>
           </div>
           <div className="song-progress md:flex items-center gap-4 hidden">
@@ -276,27 +277,24 @@ export default function SongControl() {
         </div>
         <div className="right-controls w-1/4 items-end justify-end hidden md:flex">
           <ToggleIconButtonDotted>
-            <span className={isDisabled ? "opacity-50" : ""}>lyrics</span>
+            <OutlinedIcon icon="lyrics" className={isDisabled ? "opacity-50" : ""} />
           </ToggleIconButtonDotted>
           <ToggleIconButtonDotted onClick={toggleQueue} active={isQueueVisible}>
-            <span className={twMerge(
-              "material-symbols-outlined",
-            )}>queue_music</span>
+            <OutlinedIcon icon="queue_music" />
           </ToggleIconButtonDotted>
           <div className="volume flex items-center">
-            <IconSmallButton disabled={isDisabled}>
-              <span className={twMerge(
-                "material-symbols-outlined",
+            <IconSmallButton disabled={isDisabled} onClick={() => {
+              if (volume === 0) {
+                setVolume(volumeBeforeMute);
+                setIsMuted(false);
+              } else {
+                setVolume(0);
+                setIsMuted(true);
+              }
+            }} >
+              <OutlinedIcon icon={isMuted ? "volume_off" : "volume_up"} className={twMerge(
                 isDisabled && "opacity-50"
-              )} onClick={() => {
-                if (volume === 0) {
-                  setVolume(volumeBeforeMute);
-                  setIsMuted(false);
-                } else {
-                  setVolume(0);
-                  setIsMuted(true);
-                }
-              }}>{isMuted ? "volume_off" : "volume_up"}</span>
+              )} />
             </IconSmallButton>
             <input
               className={twMerge(

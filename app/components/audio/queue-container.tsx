@@ -60,12 +60,12 @@ export default function QueueContainer() {
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
   return (
-    <>
+    <div className='overflow-hidden rounded-2xl bg-[--md-sys-color-surface-container]'>
       <style>{slideInAnimation}</style>
       {/* Desktop queue */}
       <div 
         className={twMerge(
-          "song-queue-container max-h-[calc(100vh-228px)] overflow-y-auto bg-[--md-sys-color-surface] relative w-[var(--queue-width,500px)]",
+          "song-queue-container h-full overflow-y-auto rounded-2xl relative w-[var(--queue-width,500px)]",
           isQueueVisible ? twJoin(
             "md:block",
             "hidden",
@@ -85,7 +85,7 @@ export default function QueueContainer() {
           )}
           onMouseDown={handleMouseDown}
         />
-        <div className="bg-[--md-sys-color-surface] rounded-xl p-4">
+        <div className="bg-[--md-sys-color-surface-container] rounded-xl p-4">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold">Queue</h2>
           </div>
@@ -115,6 +115,6 @@ export default function QueueContainer() {
           <SongQueue />
         </div>
       </div>
-    </>
+    </div>
   );
 }
