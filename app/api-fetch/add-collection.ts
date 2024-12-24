@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getCookie } from 'cookies-next';
+import { createClient } from '@supabase/supabase-js';
 
 interface Album {
   file: File,
@@ -41,8 +42,8 @@ export async function addCollection(collection: Album) {
       headers: {
         'Authorization': `Bearer ${token}`,
         'cache-control': 'no-cache',
-        'cross-origin-resource-policy': 'cross-origin',
-        'access-control-allow-origin': '*'
+        // 'cross-origin-resource-policy': 'cross-origin',
+        // 'access-control-allow-origin': '*'
       }
     }
   )

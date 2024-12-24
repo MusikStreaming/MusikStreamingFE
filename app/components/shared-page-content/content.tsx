@@ -25,7 +25,7 @@ function formatDuration(duration: number) {
   return `${hours > 0 ? `${hours}h ` : ''}${minutes > 0 ? `${minutes}min ` : ''}${seconds > 0 ? `${seconds}sec` : ''}`;
 }
 
-export default function AlbumContent(params: { id: string }) {
+export default function PlaylistContent(params: { id: string }) {
   const { data: album, error, refetch } = useQuery({
     queryKey: ['album', params as { id: string }],
     queryFn: async () => {

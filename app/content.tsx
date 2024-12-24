@@ -6,7 +6,7 @@ import { getCookie, hasCookie } from "cookies-next";
 import { useQuery } from "@tanstack/react-query";
 import { Suspense } from "react";
 import Loading from "./loading";
-import fetchHistory, {HistoryItem} from "@/app/api-fetch/get-history";
+import fetchHistory, { HistoryItem } from "@/app/api-fetch/get-history";
 import { useMedia } from "./contexts/media-context";
 
 import Artists from "@/app/components/api-fetch-container/all-artists";
@@ -102,7 +102,8 @@ export default function Content() {
       }
       return response;
     },
-    enabled: isLoggedIn && isInitialized && !isLoading
+    enabled: isLoggedIn && isInitialized && !isLoading,
+    staleTime: 1000
   });
 
   if (!isInitialized || isLoading) {
@@ -129,7 +130,7 @@ export default function Content() {
           <Suspense fallback={<Loading />}>
             <Albums />
           </Suspense>
-        </div> 
+        </div>
       </div>
     );
   }
@@ -140,22 +141,22 @@ export default function Content() {
       <h2 className="text-lg font-bold">Bài hát vừa nghe</h2>
       <div className="grid grid-cols-2 gap-4">
         {
-        data && data.data && data.data.length > 0 && data.data.map((historyItem: HistoryItem) => (
-          <HorizontalCard
-            key={historyItem.songs.id}
-            title={historyItem.songs.title}
-            subtitle={historyItem.songs.artists.map(artist => artist.artist.name).join(', ')}
-            href={`/song/${historyItem.songs.id}`}
-            type="song"
-            img={{
-              src: historyItem.songs.thumbnailurl || '/assets/placeholder.jpg',
-              alt: historyItem.songs.title,
-              width: 64,
-            }}
-            songID={historyItem.songs.id}
-          />
-        ))
-      }
+          data && data.data && data.data.slice(0, 8).map((historyItem: HistoryItem) => (
+            <HorizontalCard
+              key={historyItem.songs.id}
+              title={historyItem.songs.title}
+              subtitle={historyItem.songs.artists.map(artist => artist.artist.name).join(', ')}
+              href={`/song/${historyItem.songs.id}`}
+              type="song"
+              img={{
+                src: historyItem.songs.thumbnailurl || '/assets/placeholder.jpg',
+                alt: historyItem.songs.title,
+                width: 64,
+              }}
+              songID={historyItem.songs.id}
+            />
+          ))
+        }
       </div>
       <div className="card-scroll flex flex-col overflow-x-hidden gap-4">
         <h2 className="text-lg font-bold">Bài hát mới</h2>

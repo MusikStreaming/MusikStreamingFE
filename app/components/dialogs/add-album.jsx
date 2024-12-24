@@ -35,8 +35,9 @@ export default function AddAlbum() {
   const [formState, formDispatch] = useReducer(formReducer, {
     albumTitle: "",
     description: "",
-    type: "",
+    type: "Album",
     file: null,
+    visibility: "Public",
   });
   const [searchResults, setSearchResults] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -133,28 +134,21 @@ export default function AddAlbum() {
   const handleAddAlbum = async () => {
     try {
       setSubmitStatus({type: 'success', message: ""})
-      const response = await addCollection({
-        file: formState.file,
-        title: formState.albumTitle,
-        description: formState.description,
-        type: formState.type,
-        visibility: formState.visibility,
+      const formData = new FormData();
+      formData.append('file', formState.file);
+      formData.append('title', formState.albumTitle);
+      formData.append('description', formState.description);
+      formData.append('type', formState.type);
+      formData.append('visibility', formState.visibility);
+      const response = await fetch("/api/collection", {
+        method: "POST",
+        body: formData,
+        headers: {
+          'Authorization': `Bearer ${getCookie('session_token')}`
+        }
       });
-      // const response = fetch("/api/collection", {
-      //   method: "POST",
-      //   body: JSON.stringify({
-      //     title: formState.albumTitle,
-      //     description: formState.description,
-      //     type: formState.type,
-      //     visibility: formState.visibility,
-      //     artists: selectedArtists.map(a => a.id),
-      //   }),
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     // 'Authorization': `Bearer ${getCookie('session_token')}`
-      //   }
-      // });
-      console.log(response.data);
+      const result = await response.json();
+      console.log(result);
       setSubmitStatus({ type: 'success', message: 'Album added successfully!' });
     } catch (error) {
       setSubmitStatus({
@@ -205,10 +199,10 @@ export default function AddAlbum() {
       <div role="group" aria-label="Album type selection">
         <label className="text-[--md-sys-color-on-surface-variant]" id="type-label">Type</label>
         <Dropdown
-          options={["Album", "EP", "Single"]}
-          defaultValue="Album"
-          onChange={(e) => {
-            formDispatch({ type: 'SET_TYPE', payload: e });
+          options={["Album", "EP", "Single"].map(type => ({ value: type, label: type }))}
+          defaultValue={{ value: "Album", label: "Album" }}
+          onChange={(selectedOption) => {
+            formDispatch({ type: 'SET_TYPE', payload: selectedOption.value });
           }}
           tabIndex="0"
           aria-labelledby="type-label"
@@ -218,10 +212,10 @@ export default function AddAlbum() {
       <div role="group" aria-label="Album visibility selection">
         <label className="text-[--md-sys-color-on-surface-variant]" id="visibility-label">Visibility</label>
         <Dropdown
-          options={["Public", "Unreleased"]}
-          defaultValue="Public"
-          onChange={(e) => {
-            formDispatch({ type: 'SET_VISIBILITY', payload: e });
+          options={["Public", "Unreleased"].map(visibility => ({ value: visibility, label: visibility }))}
+          defaultValue={{ value: "Public", label: "Public" }}
+          onChange={(selectedOption) => {
+            formDispatch({ type: 'SET_VISIBILITY', payload: selectedOption.value });
           }}
           tabIndex="0"
           aria-labelledby="visibility-label"

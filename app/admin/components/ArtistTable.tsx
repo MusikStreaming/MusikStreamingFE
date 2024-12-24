@@ -7,6 +7,8 @@ import PaginationTable from '@/app/components/tables/PaginationTable';
 import TextButton from '@/app/components/buttons/text-button';
 import { Artist } from '@/app/model/artist';
 import OutlinedIcon from "@/app/components/icons/outlined-icon";
+import AddArtistDialog from '@/app/components/dialogs/add-artist-dialog';
+import EditArtistDialog from '@/app/components/dialogs/edit-artist-dialog';
 
 // interface Artist {
 //   id: string;
@@ -125,41 +127,11 @@ export default function ArtistTable() {
             enableFiltering: true
           },
           { 
-            header: 'Description', 
-            accessor: 'description',
-            enableSorting: true,
-            enableFiltering: true
-          },
-          { 
             header: 'Avatar URL', 
             accessor: 'avatarurl',
             enableSorting: true,
             enableFiltering: true
           },
-          { 
-            header: 'Created At', 
-            accessor: 'createdAt',
-            enableSorting: true,
-            enableFiltering: true
-          },
-          { 
-            header: 'Updated At', 
-            accessor: 'updatedAt',
-            enableSorting: true,
-            enableFiltering: true
-          },
-          { 
-            header: 'Country', 
-            accessor: 'country',
-            enableSorting: true,
-            enableFiltering: true
-          },
-          { 
-            header: 'Manager ID', 
-            accessor: 'managerid',
-            enableSorting: true,
-            enableFiltering: true
-          }
         ]}
         page={page}
         onPageChange={setPage}
@@ -193,20 +165,21 @@ export default function ArtistTable() {
         onRowClick={handleRowClick}
       />
 
-      {/* <AddArtistDialog
+      {<AddArtistDialog
         isOpen={isAddModalOpen}
         onClose={handleCloseModal}
         onSuccess={handleSuccess}
       />
-W
+      }
+
       {selectedArtist && (
         <EditArtistDialog
-          isOpen={true}
+          isOpen={false}
           onClose={handleCloseModal}
           onSuccess={handleSuccess}
           artist={selectedArtist}
         />
-      )} */}
+      )}
     </div>
   );
 }

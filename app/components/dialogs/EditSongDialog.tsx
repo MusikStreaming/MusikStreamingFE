@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Input from '../inputs/outlined-input';
 import { Song } from '@/app/model/song';
 import DialogFrame from './dialog-frame';
+import DragNDropZone from '../inputs/dragndropzone';
 
 interface SearchArtist {
   id: string;
@@ -27,6 +28,7 @@ interface EditSongData {
   artists: string[];
   releasedate: string;
   duration: number;
+  file: File | null;
 }
 
 interface EditSongDialogProps {
@@ -44,10 +46,12 @@ const EditSongDialog: React.FC<EditSongDialogProps> = ({ isOpen, onClose, onSucc
     genre: song.genre || '',
     artists: song.artists.map(a => a.artist.id),
     releasedate: song.releasedate || new Date().toISOString().split('T')[0],
-    duration: song.duration || 0
+    duration: song.duration || 0,
+    file: null
   });
   const [artistSearch, setArtistSearch] = useState('');
   const [selectedArtists, setSelectedArtists] = useState(song.artists);
+  const [thumbnailUrl, setThumbnailUrl] = useState(song.thumbnailurl || '');
 
   // Query for searching artists
   const { data: artistResults = [] } = useQuery<SearchArtist[]>({
@@ -76,13 +80,20 @@ const EditSongDialog: React.FC<EditSongDialogProps> = ({ isOpen, onClose, onSucc
   const updateSongMutation = useMutation({
     mutationFn: async (data: EditSongData) => {
       const token = getCookie('session_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/song/${song.id}`, {
+      const formData = new FormData();
+      formData.append('title', data.title);
+      formData.append('genre', data.genre);
+      formData.append('releasedate', data.releasedate);
+      formData.append('duration', data.duration.toString());
+      if (data.file) {
+        formData.append('file', data.file);
+      }
+      const response = await fetch(`/api/song/${data.id}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
         },
-        body: JSON.stringify(data)
+        body: formData
       });
       if (!response.ok) throw new Error('Failed to update song');
       return response.json();
@@ -112,11 +123,23 @@ const EditSongDialog: React.FC<EditSongDialogProps> = ({ isOpen, onClose, onSucc
     updateSongMutation.mutate(songData);
   };
 
+  const handleThumbnailChange = (files: File[]) => {
+    const file = files[0];
+    setSongData({ ...songData, file });
+    setThumbnailUrl(URL.createObjectURL(file));
+  };
+
   if (!isOpen) return null;
 
   return (
-    <DialogFrame>
+    <DialogFrame onClose={onClose}>
         <h2 className="text-xl font-bold mb-4">Edit Song</h2>
+        <DragNDropZone
+          onDrop={handleThumbnailChange}
+          supportText="Song File"
+          avatarPreview={thumbnailUrl}
+          supportedTypes={['audio/*']}
+        />
         <Input
           type="text"
           value={songData.title}

@@ -53,6 +53,7 @@ export default function SongsTable() {
         {
           headers: {
             'Authorization': `Bearer ${token}`,
+            'cache-control': 'no-cache'
           }
         }
       );

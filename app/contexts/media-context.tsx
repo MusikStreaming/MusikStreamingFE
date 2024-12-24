@@ -92,8 +92,15 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [volume, setVolume] = useState(1);
+  const [volume, setVolume] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedVolume = localStorage.getItem('audio-volume');
+      return savedVolume ? Math.min(Math.max(parseFloat(savedVolume), 0), 1) : 1;
+    }
+    return 1;
+  });
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const volumeRef = useRef(volume);
   const [isQueueVisible, setIsQueueVisible] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragProgress, setDragProgress] = useState(0);
@@ -102,6 +109,10 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
   const [backupQueue, setBackupQueue] = useState<Song[]>([]);
   const [isCaching, setIsCaching] = useState(false);
   const [isLoop, setIsLoop] = useState(false);
+
+  useEffect(() => {
+    volumeRef.current = volume;
+  }, [volume]);
 
   const handleError = useCallback((error: Error) => {
     console.error('Media error:', error);
@@ -141,6 +152,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const pauseSong = useCallback(() => {
+    console.debug('[MediaContext] pauseSong called');
     if (audioRef.current) {
       audioRef.current.pause();
       setIsPlaying(false);
@@ -148,6 +160,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const resumeSong = useCallback(async () => {
+    console.debug('[MediaContext] resumeSong called');
     if (audioRef.current) {
       setIsLoading(true);
       try {
@@ -209,7 +222,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const saveQueueToCache = async (queueData: { 
+  const saveQueueToCache = useCallback(async (queueData: { 
     queue: Song[], 
     currentIndex: number,
     currentSong: Song | null 
@@ -223,9 +236,9 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
       request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
     });
-  };
+  }, []);
   
-  const loadQueueFromCache = async () => {
+  const loadQueueFromCache = useCallback(async () => {
     const db = await initCache();
     return new Promise<{ 
       queue: Song[], 
@@ -239,7 +252,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
       request.onsuccess = () => resolve(request.result || null);
       request.onerror = () => reject(request.error);
     });
-  };
+  }, []);
 
   const cacheNextSong = useCallback(async () => {
     if (queue.length > queueIndex + 1 && !isCaching) {
@@ -264,6 +277,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
   }, [queue, queueIndex, isCaching, cacheSong, getCachedSong]);
 
   const playSong = useCallback(async (song: Song) => {
+    console.debug('[MediaContext] playSong called');
     resetError();
     setIsLoading(true);
 
@@ -310,7 +324,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
         const blobUrl = URL.createObjectURL(audioBlob);
         audioRef.current.src = blobUrl;
         audioRef.current.load();
-        audioRef.current.volume = volume;
+        audioRef.current.volume = volumeRef.current; // Use ref instead of state
         await audioRef.current.play();
         
         updateMediaSession(song);
@@ -330,7 +344,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [queue, volume, queueIndex, updateMediaSession, getCachedSong, cacheSong, handleError, resetError]);
+  }, [queue, volume, queueIndex, updateMediaSession, getCachedSong, cacheSong, handleError, resetError, saveQueueToCache]);
 
   const playPreviousSong = useCallback(() => {
     if (queueIndex > 0) {
@@ -483,6 +497,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
                 audioRef.current.src = blobUrl;
                 audioRef.current.load();
                 audioRef.current.volume = volume;
+                updateMediaSession(cachedQueue.currentSong);
               }
               // Cache for future use
               await cacheSong(cachedQueue.currentSong.id, blob);
@@ -497,7 +512,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
     };
 
     loadState();
-  }, [volume, updateMediaSession, getCachedSong, cacheSong]);
+  }, [updateMediaSession, getCachedSong, cacheSong, loadQueueFromCache]); // Remove volume dependency
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -521,14 +536,15 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
         currentSong
       });
     }
-  }, [queue, queueIndex, currentSong]);
+  }, [queue, queueIndex, currentSong, saveQueueToCache]);
 
   // Cleanup effect
   useEffect(() => {
+    const audio = audioRef.current;
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = '';
+      if (audio) {
+        audio.pause();
+        audio.src = '';
       }
     };
   }, []);
@@ -545,6 +561,29 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
     audio.addEventListener('error', handleAudioError);
     return () => audio.removeEventListener('error', handleAudioError);
   }, [handleError]);
+
+  // Persist volume changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('audio-volume', volume.toString());
+    }
+  }, [volume]);
+
+  // Ensure volume is set whenever audio source changes
+  useEffect(() => {
+    console.debug('[MediaContext] Volume effect triggered:', volume);
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const setInitialVolume = () => {
+      if (Math.abs(audio.volume - volumeRef.current) > 0.01) {
+        audio.volume = volumeRef.current;
+      }
+    };
+
+    audio.addEventListener('loadedmetadata', setInitialVolume);
+    return () => audio.removeEventListener('loadedmetadata', setInitialVolume);
+  }, []); // Remove volume dependency
 
   // Debounced seek function
   const debouncedSeek = useCallback((time: number) => {
@@ -598,15 +637,38 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
   };
 
   /**
-   * Updates the volume level
+   * Updates the volume level without affecting playback
    * @param {number} newVolume - New volume level (0-1)
    */
-  const handleVolumeChange = (newVolume: number) => {
+  const handleVolumeChange = useCallback((newVolume: number) => {
+    console.debug('[MediaContext] handleVolumeChange called:', newVolume);
+    const safeVolume = Math.min(Math.max(newVolume, 0), 1);
+    
     if (audioRef.current) {
-      audioRef.current.volume = newVolume;
-      setVolume(newVolume);
+      try {
+        volumeRef.current = safeVolume;
+        audioRef.current.volume = safeVolume;
+        setVolume(prev => {
+          const shouldUpdate = Math.abs(prev - safeVolume) > 0.01;
+          console.debug('[MediaContext] Volume state update:', shouldUpdate);
+          return shouldUpdate ? safeVolume : prev;
+        });
+      } catch (error) {
+        console.error('[MediaContext] Volume change failed:', error);
+      }
     }
-  };
+  }, []);
+
+  // Add debug effect for volume changes
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    // Only update volume if it's significantly different
+    if (Math.abs(audio.volume - volume) > 0.01) {
+      audio.volume = volume;
+    }
+  }, [volume]);
 
   return (
     <MediaContext.Provider

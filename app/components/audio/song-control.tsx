@@ -19,7 +19,6 @@ import OutlinedIcon from "@/app/components/icons/outlined-icon";
 import OutlinedFilledIcon from "@/app/components/icons/outlined-filled-icon";
 
 export default function SongControl() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [shouldHide, setShouldHide] = useState(false);
   const {
     currentSong,
@@ -52,6 +51,7 @@ export default function SongControl() {
   const titleRef = useRef<HTMLParagraphElement>(null);
   const subRef = useRef<HTMLParagraphElement>(null);
   const [isSubOverflowing, setSubOverflowing] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     // const checkAuth = () => {
@@ -134,6 +134,58 @@ export default function SongControl() {
     }
   }, [currentSong, handleSongTitleClick]);
 
+  const filteredArtists = currentSong?.artists?.map(artist => ({
+    artist: {
+      id: artist.artist.id,
+      name: artist.artist.name
+    }
+  })) || [];
+
+  const handleVolumeChange = useCallback((newValue: number) => {
+    console.debug('[SongControl] handleVolumeChange called:', newValue);
+    try {
+      const normalizedVolume = newValue / 100;
+      if (!isNaN(normalizedVolume) && normalizedVolume >= 0 && normalizedVolume <= 1) {
+        // Prevent unnecessary volume updates
+        if (Math.abs(volume - normalizedVolume) > 0.01) {
+          setVolume(normalizedVolume);
+        }
+        // Update mute state without triggering additional effects
+        setIsMuted(normalizedVolume === 0);
+        if (normalizedVolume > 0) {
+          setVolumeBeforeMute(normalizedVolume);
+        }
+      }
+    } catch (error) {
+      console.error('[SongControl] Volume UI change failed:', error);
+    }
+  }, [volume, setVolume]);
+
+  const handleMuteToggle = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent event bubbling
+    try {
+      if (isMuted) {
+        setVolume(volumeBeforeMute);
+        setIsMuted(false);
+      } else {
+        setVolumeBeforeMute(volume);
+        setVolume(0);
+        setIsMuted(true);
+      }
+    } catch (error) {
+      console.error('[SongControl] Mute toggle failed:', error);
+    }
+  }, [isMuted, volume, volumeBeforeMute, setVolume]);
+
+  // Simplify the volume change effect
+  useEffect(() => {
+    if (volume === 0) {
+      if (!isMuted) setIsMuted(true);
+    } else if (isMuted) {
+      setIsMuted(false);
+    }
+  }, [volume]);
+
   return (
     <div className={twMerge(
       'song-playing z-[1000] bg-[--md-sys-color-inverse-on-surface] flex-col transition-transform duration-300',
@@ -188,14 +240,14 @@ export default function SongControl() {
                 {currentSong?.title || "No song selected"}
               </Link>
             </p>
-            {currentSong?.artists && currentSong.artists.length > 0 && (
+            {filteredArtists.length > 0 && (
               <p
                 ref={subRef}
                 className={twMerge(
                   "text-xs md:text-sm text-[--md-sys-color-outline] whitespace-nowrap text-nowrap",
                   isSubOverflowing && "animate-marquee"
                 )}>
-                {[...currentSong.artists].map((artist, index, array) => (
+                {filteredArtists.map((artist, index, array) => (
                   <span key={artist.artist.id}>
                     <Link
                       href={`/artist/${artist.artist.id}`}
@@ -283,15 +335,7 @@ export default function SongControl() {
             <OutlinedIcon icon="queue_music" />
           </ToggleIconButtonDotted>
           <div className="volume flex items-center">
-            <IconSmallButton disabled={isDisabled} onClick={() => {
-              if (volume === 0) {
-                setVolume(volumeBeforeMute);
-                setIsMuted(false);
-              } else {
-                setVolume(0);
-                setIsMuted(true);
-              }
-            }} >
+            <IconSmallButton disabled={isDisabled} onClick={handleMuteToggle} >
               <OutlinedIcon icon={isMuted ? "volume_off" : "volume_up"} className={twMerge(
                 isDisabled && "opacity-50"
               )} />
@@ -306,11 +350,7 @@ export default function SongControl() {
               value={volume * 100}
               min={0}
               max={100}
-              onChange={(e) => {
-                setVolume(Number.parseInt(e.target.value) / 100);
-                setIsMuted(false);
-                setVolumeBeforeMute(volume);
-              }}
+              onChange={(e) => handleVolumeChange(Number(e.target.value))}
               disabled={isDisabled}
             />
           </div>

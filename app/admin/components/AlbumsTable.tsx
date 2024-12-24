@@ -4,8 +4,9 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCookie } from 'cookies-next';
 import PaginationTable from '@/app/components/tables/PaginationTable';
-import AddAlbum from '@/app/components/dialogs/add-album';
-// import EditAlbumDialog from '@/app/components/dialogs/EditAlbumDialog';
+// import AddAlbum from '@/app/components/dialogs/add-album';
+import AddAlbumDialog from '@/app/components/dialogs/add-album-dialog';
+import EditAlbumDialog from '@/app/components/dialogs/EditAlbumDialog';
 import TextButton from '@/app/components/buttons/text-button';
 import IconSmallButton from '@/app/components/buttons/icon-small-button';
 import OutlinedIcon from '@/app/components/icons/outlined-icon';
@@ -15,11 +16,15 @@ interface Album {
   title: string;
   artist: string;
   releaseDate: string;
+  thumbnailurl: string;
+  type: string;
+  visibility: string;
+  // songs: { id: string; title: string }[];
 }
 
 interface AlbumsResponse {
   data: Album[];
-  total: number;
+  count: number;
 }
 
 export default function AlbumsTable() {
@@ -33,14 +38,12 @@ export default function AlbumsTable() {
     queryKey: ['albums', page, limit],
     queryFn: async () => {
       const token = getCookie('session_token');
+      console.log(token)
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/v1/collection/albums?page=${page}&limit=${limit}`,
         {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'cache-control': 'no-cache',
-            'cross-origin-resource-policy': 'cross-origin',
-            'access-control-allow-origin': '*'
           }
         }
       );
@@ -53,12 +56,12 @@ export default function AlbumsTable() {
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const token = getCookie('session_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/collection/${id}`, {
+      const response = await fetch(`/api/collection/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
-        }
-      });
+        },
+      })
       if (!response.ok) throw new Error('Failed to delete album');
     },
     onSuccess: () => {
@@ -139,7 +142,7 @@ export default function AlbumsTable() {
         isLoading={isLoading || deleteMutation.isPending}
         isError={isError}
         errorMessage="Failed to load albums."
-        totalPages={albums?.total ? Math.ceil(albums.total / limit) : undefined}
+        totalPages={albums?.count ? Math.ceil(albums.count / limit) : undefined}
         page={page}
         onPageChange={setPage}
         rowActions={(album: Album) => (
@@ -164,29 +167,17 @@ export default function AlbumsTable() {
         showPageInput={true}
       />
 
-      {/* <AddAlbumDialog
-        isOpen={isAddModalOpen}
-        onClose={handleCloseModal}
-        onSuccess={handleSuccess}
-      /> */}
       {isAddModalOpen &&
-        <div className='fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 h-full'>
-          <div className='bg-[--md-sys-color-surface-container] p-4 rounded-md w-full max-w-md h-3/4 max-h-dvh overflow-auto flex flex-col items-end'>
-            <IconSmallButton onClick={() => setIsAddModalOpen(false)}>
-              <OutlinedIcon icon='close' />
-            </IconSmallButton>
-            <AddAlbum />
-          </div>
-        </div>}
+        <AddAlbumDialog onClose={handleCloseModal}/>}
 
-      {/* {selectedAlbum && (
+      {selectedAlbum && (
         <EditAlbumDialog
           isOpen={true}
           onClose={handleCloseModal}
           onSuccess={handleSuccess}
           album={selectedAlbum}
         />
-      )} */}
+      )}
     </div>
   );
 }
