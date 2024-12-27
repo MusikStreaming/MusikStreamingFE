@@ -19,13 +19,14 @@ export async function POST(request: NextRequest) {
         // );
         const response = NextResponse.json({
             user: {
-                id: data.user.id,
-                email: data.user.email,
-                username: data.user.username,
-                verified: data.user.verify_email,
+                id: data.externalAuth.user.id,
+                email: data.externalAuth.user.email,
+                username: data.externalAuth.user.username,
+                verified: data.externalAuth.user.verify_email,
             },
             success: true,
-            redirectToManager: ['Artist Manager', 'Admin'].includes(data.user.role)
+            redirectToManager: ['Artist Manager', 'Admin'].includes(data.externalAuth.user.role)
+
         });
         response.cookies.delete('session');
         response.cookies.delete('user_id');
