@@ -1,26 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-// import { createClient } from '@supabase/supabase-js';
-
-// const supabase = createClient(
-//   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-//   process.env.SUPABASE_SERVICE_KEY!
-// );
 
 export async function GET(request: NextRequest) {
+  console.group('👤 Profile Request');
   try {
-    // Get the session token
     const sessionToken = request.cookies.get('session_token')?.value;
 
+    console.log('🎫 Session token present:', !!sessionToken);
+
     if (!sessionToken) {
-      console.log('No session token found');
+      console.warn('⚠️ No session token found');
+      console.groupEnd();
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    // Verify the token with external auth service
-    const externalResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/user`, {
+    console.log('🔍 Verifying with external auth...');
+    const externalResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/user/me`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${sessionToken}`,
@@ -28,8 +25,12 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    console.log('📥 External API status:', externalResponse.status);
+
     if (!externalResponse.ok) {
-      console.log('External auth verification failed');
+      console.error('❌ External auth failed:', externalResponse.status);
+      console.log('📝 Response details:', await externalResponse.text());
+      console.groupEnd();
       return NextResponse.json(
         { error: 'Invalid session' },
         { status: 401 }
@@ -37,8 +38,9 @@ export async function GET(request: NextRequest) {
     }
 
     const userData = await externalResponse.json();
+    console.log('✅ Profile fetch successful');
+    console.groupEnd();
 
-    // Return user profile data
     return NextResponse.json({
       id: userData.id,
       username: userData.username,
@@ -49,10 +51,11 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Profile fetch error:', error);
+    console.error('❌ Profile error:', error);
+    console.groupEnd();
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-} 
+}

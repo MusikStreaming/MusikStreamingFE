@@ -127,12 +127,6 @@ export default function UsersTable() {
             enableFiltering: true
           },
           { 
-            header: 'Email', 
-            accessor: 'email',
-            enableSorting: true,
-            enableFiltering: true
-          },
-          { 
             header: 'Role', 
             accessor: 'role',
             enableSorting: true,

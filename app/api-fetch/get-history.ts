@@ -24,16 +24,22 @@ export interface History {
 
 export default async function fetchHistory(): Promise<History | null> {
   try {
-    const { data } = await axios.get<History>(`${process.env.NEXT_PUBLIC_API_URL}/v1/user/me/history`, {
+    const { data } = await axios.get<History>(`/api/user/history`, {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + localStorage.getItem('session_token'),
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
       },
     });
+    console.log('📥 History data:', data);
     return data;
-  } catch (e) {
-    console.error(e);
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      console.warn('User not authenticated');
+      return null;
+    }
+    console.error('Error fetching history:', error);
     return null;
   }
 }

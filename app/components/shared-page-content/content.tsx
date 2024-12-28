@@ -32,31 +32,8 @@ export default function PlaylistContent(params: { id: string }) {
       return fetchAlbumById(params.id);
     }
   });
-  // const [album, setAlbum] = useState<AlbumDetails | undefined>();
-  // const [error, setError] = useState<string | null>(null);
   const { playList } = useMedia();
   const router = useRouter();
-
-  // const fetchData = useCallback(async () => {
-  //   try {
-  //     const {id} = params;
-  //     const albumData = await fetchAlbumById(id);
-  //     if (!albumData) {
-  //       throw new Error('Album not found');
-  //     }
-  //     setAlbum(albumData);
-  //   } catch (e) {
-  //     console.error('Error fetching album:', e);
-  //     setError(e instanceof Error ? e.message : 'Failed to load album');
-  //   }
-  // }, [params]);
-
-  // useEffect(() => {
-  //   fetchData().catch(e => {
-  //     console.error('Error in album fetch effect:', e);
-  //     setError(e instanceof Error ? e.message : 'Failed to load album');
-  //   });
-  // }, [fetchData, params.id]);
 
   if (error) {
     return <ErrorComponent onReloadClick={refetch} />;
@@ -73,7 +50,7 @@ export default function PlaylistContent(params: { id: string }) {
         <div className='flex flex-col md:flex-row items-center gap-6'>
           {album ? 
             <Image
-              src={processCloudinaryUrl(album.thumbnailurl, 200, 200, "collections")}
+              src={processCloudinaryUrl(album.thumbnailurl, 200, 200, "collections") || '/images/playlist-default.png'}
               alt={album.title}
               width={200}
               height={200}

@@ -62,7 +62,7 @@ export default function SongTable({ songs, className, showImage }: {
         releasedate: "",
         genre: '',
         views: s.song.views || 0,
-        artists: s.song.artists?.map(a => ({ artist: { id: a.id || "#", name: a.name } })) || []
+        artists: s.song.artists?.map(a => ({ artist: { id: a.id || "#", name: a.name } })) || [{ artist: { id: "#", name: "Unknown" } }]
       }));
 
       // Play the sliced list with the clicked song first

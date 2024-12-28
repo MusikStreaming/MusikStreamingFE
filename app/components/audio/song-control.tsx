@@ -3,8 +3,7 @@ import Image from 'next/image';
 import { useMedia } from '@/app/contexts/media-context';
 import { formatDuration } from '@/app/utils/time';
 import { twMerge } from 'tailwind-merge';
-import { useState, useEffect, useCallback, useRef, HtmlHTMLAttributes } from 'react';
-import { getCookie } from 'cookies-next/client';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import IconSmallButton from '@/app/components/buttons/icon-small-button';
@@ -61,7 +60,7 @@ export default function SongControl() {
 
     const handleResize = () => {
       setShouldHide(
-        (pathname.includes('/song') && window.innerWidth < 768)
+        (pathname.includes('/now-playing') && window.innerWidth < 768)
         || pathname.includes('/manager')
         || pathname.includes('/admin')
         || pathname.includes('/login')
@@ -186,12 +185,20 @@ export default function SongControl() {
     }
   }, [volume]);
 
+  const handleLyricsToggle = useCallback(() => {
+    if (!pathname.includes('/lyrics')) {
+      router.push('/lyrics');
+    } else {
+      router.back();
+    }
+  }, [pathname, router]);
+
   return (
     <div className={twMerge(
       'song-playing z-[1000] bg-[--md-sys-color-inverse-on-surface] flex-col transition-transform duration-300',
       shouldHide && 'hidden',
     )} onClick={() => {
-      if (window.innerWidth < 768 && currentSong?.id) router.push(`/song/${currentSong.id}`)
+      if (window.innerWidth < 768 && currentSong?.id) router.push(`/now-playing`);
     }
     }>
       <div className="p-4 gap-1 md:gap-4 flex flex-wrap items-center justify-between">
@@ -328,7 +335,7 @@ export default function SongControl() {
           </div>
         </div>
         <div className="right-controls w-1/4 items-end justify-end hidden md:flex">
-          <ToggleIconButtonDotted>
+          <ToggleIconButtonDotted onClick={handleLyricsToggle} active={pathname.includes('/lyrics')}>
             <OutlinedIcon icon="lyrics" className={isDisabled ? "opacity-50" : ""} />
           </ToggleIconButtonDotted>
           <ToggleIconButtonDotted onClick={toggleQueue} active={isQueueVisible}>

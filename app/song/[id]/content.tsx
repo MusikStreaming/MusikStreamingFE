@@ -247,7 +247,7 @@ export default function SongContent(params: { id: string; initialData: SongDetai
     return (
       <div className='flex flex-col w-full gap-8 p-4'>
         {/* Hero Section */}
-        <div className="desktop hidden md:flex md:flex-col gap-6 w-full">
+        <div className="flex flex-col gap-6 w-full">
           <div className='flex flex-col md:flex-row items-center gap-6'>
             {song ?
               <Image
@@ -344,110 +344,6 @@ export default function SongContent(params: { id: string; initialData: SongDetai
               <p className="">Total Views: {song.views.toLocaleString()}</p> :
               <Skeleton className='h-4 w-32' />
             }
-          </div>
-        </div>
-        {/* Mobile site */}
-        <div className="mobile flex flex-col md:hidden slide-up-enter w-full">
-          <TextButton className="text-[--md-sys-color-primary] w-fit" onClick={() => router.back()}>
-            <span className="material-symbols-outlined">arrow_back</span>
-            Quay lại
-          </TextButton>
-          <div className="song-info flex flex-col gap-[60px] w-full pt-6 items-center">
-            <div className="cover-and-title flex flex-col w-full items-center">
-              <div className={`img-large-rotate ${currentSong?.id === song?.id ? 'animate-spin-slow' : ''}`}>
-                <Image
-                  src={song?.thumbnailurl || '/assets/placeholder.jpg'}
-                  alt={song?.title || 'Song cover'}
-                  width={300}
-                  height={300}
-                  priority={true}
-                  className="rounded-full shadow-lg"
-                />
-              </div>
-              <div className="flex justify-between items-center w-full pt-6">
-                <div className="flex flex-col gap-3 w-full">
-                  <h1 className='font-bold text-2xl md:text-3xl'>{song?.title}</h1>
-                  <ArtistLinks artists={song?.artists || []} />
-                </div>
-                <div className="flex justify-end gap-4 items-center">
-                  <ToggleIconButton alternateIcon={<span className="material-symbols-outlined">playlist_add_check</span>}>
-                    <span className="material-symbols-outlined">playlist_add</span>
-                  </ToggleIconButton>
-                  <ToggleButtonFilled
-                    active={song && likedSongs.some(s => s.id === song.id)}
-                    onClick={() => song && (likedSongs.some(s => s.id === song.id)
-                      ? removeLikedSong({
-                        ...song,
-                        thumbnailurl: song.thumbnailurl || '/assets/placeholder.jpg',
-                        artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
-                      })
-                      : addLikedSong({
-                        ...song,
-                        thumbnailurl: song.thumbnailurl || '/assets/placeholder.jpg',
-                        artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
-                      })
-                    )}>
-                    favorite
-                  </ToggleButtonFilled>
-                </div>
-              </div>
-            </div>
-            <div className="control-region flex flex-col w-full items-center gap-4">
-              <div className="progress-bar flex flex-col gap-3 w-full items-center">
-                <input
-                  className={twMerge(
-                    "w-full",
-                    isPlaybackDisabled && "opacity-50"
-                  )}
-                  aria-label="song-progress"
-                  type="range"
-                  value={song?.id === currentSong?.id ? progress : 0}
-                  min={0}
-                  max={song?.duration || 100}
-                  onChange={(e) => seekTo(parseInt(e.target.value))}
-                  disabled={isPlaybackDisabled}
-                />
-                <div className="flex justify-between gap-3 w-full items-center">
-                  <p className="">{song?.id === currentSong?.id ? formatDuration(progress, true) : '0:00'}</p>
-                  <p className="">{formatDuration(song?.duration || 0, true)}</p>
-                </div>
-              </div>
-              <div className="flex justify-between items-center gap-4 w-full">
-                <PlainTooltip content="Trộn bài">
-                  <IconSmallButton>
-                    <span className="material-symbols-outlined">shuffle</span>
-                  </IconSmallButton>
-                </PlainTooltip>
-                <PlainTooltip content="Bài trước">
-                  <IconSmallButton>
-                    <span className="material-symbols-outlined">skip_previous</span>
-                  </IconSmallButton>
-                </PlainTooltip>
-                <PlayButton
-                  className="bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary] w-12 h-12"
-                  onClick={handlePlayClick}
-                  isPlaying={isPlaying && currentSong?.id === song?.id}
-                  songId={song?.id}
-                />
-                <PlainTooltip content="Bài sau">
-                  <IconSmallButton>
-                    <span className="material-symbols-outlined">skip_next</span>
-                  </IconSmallButton>
-                </PlainTooltip>
-                <PlainTooltip content="Lặp lại">
-                  <IconSmallButton>
-                    <span className="material-symbols-outlined">repeat</span>
-                  </IconSmallButton>
-                </PlainTooltip>
-              </div>
-              <div className="additional flex justify-between items-center gap-4 w-full">
-                <PlainTooltip content="Danh sách phát">
-                <IconSmallButton onClick={toggleQueue}>
-                  <span className="material-symbols-outlined">queue_music</span>
-                </IconSmallButton>
-                </PlainTooltip>
-              </div>
-            </div>
           </div>
         </div>
 

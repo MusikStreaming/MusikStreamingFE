@@ -12,7 +12,7 @@ interface Album {
 
 export async function addCollection(collection: Album) {
   const token = getCookie("session_token");
-  console.log(token)
+  // console.log(token)
   // if (!token) {
   //   throw new Error("No authentication token found");
   // }

@@ -27,9 +27,23 @@ const slideInAnimation = `
 `;
 
 export default function QueueContainer() {
-  const { isQueueVisible, toggleQueue, currentSong, queue } = useMedia();
-  const [width, setWidth] = useState(500); // Default width (w-80 = 320px)
+  const { isQueueVisible, toggleQueue } = useMedia();
+  const [width, setWidth] = useState(500); // Default fallback width
+  const [isClient, setIsClient] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+
+  // Handle hydration and localStorage
+  useEffect(() => {
+    setIsClient(true);
+    const storedWidth = localStorage.getItem('queue-width');
+    if (storedWidth) {
+      const parsedWidth = parseInt(storedWidth);
+      if (!isNaN(parsedWidth)) {
+        setWidth(parsedWidth);
+        document.documentElement.style.setProperty('--queue-width', `${parsedWidth}px`);
+      }
+    }
+  }, []);
 
   const handleMouseDown = useCallback(() => {
     setIsDragging(true);
@@ -41,8 +55,11 @@ export default function QueueContainer() {
       const clampedWidth = Math.min(Math.max(newWidth, 280), 600);
       setWidth(clampedWidth);
       document.documentElement.style.setProperty('--queue-width', `${clampedWidth}px`);
+      if (isClient) {
+        localStorage.setItem('queue-width', clampedWidth.toString());
+      }
     }
-  }, [isDragging]);
+  }, [isDragging, isClient]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -58,6 +75,10 @@ export default function QueueContainer() {
       window.removeEventListener('mouseup', handleMouseUp);
     };
   }, [isDragging, handleMouseMove, handleMouseUp]);
+
+  if (!isClient) {
+    return null; // or a loading skeleton if preferred
+  }
 
   return (
     <div className='overflow-hidden rounded-2xl bg-[--md-sys-color-surface-container]'>

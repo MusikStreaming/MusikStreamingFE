@@ -37,8 +37,6 @@ export default function AlbumsTable() {
   const { data: albums, isLoading, isError, refetch } = useQuery<AlbumsResponse>({
     queryKey: ['albums', page, limit],
     queryFn: async () => {
-      const token = getCookie('session_token');
-      console.log(token)
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/v1/collection/albums?page=${page}&limit=${limit}`,
         {

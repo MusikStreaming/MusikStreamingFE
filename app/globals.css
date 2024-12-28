@@ -208,9 +208,13 @@ body {
   z-index: 9999;
 }
 
+::-webkit-scrollbar:hover{
+  width: 8px;
+}
+
 /* Track */
 ::-webkit-scrollbar-track {
-  width: 4px;
+  width: 8px;
   background: var(--md-sys-color-surface-container); 
   border-radius: 9999px;
 }
@@ -224,7 +228,7 @@ body {
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-  width: 4px;
+  width: 8px;
   background: var(--md-sys-color-outline);
 }
 
@@ -411,14 +415,16 @@ a{
 @keyframes slideUp {
   from {
     transform: translateY(100%);
+    opacity: 0;
   }
   to {
     transform: translateY(0);
+    opacity: 1;
   }
 }
 
 .slide-up-enter {
-  animation: slideUp 0.3s ease-out forwards;
+  animation: slideUp 300ms ease-out;
 }
 
 @keyframes slideDown {
@@ -450,3 +456,38 @@ a{
     height: calc(100vh- var(--desktop-content-offset));
   }
 } */
+
+/* Add these new animation classes */
+.transitioning {
+  transition: transform 300ms ease-out !important;
+}
+
+@keyframes slideLeft {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideRight {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.slide-left {
+  animation: slideLeft 300ms ease-out;
+}
+
+.slide-right {
+  animation: slideRight 300ms ease-out;
+}

@@ -5,7 +5,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get('session_token');
-    console.log(token!.value);
+    // console.log(token!.value);
     if (!token) {
       return new NextResponse("Unauthorized", { status: 401 });
     }

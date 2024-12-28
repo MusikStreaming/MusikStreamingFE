@@ -78,6 +78,8 @@ interface MediaContextType {
   isError: boolean;
   errorMessage: string;
   resetError: () => void;
+  playHistory: Song[];
+  historyIndex: number;
 }
 
 /**
@@ -109,6 +111,8 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
   const [backupQueue, setBackupQueue] = useState<Song[]>([]);
   const [isCaching, setIsCaching] = useState(false);
   const [isLoop, setIsLoop] = useState(false);
+  const [playHistory, setPlayHistory] = useState<Song[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
 
   useEffect(() => {
     volumeRef.current = volume;
@@ -276,12 +280,22 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
     }
   }, [queue, queueIndex, isCaching, cacheSong, getCachedSong]);
 
-  const playSong = useCallback(async (song: Song) => {
-    console.debug('[MediaContext] playSong called');
+  const playSong = useCallback(async (song: Song, addToHistory = true) => {
+    console.debug('[MediaContext] playSong called', { song, addToHistory });
     resetError();
     setIsLoading(true);
 
     try {
+      // Add to history if requested
+      if (addToHistory) {
+        setPlayHistory(prev => {
+          // Remove future history if we're not at the end
+          const newHistory = prev.slice(0, historyIndex + 1);
+          return [...newHistory, song];
+        });
+        setHistoryIndex(prev => prev + 1);
+      }
+
       // Cleanup previous audio
       if (audioRef.current) {
         audioRef.current.pause();
@@ -339,40 +353,53 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
           currentSong: song
         });
       }
+
+      await updateHistory(song.id);
     } catch (error) {
       handleError(error as Error);
     } finally {
       setIsLoading(false);
     }
-  }, [queue, volume, queueIndex, updateMediaSession, getCachedSong, cacheSong, handleError, resetError, saveQueueToCache]);
+  }, [queue, volume, queueIndex, updateMediaSession, getCachedSong, cacheSong, handleError, resetError, saveQueueToCache, historyIndex]);
 
   const playPreviousSong = useCallback(() => {
-    if (queueIndex > 0) {
-      setQueueIndex(prev => prev - 1);
-      playSong(queue[queueIndex - 1]);
+    console.debug('[MediaContext] playPreviousSong called', { historyIndex, playHistory });
+    
+    if (historyIndex > 0) {
+      // There's a previous song in history
+      const previousSong = playHistory[historyIndex - 1];
+      setHistoryIndex(prev => prev - 1);
+      playSong(previousSong, false); // Don't add to history when going back
     } else if (audioRef.current) {
-      // If at start of queue, restart current song
+      // No previous song, restart current
       audioRef.current.currentTime = 0;
       audioRef.current.play();
     }
-  }, [queue, queueIndex, playSong]);
+  }, [playHistory, historyIndex, playSong]);
 
   const playNextSong = useCallback(() => {
-    if (queue.length > queueIndex + 1) {
-      const nextIndex = queueIndex + 1;
-      const nextSong = queue[nextIndex];
-      setQueueIndex(nextIndex);
-      playSong(nextSong);
+    console.debug('[MediaContext] playNextSong called', { historyIndex, playHistory });
+    
+    if (historyIndex < playHistory.length - 1) {
+      // There's a next song in history
+      const nextSong = playHistory[historyIndex + 1];
+      setHistoryIndex(prev => prev + 1);
+      playSong(nextSong, false); // Don't add to history when going forward
+    } else if (queue.length > queueIndex + 1) {
+      // Play next song from queue
+      const nextSong = queue[queueIndex + 1];
+      setQueueIndex(prev => prev + 1);
+      playSong(nextSong); // Add to history when playing new song
     } else if (backupQueue.length > 0 && isLoop) {
-      // Reset queue with backup if looping
+      // Loop behavior
       setQueue(backupQueue);
       setBackupQueue([]);
       setQueueIndex(0);
-      // if (backupQueue[0]) {
-      //   playSong(backupQueue[0]);
-      // }
+      if (backupQueue[0]) {
+        playSong(backupQueue[0]);
+      }
     }
-  }, [queue, queueIndex, backupQueue, isLoop, playSong]);
+  }, [queue, queueIndex, backupQueue, isLoop, playHistory, historyIndex, playSong]);
 
   const playList = useCallback(async (songs: Song[], startIndex: number = 0) => {
     if (songs.length === 0) return;
@@ -670,6 +697,36 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
     }
   }, [volume]);
 
+  // Add effect to persist play history
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && playHistory.length > 0) {
+        localStorage.setItem('playHistory', JSON.stringify({
+          history: playHistory,
+          index: historyIndex
+        }));
+      }
+    } catch (error) {
+      console.error('[MediaContext] Error saving play history:', error);
+    }
+  }, [playHistory, historyIndex]);
+
+  // Load saved history on mount
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('playHistory');
+        if (saved) {
+          const { history, index } = JSON.parse(saved);
+          setPlayHistory(history);
+          setHistoryIndex(index);
+        }
+      }
+    } catch (error) {
+      console.error('[MediaContext] Error loading play history:', error);
+    }
+  }, []);
+
   return (
     <MediaContext.Provider
       value={{
@@ -699,7 +756,9 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
         isLoop,
         isError,
         errorMessage,
-        resetError
+        resetError,
+        playHistory,
+        historyIndex
       }}
     >
       <audio

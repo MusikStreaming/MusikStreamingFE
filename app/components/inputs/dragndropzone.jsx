@@ -2,7 +2,10 @@ import { useDropzone } from 'react-dropzone';
 import Image from 'next/image';
 
 export default function DragNDropZone({ onDrop, avatarPreview: imgPreview, supportText, supportedTypes, icon_text="add_photo_alternate" }) {
-    const { getRootProps, getInputProps } = useDropzone({ onDrop });
+    const { getRootProps, getInputProps } = useDropzone({
+         onDrop,
+         accept: supportedTypes || "*"
+        });
     
     return (
       <div {...getRootProps()} className="cursor-pointer w-full flex flex-col items-center gap-2">

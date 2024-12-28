@@ -13,6 +13,7 @@ import Artists from "@/app/components/api-fetch-container/all-artists";
 import Songs from "@/app/components/api-fetch-container/all-songs";
 import Albums from "@/app/components/api-fetch-container/all-albums";
 import HorizontalCard from "./components/info-cards/horizontal-card";
+import ErrorComponent from "./components/api-fetch-container/fetch-error";
 
 export default function Content() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -133,6 +134,10 @@ export default function Content() {
         </div>
       </div>
     );
+  }
+
+  if (error) {
+    return <ErrorComponent onReloadClick={refetch} />;
   }
 
   return (
