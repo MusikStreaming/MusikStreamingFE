@@ -2,7 +2,7 @@
 
 import { useSearchParams } from 'next/navigation';
 import AddSong from './add-song';
-import AddAlbum from './add-album';
+import AddAlbum from '../../../components/dialogs/add-album';
 import { Suspense } from 'react';
 
 export default function AddDiscographyItem() {

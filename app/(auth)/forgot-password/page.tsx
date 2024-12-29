@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Input from '@/app/components/inputs/outlined-input';
 import { Suspense } from 'react';
+import OutlinedIcon from '@/app/components/icons/outlined-icon';
 
 export default function ForgotPassword() {
     const [email, setEmail] = useState('');
@@ -61,9 +62,7 @@ export default function ForgotPassword() {
                         </form>
                     ) : (
                         <div className="text-center">
-                            <span className="material-symbols-outlined text-5xl text-[--md-sys-color-primary] mb-4">
-                                mail
-                            </span>
+                            <OutlinedIcon icon={"mail"}/>
                             <h2 className="text-xl font-semibold mb-2 text-[--md-sys-color-on-surface]">
                                 Check your email
                             </h2>

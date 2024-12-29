@@ -44,7 +44,7 @@ export default function AddSong() {
         <label className="text-[--md-sys-color-on-surface-variant]" id="artist-label">Artist</label>
         <Dropdown 
           options={artists.map(a => ({ value: a.id, label: a.name }))}
-          onChange={(value) => dispatch({ type: 'SET_ARTIST', payload: value })}
+          onChange={(selectedOption) => dispatch({ type: 'SET_ARTIST', payload: selectedOption })}
           aria-labelledby="artist-label"
         />
       </div>

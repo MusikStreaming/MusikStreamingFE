@@ -8,7 +8,8 @@ import { useRouter } from 'next/navigation';
 import TextButton from '@/app/components/buttons/text-button';
 import { fetchAlbumsFromArtist } from '@/app/api-fetch/albums-from-artist';
 import { AlbumCard } from '@/app/components/info-cards/album-card';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import OutlinedIcon from "@/app/components/icons/outlined-icon";
 
 const styles = `
     @keyframes fadeIn {
@@ -45,6 +46,8 @@ export default function ArtistContent({ params }: { params: Promise<{ id: string
     const queryClient = useQueryClient();
     const router = useRouter();
     const [showPopup, setShowPopup] = useState(false);
+    const descriptionRef = useRef<HTMLParagraphElement>(null);
+    const [isOverflowing, setIsOverflowing] = useState(false);
 
     // Fetch albums by artist using react-query
     const { data: albumsByArtist, error } = useQuery({
@@ -64,6 +67,12 @@ export default function ArtistContent({ params }: { params: Promise<{ id: string
             return fetchArtistById(id);
         }
     });
+
+    useEffect(() => {
+        if (descriptionRef.current) {
+            setIsOverflowing(descriptionRef.current.scrollHeight > descriptionRef.current.clientHeight);
+        }
+    }, [artist]);
 
     const ArtistDetailPopup = () => {
         if (!artist || !showPopup) return null;
@@ -91,8 +100,9 @@ export default function ArtistContent({ params }: { params: Promise<{ id: string
                         <button 
                             onClick={() => setShowPopup(false)}
                             className="text-[--md-sys-color-primary]"
+                            aria-label='Close popup'
                         >
-                            <span className="material-symbols-outlined">close</span>
+                            <OutlinedIcon icon="close" />
                         </button>
                     </div>
                     <p className="whitespace-pre-wrap">{artist.description}</p>
@@ -112,12 +122,12 @@ export default function ArtistContent({ params }: { params: Promise<{ id: string
                 <style jsx global>{styles}</style>
                 <div className="flex flex-col gap-8">
                     <TextButton className='flex md:hidden text-[--md-sys-color-primary]' onClick={() => router.back()}>
-                        <span className='material-symbols-outlined'>arrow_back</span>
+                        <OutlinedIcon icon="arrow_back" />
                         Quay lại
                     </TextButton>
                     <div className='flex w-full'>
                         <div className='flex flex-col justify-start items-center w-full'>
-                            <div className='flex items-center gap-4 w-full'>
+                            <div className='flex flex-col md:flex-row items-center gap-4 w-full'>
                                 {
                                     artist ?
                                         <Image
@@ -130,24 +140,30 @@ export default function ArtistContent({ params }: { params: Promise<{ id: string
                                 }
                                 <div className="flex flex-col">
                                     {
-                                        artist ? <h1 className='text-2xl font-bold'>{artist.name}</h1> : <Skeleton className="w-[200px] h-6" />
-                                    }
-                                    {
-                                        artist
-                                            ? <p>
-                                                <span className='line-clamp-2 text-ellipsis'>{artist.description}</span>
-                                                {
-                                                    artist.description && artist.description.length > 100 && 
-                                                    <button 
-                                                        className='text-[--md-sys-color-primary] ml-1' 
-                                                        type='button'
-                                                        onClick={() => setShowPopup(true)}
-                                                    >
-                                                        See more
-                                                    </button>
-                                                }
-                                            </p>
-                                            : <Skeleton className="w-[200px] h-6" />
+                                        artist ? (
+                                            <>
+                                                <h1 className='text-2xl font-bold'>{artist.name}</h1>
+                                                <div className='flex flex-col items-end gap-2'>
+                                                    <p ref={descriptionRef} className='line-clamp-4 md:line-clamp-2 text-ellipsis'>
+                                                        {artist.description}
+                                                    </p>
+                                                    {isOverflowing && (
+                                                        <button
+                                                            className='text-[--md-sys-color-primary] ml-1'
+                                                            type='button'
+                                                            onClick={() => setShowPopup(true)}
+                                                        >
+                                                            See more
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Skeleton className="w-[200px] h-6" />
+                                                <Skeleton className="w-[200px] h-6" />
+                                            </>
+                                        )
                                     }
                                 </div>
                             </div>

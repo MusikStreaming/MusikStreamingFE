@@ -5,7 +5,7 @@ import { SongSchema, AlternativeSongSchema } from "../model/schemas/song-by-id";
 
 export default async function fetchSongById(id: string) {
     try {
-        const res = await axios.get(`${process.env.API_URL}/v1/song/${id}`);
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/v1/song/${id}`);
         try {
             const data = AlternativeSongSchema.parse(res.data);
             return data.data as SongDetails;

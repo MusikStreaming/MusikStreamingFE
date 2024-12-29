@@ -27,9 +27,23 @@ const slideInAnimation = `
 `;
 
 export default function QueueContainer() {
-  const { isQueueVisible, toggleQueue, currentSong, queue } = useMedia();
-  const [width, setWidth] = useState(500); // Default width (w-80 = 320px)
+  const { isQueueVisible, toggleQueue } = useMedia();
+  const [width, setWidth] = useState(500); // Default fallback width
+  const [isClient, setIsClient] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+
+  // Handle hydration and localStorage
+  useEffect(() => {
+    setIsClient(true);
+    const storedWidth = localStorage.getItem('queue-width');
+    if (storedWidth) {
+      const parsedWidth = parseInt(storedWidth);
+      if (!isNaN(parsedWidth)) {
+        setWidth(parsedWidth);
+        document.documentElement.style.setProperty('--queue-width', `${parsedWidth}px`);
+      }
+    }
+  }, []);
 
   const handleMouseDown = useCallback(() => {
     setIsDragging(true);
@@ -41,8 +55,11 @@ export default function QueueContainer() {
       const clampedWidth = Math.min(Math.max(newWidth, 280), 600);
       setWidth(clampedWidth);
       document.documentElement.style.setProperty('--queue-width', `${clampedWidth}px`);
+      if (isClient) {
+        localStorage.setItem('queue-width', clampedWidth.toString());
+      }
     }
-  }, [isDragging]);
+  }, [isDragging, isClient]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -59,13 +76,17 @@ export default function QueueContainer() {
     };
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
+  if (!isClient) {
+    return null; // or a loading skeleton if preferred
+  }
+
   return (
-    <>
+    <div className='overflow-hidden rounded-2xl bg-[--md-sys-color-surface-container]'>
       <style>{slideInAnimation}</style>
       {/* Desktop queue */}
       <div 
         className={twMerge(
-          "song-queue-container max-h-[calc(100vh-228px)] overflow-y-auto bg-[--md-sys-color-surface] relative w-[var(--queue-width,500px)]",
+          "song-queue-container h-full overflow-y-auto rounded-2xl relative w-[var(--queue-width,500px)]",
           isQueueVisible ? twJoin(
             "md:block",
             "hidden",
@@ -85,7 +106,7 @@ export default function QueueContainer() {
           )}
           onMouseDown={handleMouseDown}
         />
-        <div className="bg-[--md-sys-color-surface] rounded-xl p-4">
+        <div className="bg-[--md-sys-color-surface-container] rounded-xl p-4">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold">Queue</h2>
           </div>
@@ -115,6 +136,6 @@ export default function QueueContainer() {
           <SongQueue />
         </div>
       </div>
-    </>
+    </div>
   );
 }

@@ -78,6 +78,8 @@ interface MediaContextType {
   isError: boolean;
   errorMessage: string;
   resetError: () => void;
+  playHistory: Song[];
+  historyIndex: number;
 }
 
 /**
@@ -92,8 +94,15 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [volume, setVolume] = useState(1);
+  const [volume, setVolume] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedVolume = localStorage.getItem('audio-volume');
+      return savedVolume ? Math.min(Math.max(parseFloat(savedVolume), 0), 1) : 1;
+    }
+    return 1;
+  });
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const volumeRef = useRef(volume);
   const [isQueueVisible, setIsQueueVisible] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragProgress, setDragProgress] = useState(0);
@@ -102,6 +111,12 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
   const [backupQueue, setBackupQueue] = useState<Song[]>([]);
   const [isCaching, setIsCaching] = useState(false);
   const [isLoop, setIsLoop] = useState(false);
+  const [playHistory, setPlayHistory] = useState<Song[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+
+  useEffect(() => {
+    volumeRef.current = volume;
+  }, [volume]);
 
   const handleError = useCallback((error: Error) => {
     console.error('Media error:', error);
@@ -141,6 +156,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const pauseSong = useCallback(() => {
+    console.debug('[MediaContext] pauseSong called');
     if (audioRef.current) {
       audioRef.current.pause();
       setIsPlaying(false);
@@ -148,6 +164,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const resumeSong = useCallback(async () => {
+    console.debug('[MediaContext] resumeSong called');
     if (audioRef.current) {
       setIsLoading(true);
       try {
@@ -209,7 +226,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const saveQueueToCache = async (queueData: { 
+  const saveQueueToCache = useCallback(async (queueData: { 
     queue: Song[], 
     currentIndex: number,
     currentSong: Song | null 
@@ -223,9 +240,9 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
       request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
     });
-  };
+  }, []);
   
-  const loadQueueFromCache = async () => {
+  const loadQueueFromCache = useCallback(async () => {
     const db = await initCache();
     return new Promise<{ 
       queue: Song[], 
@@ -239,7 +256,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
       request.onsuccess = () => resolve(request.result || null);
       request.onerror = () => reject(request.error);
     });
-  };
+  }, []);
 
   const cacheNextSong = useCallback(async () => {
     if (queue.length > queueIndex + 1 && !isCaching) {
@@ -263,11 +280,22 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
     }
   }, [queue, queueIndex, isCaching, cacheSong, getCachedSong]);
 
-  const playSong = useCallback(async (song: Song) => {
+  const playSong = useCallback(async (song: Song, addToHistory = true) => {
+    console.debug('[MediaContext] playSong called', { song, addToHistory });
     resetError();
     setIsLoading(true);
 
     try {
+      // Add to history if requested
+      if (addToHistory) {
+        setPlayHistory(prev => {
+          // Remove future history if we're not at the end
+          const newHistory = prev.slice(0, historyIndex + 1);
+          return [...newHistory, song];
+        });
+        setHistoryIndex(prev => prev + 1);
+      }
+
       // Cleanup previous audio
       if (audioRef.current) {
         audioRef.current.pause();
@@ -310,7 +338,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
         const blobUrl = URL.createObjectURL(audioBlob);
         audioRef.current.src = blobUrl;
         audioRef.current.load();
-        audioRef.current.volume = volume;
+        audioRef.current.volume = volumeRef.current; // Use ref instead of state
         await audioRef.current.play();
         
         updateMediaSession(song);
@@ -325,40 +353,53 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
           currentSong: song
         });
       }
+
+      await updateHistory(song.id);
     } catch (error) {
       handleError(error as Error);
     } finally {
       setIsLoading(false);
     }
-  }, [queue, volume, queueIndex, updateMediaSession, getCachedSong, cacheSong, handleError, resetError]);
+  }, [queue, volume, queueIndex, updateMediaSession, getCachedSong, cacheSong, handleError, resetError, saveQueueToCache, historyIndex]);
 
   const playPreviousSong = useCallback(() => {
-    if (queueIndex > 0) {
-      setQueueIndex(prev => prev - 1);
-      playSong(queue[queueIndex - 1]);
+    console.debug('[MediaContext] playPreviousSong called', { historyIndex, playHistory });
+    
+    if (historyIndex > 0) {
+      // There's a previous song in history
+      const previousSong = playHistory[historyIndex - 1];
+      setHistoryIndex(prev => prev - 1);
+      playSong(previousSong, false); // Don't add to history when going back
     } else if (audioRef.current) {
-      // If at start of queue, restart current song
+      // No previous song, restart current
       audioRef.current.currentTime = 0;
       audioRef.current.play();
     }
-  }, [queue, queueIndex, playSong]);
+  }, [playHistory, historyIndex, playSong]);
 
   const playNextSong = useCallback(() => {
-    if (queue.length > queueIndex + 1) {
-      const nextIndex = queueIndex + 1;
-      const nextSong = queue[nextIndex];
-      setQueueIndex(nextIndex);
-      playSong(nextSong);
+    console.debug('[MediaContext] playNextSong called', { historyIndex, playHistory });
+    
+    if (historyIndex < playHistory.length - 1) {
+      // There's a next song in history
+      const nextSong = playHistory[historyIndex + 1];
+      setHistoryIndex(prev => prev + 1);
+      playSong(nextSong, false); // Don't add to history when going forward
+    } else if (queue.length > queueIndex + 1) {
+      // Play next song from queue
+      const nextSong = queue[queueIndex + 1];
+      setQueueIndex(prev => prev + 1);
+      playSong(nextSong); // Add to history when playing new song
     } else if (backupQueue.length > 0 && isLoop) {
-      // Reset queue with backup if looping
+      // Loop behavior
       setQueue(backupQueue);
       setBackupQueue([]);
       setQueueIndex(0);
-      // if (backupQueue[0]) {
-      //   playSong(backupQueue[0]);
-      // }
+      if (backupQueue[0]) {
+        playSong(backupQueue[0]);
+      }
     }
-  }, [queue, queueIndex, backupQueue, isLoop, playSong]);
+  }, [queue, queueIndex, backupQueue, isLoop, playHistory, historyIndex, playSong]);
 
   const playList = useCallback(async (songs: Song[], startIndex: number = 0) => {
     if (songs.length === 0) return;
@@ -483,6 +524,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
                 audioRef.current.src = blobUrl;
                 audioRef.current.load();
                 audioRef.current.volume = volume;
+                updateMediaSession(cachedQueue.currentSong);
               }
               // Cache for future use
               await cacheSong(cachedQueue.currentSong.id, blob);
@@ -497,7 +539,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
     };
 
     loadState();
-  }, [volume, updateMediaSession, getCachedSong, cacheSong]);
+  }, [updateMediaSession, getCachedSong, cacheSong, loadQueueFromCache]); // Remove volume dependency
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -521,14 +563,15 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
         currentSong
       });
     }
-  }, [queue, queueIndex, currentSong]);
+  }, [queue, queueIndex, currentSong, saveQueueToCache]);
 
   // Cleanup effect
   useEffect(() => {
+    const audio = audioRef.current;
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = '';
+      if (audio) {
+        audio.pause();
+        audio.src = '';
       }
     };
   }, []);
@@ -545,6 +588,29 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
     audio.addEventListener('error', handleAudioError);
     return () => audio.removeEventListener('error', handleAudioError);
   }, [handleError]);
+
+  // Persist volume changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('audio-volume', volume.toString());
+    }
+  }, [volume]);
+
+  // Ensure volume is set whenever audio source changes
+  useEffect(() => {
+    console.debug('[MediaContext] Volume effect triggered:', volume);
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const setInitialVolume = () => {
+      if (Math.abs(audio.volume - volumeRef.current) > 0.01) {
+        audio.volume = volumeRef.current;
+      }
+    };
+
+    audio.addEventListener('loadedmetadata', setInitialVolume);
+    return () => audio.removeEventListener('loadedmetadata', setInitialVolume);
+  }, []); // Remove volume dependency
 
   // Debounced seek function
   const debouncedSeek = useCallback((time: number) => {
@@ -598,15 +664,68 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
   };
 
   /**
-   * Updates the volume level
+   * Updates the volume level without affecting playback
    * @param {number} newVolume - New volume level (0-1)
    */
-  const handleVolumeChange = (newVolume: number) => {
+  const handleVolumeChange = useCallback((newVolume: number) => {
+    console.debug('[MediaContext] handleVolumeChange called:', newVolume);
+    const safeVolume = Math.min(Math.max(newVolume, 0), 1);
+    
     if (audioRef.current) {
-      audioRef.current.volume = newVolume;
-      setVolume(newVolume);
+      try {
+        volumeRef.current = safeVolume;
+        audioRef.current.volume = safeVolume;
+        setVolume(prev => {
+          const shouldUpdate = Math.abs(prev - safeVolume) > 0.01;
+          console.debug('[MediaContext] Volume state update:', shouldUpdate);
+          return shouldUpdate ? safeVolume : prev;
+        });
+      } catch (error) {
+        console.error('[MediaContext] Volume change failed:', error);
+      }
     }
-  };
+  }, []);
+
+  // Add debug effect for volume changes
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    // Only update volume if it's significantly different
+    if (Math.abs(audio.volume - volume) > 0.01) {
+      audio.volume = volume;
+    }
+  }, [volume]);
+
+  // Add effect to persist play history
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && playHistory.length > 0) {
+        localStorage.setItem('playHistory', JSON.stringify({
+          history: playHistory,
+          index: historyIndex
+        }));
+      }
+    } catch (error) {
+      console.error('[MediaContext] Error saving play history:', error);
+    }
+  }, [playHistory, historyIndex]);
+
+  // Load saved history on mount
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('playHistory');
+        if (saved) {
+          const { history, index } = JSON.parse(saved);
+          setPlayHistory(history);
+          setHistoryIndex(index);
+        }
+      }
+    } catch (error) {
+      console.error('[MediaContext] Error loading play history:', error);
+    }
+  }, []);
 
   return (
     <MediaContext.Provider
@@ -637,7 +756,9 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
         isLoop,
         isError,
         errorMessage,
-        resetError
+        resetError,
+        playHistory,
+        historyIndex
       }}
     >
       <audio

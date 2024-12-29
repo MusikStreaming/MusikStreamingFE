@@ -23,6 +23,57 @@ import { AlbumDetails } from '@/app/model/album-details';
 import Link from 'next/link';
 import { SongCard } from '@/app/components/info-cards/song-card';
 import PlainTooltip from '@/app/components/tooltips/plain-tooltip';
+import OutlinedIcon from '@/app/components/icons/outlined-icon';
+import { useQuery } from '@tanstack/react-query';
+import fetchPlaylists from '@/app/api-fetch/fetch-playlists';
+import PlaylistSelector from '@/app/components/playlist-selector';
+import DialogFrame from '@/app/components/dialogs/dialog-frame';
+import { CardProps } from '@/app/model/card-props';
+
+const AlbumSongCard = ({ song }: { song: AlbumSong['song'] }) => {
+  const [cardProps, setCardProps] = useState<CardProps>({
+    title: song.title || '',
+    subtitle: song.artists?.map(a => a.name).join(', ') || '',
+    img: {
+      src: song.thumbnailurl || '/assets/placeholder.jpg',
+      alt: song.title || '',
+      width: 200,
+    },
+    href: `/song/${song.id}`,
+    type: 'song',
+    songID: song.id,
+    artists: song.artists?.map(a => ({ id: '', name: a.name })) || [],
+    duration: NaN,
+    isMultipleItemSub: false
+  });
+
+  useEffect(() => {
+    const fetchSongDetails = async () => {
+      console.log(song.id)
+      const fullSongData = await fetchSongById(song.id);
+      console.log(fullSongData)
+      setCardProps({
+        title: fullSongData?.title || song.title || '',
+        subtitle: fullSongData?.artists?.map(a => a.name).join(', ') || song.artists?.map(a => a.name).join(', ') || '',
+        img: {
+          src: fullSongData?.thumbnailurl || song.thumbnailurl || '/assets/placeholder.jpg',
+          alt: fullSongData?.title || song.title || '',
+          width: 200,
+        },
+        href: `/song/${song.id}`,
+        type: 'song',
+        songID: song.id,
+        artists: fullSongData?.artists?.map(a => ({ id: a.id, name: a.name })) || song.artists?.map(a => ({ id: '', name: a.name })) || [],
+        duration: fullSongData?.duration || NaN,
+        isMultipleItemSub: fullSongData?.artists?.length > 1
+      });
+    };
+
+    fetchSongDetails();
+  }, [song]);
+
+  return <SongCard {...cardProps} />;
+};
 
 const mapSongToPlayable = (song: SongDetails) => ({
   id: song.id,
@@ -49,23 +100,50 @@ interface AlbumSong {
   };
 }
 
-const mapSongToCard = (songData: AlbumSong['song']) => ({
-  title: songData?.title || '',
-  subtitle: songData?.artists?.map(a => a.name).join(', ') || '',
-  img: {
-    src: songData?.thumbnailurl || '',
-    alt: songData?.title || '',
-    width: 200,
-    height: 200
-  },
-  href: `/song/${songData?.id}`,
-});
+const mapSongToCard = async (songData: AlbumSong['song']) => {
+  try {
+    const fullSongData = await fetchSongById(songData.id);
+    return {
+      id: songData.id,
+      title: fullSongData?.title || songData?.title || '',
+      subtitle: fullSongData?.artists?.map(a => a.name).join(', ') || 
+                songData?.artists?.map(a => a.name).join(', ') || '',
+      img: {
+        src: fullSongData?.thumbnailurl || songData?.thumbnailurl || '',
+        alt: fullSongData?.title || songData?.title || '',
+        width: 200,
+        height: 200
+      },
+      href: `/song/${songData?.id}`,
+    };
+  } catch (error) {
+    console.error('Error fetching song data:', error);
+    return {
+      id: songData.id,
+      title: songData?.title || '',
+      subtitle: songData?.artists?.map(a => a.name).join(', ') || '',
+      img: {
+        src: songData?.thumbnailurl || '/assets/placeholder.jpg',
+        alt: songData?.title || '',
+        width: 200,
+        height: 200
+      },
+      href: `/song/${songData?.id}`,
+    };
+  }
+};
 
 export default function SongContent(params: { id: string; initialData: SongDetails | null }) {
   const [song, setSong] = useState<SongDetails | undefined>(params.initialData || undefined);
   const [albums, setAlbums] = useState<AlbumDetails[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [shareTooltip, setShareTooltip] = useState("Chia sẻ");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { data: playlists, refetch } = useQuery({
+    queryKey: ['playlists'],
+    queryFn: fetchPlaylists,
+    select: (data) => Array.isArray(data) ? data : []
+  });
   const router = useRouter();
   const {
     playSong,
@@ -153,6 +231,14 @@ export default function SongContent(params: { id: string; initialData: SongDetai
     }
   };
 
+  const handleAddToPlaylist = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+  };
+
   if (error) {
     return <ErrorComponent onReloadClick={fetchSongData} />;
   }
@@ -161,7 +247,7 @@ export default function SongContent(params: { id: string; initialData: SongDetai
     return (
       <div className='flex flex-col w-full gap-8 p-4'>
         {/* Hero Section */}
-        <div className="desktop hidden md:flex md:flex-col gap-6 w-full">
+        <div className="flex flex-col gap-6 w-full">
           <div className='flex flex-col md:flex-row items-center gap-6'>
             {song ?
               <Image
@@ -194,11 +280,12 @@ export default function SongContent(params: { id: string; initialData: SongDetai
                   />
                 </PlainTooltip>
                 <PlainTooltip content={shareTooltip}>
-                  <IconSmallButton 
+                  <IconSmallButton
                     onClick={handleShare}
                     onMouseLeave={() => setShareTooltip("Chia sẻ")}
                   >
-                    <span className="material-symbols-outlined">share</span>
+                    {/* <span className="material-symbols-outlined">share</span> */}
+                    <OutlinedIcon icon={"share"} />
                   </IconSmallButton>
                 </PlainTooltip>
                 <PlainTooltip content="Thích">
@@ -219,7 +306,12 @@ export default function SongContent(params: { id: string; initialData: SongDetai
                     favorite
                   </ToggleButtonFilled>
                 </PlainTooltip>
-                <PlainTooltip content="Lựa chọn khác">
+                <PlainTooltip content="Add to Playlist">
+                  <IconSmallButton onClick={handleAddToPlaylist}>
+                    <OutlinedIcon icon="playlist_add" />
+                  </IconSmallButton>
+                </PlainTooltip>
+                <PlainTooltip content="Khác">
                   <IconSmallButton>
                     <span className="material-symbols-outlined">more_vert</span>
                   </IconSmallButton>
@@ -254,161 +346,7 @@ export default function SongContent(params: { id: string; initialData: SongDetai
             }
           </div>
         </div>
-        <div className="mobile flex flex-col md:hidden slide-up-enter w-full">
-          <TextButton className="text-[--md-sys-color-primary] w-fit" onClick={() => router.back()}>
-            <span className="material-symbols-outlined">arrow_back</span>
-            Quay lại
-          </TextButton>
-          <div className="song-info flex flex-col gap-[60px] w-full pt-6 items-center">
-            <div className="cover-and-title flex flex-col w-full items-center">
-              <div className={`img-large-rotate ${currentSong?.id === song?.id ? 'animate-spin-slow' : ''}`}>
-                <Image
-                  src={song?.thumbnailurl || '/assets/placeholder.jpg'}
-                  alt={song?.title || 'Song cover'}
-                  width={300}
-                  height={300}
-                  priority={true}
-                  className="rounded-full shadow-lg"
-                />
-              </div>
-              <div className="flex justify-between items-center w-full pt-6">
-                <div className="flex flex-col gap-3 w-full">
-                  <h1 className='font-bold text-2xl md:text-3xl'>{song?.title}</h1>
-                  <ArtistLinks artists={song?.artists || []} />
-                </div>
-                <div className="flex justify-end gap-4 items-center">
-                  <ToggleIconButton alternateIcon={<span className="material-symbols-outlined">playlist_add_check</span>}>
-                    <span className="material-symbols-outlined">playlist_add</span>
-                  </ToggleIconButton>
-                  <ToggleButtonFilled
-                    active={song && likedSongs.some(s => s.id === song.id)}
-                    onClick={() => song && (likedSongs.some(s => s.id === song.id)
-                      ? removeLikedSong({
-                        ...song,
-                        thumbnailurl: song.thumbnailurl || '/assets/placeholder.jpg',
-                        artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
-                      })
-                      : addLikedSong({
-                        ...song,
-                        thumbnailurl: song.thumbnailurl || '/assets/placeholder.jpg',
-                        artists: song.artists?.map(a => ({ artist: { id: a.id, name: a.name } })) || []
-                      })
-                    )}>
-                    favorite
-                  </ToggleButtonFilled>
-                </div>
-              </div>
-            </div>
-            <div className="control-region flex flex-col w-full items-center gap-4">
-              <div className="progress-bar flex flex-col gap-3 w-full items-center">
-                <input
-                  className={twMerge(
-                    "w-full",
-                    isPlaybackDisabled && "opacity-50"
-                  )}
-                  aria-label="song-progress"
-                  type="range"
-                  value={song?.id === currentSong?.id ? progress : 0}
-                  min={0}
-                  max={song?.duration || 100}
-                  onChange={(e) => seekTo(parseInt(e.target.value))}
-                  disabled={isPlaybackDisabled}
-                />
-                <div className="flex justify-between gap-3 w-full items-center">
-                  <p className="">{song?.id === currentSong?.id ? formatDuration(progress, true) : '0:00'}</p>
-                  <p className="">{formatDuration(song?.duration || 0, true)}</p>
-                </div>
-              </div>
-              <div className="flex justify-between items-center gap-4 w-full">
-                <PlainTooltip content="Trộn bài">
-                  <IconSmallButton>
-                    <span className="material-symbols-outlined">shuffle</span>
-                  </IconSmallButton>
-                </PlainTooltip>
-                <PlainTooltip content="Bài trước">
-                  <IconSmallButton>
-                    <span className="material-symbols-outlined">skip_previous</span>
-                  </IconSmallButton>
-                </PlainTooltip>
-                <PlayButton
-                  className="bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary] w-12 h-12"
-                  onClick={handlePlayClick}
-                  isPlaying={isPlaying && currentSong?.id === song?.id}
-                  songId={song?.id}
-                />
-                <PlainTooltip content="Bài sau">
-                  <IconSmallButton>
-                    <span className="material-symbols-outlined">skip_next</span>
-                  </IconSmallButton>
-                </PlainTooltip>
-                <PlainTooltip content="Lặp lại">
-                  <IconSmallButton>
-                    <span className="material-symbols-outlined">repeat</span>
-                  </IconSmallButton>
-                </PlainTooltip>
-              </div>
-              <div className="additional flex justify-between items-center gap-4 w-full">
-                <PlainTooltip content="Danh sách phát">
-                  <IconSmallButton onClick={toggleQueue}>
-                    <span className="material-symbols-outlined">queue_music</span>
-                  </IconSmallButton>
-                </PlainTooltip>
-              </div>
-            </div>
-            {/* {isQueueVisible && (
-              <div className="fixed bottom-[72px] left-0 right-0 bg-[--md-sys-color-surface] border-t border-[--md-sys-color-outline] p-4 z-50 max-h-[60vh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-bold">Danh sách phát</h3>
-                  <IconSmallButton onClick={toggleQueue}>
-                    <span className="material-symbols-outlined">close</span>
-                  </IconSmallButton>
-                </div>
-                {queue.length > 0 ? (
-                  <div className="flex flex-col gap-2">
-                    {queue.map((song, index) => (
-                      <div 
-                        key={song.id} 
-                        className={`flex items-center justify-between p-2 rounded ${
-                          currentSong?.id === song.id ? 'bg-[--md-sys-color-primary-container]' : ''
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Image
-                            src={song.thumbnailurl || '/assets/placeholder.jpg'}
-                            alt={song.title}
-                            width={40}
-                            height={40}
-                            className="rounded"
-                          />
-                          <div>
-                            <p className="font-medium">{song.title}</p>
-                            <p className="text-sm text-[--md-sys-color-on-surface-variant]">
-                              {song.artists?.map(a => a.artist.name).join(', ')}
-                            </p>
-                          </div>
-                        </div>
-                        <IconSmallButton onClick={() => removeFromQueue(song.id)}>
-                          <span className="material-symbols-outlined">remove</span>
-                        </IconSmallButton>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-center text-[--md-sys-color-on-surface-variant]">
-                    Danh sách phát trống
-                  </p>
-                )}
-              </div>
-            )} */}
-          </div>
 
-        </div>
-        <div className="flex flex-col gap-3 w-full">
-          <h2 className="text-lg font-bold">Lời bài hát</h2>
-        </div>
-        {/* <div className='flex flex-col'>
-          <h2 className='text-lg font-bold'>Danh sách phát</h2>
-        </div> */}
         <div className="flex flex-col w-full overflow-hidden">
           {
             albums.map((album, index) => (
@@ -417,7 +355,7 @@ export default function SongContent(params: { id: string; initialData: SongDetai
                 <div className="card-scroll grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-4">
                   {
                     album?.songs?.map(song => (
-                      <SongCard key={song?.song?.id} type="song" {...mapSongToCard(song?.song)} />
+                      <AlbumSongCard key={song?.song?.id} song={song?.song} />
                     ))
                   }
                 </div>
@@ -425,6 +363,9 @@ export default function SongContent(params: { id: string; initialData: SongDetai
             ))
           }
         </div>
+        {isModalOpen && <DialogFrame onClose={handleModalClose}>
+            <PlaylistSelector playlists={playlists ?? []} songId={song?.id} onClose={handleModalClose} />
+        </DialogFrame>}
       </div>
     );
   } catch (e) {

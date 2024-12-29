@@ -1,5 +1,5 @@
-import AlbumContent from "./content";
 import { Suspense } from "react";
+import PlaylistContent from "../../components/shared-page-content/content";
 
 export default async function AlbumPage({ params }: { params: Promise<{ id: string }> }) {
   const id = (await params).id;
@@ -7,7 +7,7 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
   return (
     <Suspense>
       <div className="container mx-auto px-4 py-8">
-        <AlbumContent id={id} />
+        <PlaylistContent id={id} />
       </div>
     </Suspense>
   )

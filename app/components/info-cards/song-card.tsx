@@ -4,7 +4,7 @@ import { useMedia } from "@/app/contexts/media-context";
 // import { hasCookie } from "cookies-next";
 
 export function SongCard(props: CardProps) {
-  const { playSong, pauseSong, currentSong, isPlaying } = useMedia();
+  const { playSong, pauseSong, currentSong, isPlaying, clearQueue } = useMedia();
 
   const handlePlayClick = async () => {
     // if (!hasCookie('session')) {
@@ -21,16 +21,19 @@ export function SongCard(props: CardProps) {
       id: props.songID!,
       duration: props.duration!,
       title: props.title!,
-      artists: props.artists!.map(artist => ({ 
+      artists: props.artists ? props.artists.map(artist => ({ 
         artist: {
           id: artist.id || '',
           name: artist.name || ''
         }
-      })),
+      })) : [],
       thumbnailurl: props.img.src
     }
     playSong(song);
+    clearQueue();
   };
 
-  return <GeneralCard {...props} onClick={handlePlayClick} />;
+  return <GeneralCard {...props} isMultipleItemSub={props.artists && props.artists.length > 1
+    
+  } onClick={handlePlayClick} />;
 }

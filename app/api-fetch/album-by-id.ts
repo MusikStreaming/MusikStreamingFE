@@ -41,14 +41,21 @@ export default async function fetchAlbumById(id: string): Promise<AlbumDetails> 
   try {
     if (localStorage && localStorage.getItem(
       `playlist-${id}`
-    )) {
+    ) && Date.now() - (parseInt(localStorage.getItem(`playlist-time-${id}`) || '0')) < 1000 * 30) {
       console.log("Fetching album with ID:", id, "from local storage");
       const data = JSON.parse(localStorage.getItem(`playlist-${id}`) as string);
       console.log("Successfully fetched album data from local storage:", data);
       return data;
     }
     console.log("Fetching album with ID:", id);
-    const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/v1/collection/${id}`);
+    const res = await axios.get(
+      `${process.env.NEXT_PUBLIC_API_URL}/v1/collection/${id}`,
+      {
+        headers: {
+          'cache-control': 'no-cache',
+        }
+      }
+    );
     console.log("Raw API response:", res.data);
 
     try {
@@ -56,6 +63,7 @@ export default async function fetchAlbumById(id: string): Promise<AlbumDetails> 
       const data = AlbumSchema.parse(res.data);
       console.log("Successfully parsed album data:", data);
       localStorage.setItem(`playlist-${id}`, JSON.stringify(data));
+      localStorage.setItem(`playlist-time-${id}`, Date.now().toString());
       return data;
     } catch (parseError) {
       console.log("Failed to parse with AlbumSchema, trying AlternativeAlbumSchema");
@@ -64,6 +72,7 @@ export default async function fetchAlbumById(id: string): Promise<AlbumDetails> 
       const alternativeData = AlternativeAlbumSchema.parse(res.data);
       console.log("Successfully parsed with AlternativeAlbumSchema:", alternativeData.data);
       localStorage.setItem(`playlist-${id}`, JSON.stringify(alternativeData.data));
+      localStorage.setItem(`playlist-time-${id}`, Date.now().toString());
       return alternativeData.data;
     }
   } catch (error) {

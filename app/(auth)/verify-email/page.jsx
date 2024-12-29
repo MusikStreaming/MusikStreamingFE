@@ -2,6 +2,7 @@
 
 import { Suspense } from "react";
 import { useRouter } from "next/navigation";
+import OutlinedIcon from "@/app/components/icons/outlined-icon";
 
 export default function VerifyEmailPage() {
     const router = useRouter();
@@ -14,7 +15,7 @@ export default function VerifyEmailPage() {
             </div>
             <div className="flex flex-col gap-4">
                 <div className='bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary] rounded-full p-2 flex items-center gap-2'>
-                    <span className='material-symbols-outlined'>check_circle</span>
+                    <OutlinedIcon icon="check_circle"/>
                     <span>Xác nhận email</span>
                 </div>
                 {/* <button className='text-sm text-[--md-sys-color-secondary] rounded-full p-0' onClick={() => {

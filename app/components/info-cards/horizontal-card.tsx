@@ -1,63 +1,82 @@
 'use client'
 
-import TextButton from "../buttons/text-button";
-;
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import "./cards.css"
-import { CardProps } from "@/app/model/card-props";
-import Link from "next/link";
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useMedia } from '@/app/contexts/media-context';
 
-/**
- * HorizontalCard Component
- * 
- * A horizontal card that displays an image, title, and a play button. The card is clickable and navigates to the provided href.
- * 
- * @param {Object} props - Component props
- * @param {Object} props.img - Image object containing src, width, and height
- * @param {string} props.img.src - Source URL of the image
- * @param {number} props.img.width - Width of the image
- * @param {number} props.img.height - Height of the image
- * @param {string} props.title - Title text to display
- * @param {string} props.subtitle - Subtitle text to display
- * @param {string} props.href - URL to navigate to when the card is clicked
- * @param {Function} [props.onClick] - Optional click handler for the play button
- */
+import { CardProps } from '@/app/model/card-props';
+import TextButton from '../buttons/text-button';
+import Skeleton from '../loading/skeleton';
+import { useQuery } from '@tanstack/react-query';
+import fetchSongById from '@/app/api-fetch/song-by-id';
+
 export default function HorizontalCard({
-    img,
-    title,
-    subtitle,
-    href,
-    onClick = () => { }
+  img,
+  title,
+  href,
+  songID = undefined,
 }: CardProps) {
-    const router = useRouter();
-    return (
-        <div className="horizontal-card song-card flex items-center gap-3 bg-[--md-sys-color-surface-variant] rounded-lg" role="link" onClick={
-            () => {
-                router.push(href);
-            }
-        }>
-            <div className="image-frame flex justify-start">
-                <Image
-                    className="rounded-l-lg"
-                    src={img.src}
-                    alt={title}
-                    width={img.width}
-                    height={img.width}
-                >
-                </Image>
-            </div>
-            <div className="title text-ellipsis line-clamp-1 w-full">
-                <Link href={href} className="text-left">{title}</Link>
-            </div>
-            <div className="play-button-container">
-                <div className="play-button w-12 ">
-                    <TextButton className="" onClick={onClick}>
-                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed"><path d="M320-200v-560l440 280-440 280Z"/></svg>
-                        {/* <span className="material-symbols-outlined icon-filled">play_arrow</span> */}
-                    </TextButton>
-                </div>
-            </div>
+  const router = useRouter();
+  const { currentSong, isPlaying, playSong } = useMedia();
+  
+  router.prefetch(href);
+
+  const { data: songData } = useQuery({
+    queryKey: ["song", songID],
+    queryFn: () => {
+      if (!songID) throw new Error('Song ID is required');
+      return fetchSongById(songID);
+    },
+    enabled: !!songID
+  });
+
+  return (
+    <div 
+      className="horizontal-card song-card flex items-center gap-3 bg-[--md-sys-color-surface-variant] rounded-lg cursor-pointer" 
+      onClick={() => router.push(href)}
+    >
+      <div className="image-frame flex justify-start relative w-24 h-24 overflow-hidden bg-[--md-sys-color-surface-container]">
+        {img.src ? (
+          <>
+            <Image
+              className="rounded-l-lg object-cover w-full h-full transition-transform duration-300 group-hover:scale-125 group-hover:brightness-50"
+              src={img.src}
+              alt={title}
+              fill={true}
+              sizes="96px"
+              priority={true}
+            />
+            <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          </>
+        ) : (
+          <Skeleton className="w-full h-full rounded-l-lg" />
+        )}
+      </div>
+      <div className="title text-ellipsis line-clamp-1 w-full">
+        <Link href={href} className="text-left hover:underline">
+          {title}
+        </Link>
+      </div>
+      <div className="play-button-container">
+        <div className="play-button w-12 h-12 bg-[--md-sys-color-primary] rounded-full overflow-hidden">
+          <TextButton 
+            className="w-full h-full flex items-center justify-center bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary]" 
+            onClick={async (e: React.MouseEvent<HTMLButtonElement>) => {
+              e.stopPropagation();
+              if (songData && songData.thumbnailurl) {
+                playSong({
+                  ...songData,
+                  thumbnailurl: songData.thumbnailurl,
+                  artists: songData.artists.map(a => ({ artist: { id: a.id, name: a.name } }))
+                });
+              }
+            }}
+          >
+            <span className="material-symbols-outlined-filled">{songID && songID === currentSong?.id ? (isPlaying ? 'pause' : 'play_arrow') : 'play_arrow'}</span>
+          </TextButton>
         </div>
-    );
+      </div>
+    </div>
+  );
 }

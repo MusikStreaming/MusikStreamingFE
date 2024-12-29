@@ -3,8 +3,7 @@ import Image from 'next/image';
 import { useMedia } from '@/app/contexts/media-context';
 import { formatDuration } from '@/app/utils/time';
 import { twMerge } from 'tailwind-merge';
-import { useState, useEffect, useCallback, useRef, HtmlHTMLAttributes } from 'react';
-import { getCookie } from 'cookies-next/client';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import IconSmallButton from '@/app/components/buttons/icon-small-button';
@@ -15,9 +14,10 @@ import ToggleIconButtonDotted from '@/app/components/buttons/toggle-icon-button-
 import { useLiked } from '@/app/contexts/liked-context';
 import { Song } from '@/app/model/song';
 import ToggleButtonFilled from '../buttons/toggle-button';
+import OutlinedIcon from "@/app/components/icons/outlined-icon";
+import OutlinedFilledIcon from "@/app/components/icons/outlined-filled-icon";
 
 export default function SongControl() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [shouldHide, setShouldHide] = useState(false);
   const {
     currentSong,
@@ -50,6 +50,7 @@ export default function SongControl() {
   const titleRef = useRef<HTMLParagraphElement>(null);
   const subRef = useRef<HTMLParagraphElement>(null);
   const [isSubOverflowing, setSubOverflowing] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     // const checkAuth = () => {
@@ -59,14 +60,14 @@ export default function SongControl() {
 
     const handleResize = () => {
       setShouldHide(
-        (pathname.includes('/song') && window.innerWidth < 768) 
-        || pathname.includes('/manager') 
-        || pathname.includes('/admin') 
-        || pathname.includes('/login') 
-        || pathname.includes('/sign-up') 
-        || pathname.includes('/forgot-password') 
-        || pathname.includes('/new-password') 
-        || pathname.includes('/verify-email') 
+        (pathname.includes('/now-playing') && window.innerWidth < 768)
+        || pathname.includes('/manager')
+        || pathname.includes('/admin')
+        || pathname.includes('/login')
+        || pathname.includes('/sign-up')
+        || pathname.includes('/forgot-password')
+        || pathname.includes('/new-password')
+        || pathname.includes('/verify-email')
         || pathname.includes('/auth'));
     };
 
@@ -132,12 +133,73 @@ export default function SongControl() {
     }
   }, [currentSong, handleSongTitleClick]);
 
+  const filteredArtists = currentSong?.artists?.map(artist => ({
+    artist: {
+      id: artist.artist.id,
+      name: artist.artist.name
+    }
+  })) || [];
+
+  const handleVolumeChange = useCallback((newValue: number) => {
+    console.debug('[SongControl] handleVolumeChange called:', newValue);
+    try {
+      const normalizedVolume = newValue / 100;
+      if (!isNaN(normalizedVolume) && normalizedVolume >= 0 && normalizedVolume <= 1) {
+        // Prevent unnecessary volume updates
+        if (Math.abs(volume - normalizedVolume) > 0.01) {
+          setVolume(normalizedVolume);
+        }
+        // Update mute state without triggering additional effects
+        setIsMuted(normalizedVolume === 0);
+        if (normalizedVolume > 0) {
+          setVolumeBeforeMute(normalizedVolume);
+        }
+      }
+    } catch (error) {
+      console.error('[SongControl] Volume UI change failed:', error);
+    }
+  }, [volume, setVolume]);
+
+  const handleMuteToggle = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent event bubbling
+    try {
+      if (isMuted) {
+        setVolume(volumeBeforeMute);
+        setIsMuted(false);
+      } else {
+        setVolumeBeforeMute(volume);
+        setVolume(0);
+        setIsMuted(true);
+      }
+    } catch (error) {
+      console.error('[SongControl] Mute toggle failed:', error);
+    }
+  }, [isMuted, volume, volumeBeforeMute, setVolume]);
+
+  // Simplify the volume change effect
+  useEffect(() => {
+    if (volume === 0) {
+      if (!isMuted) setIsMuted(true);
+    } else if (isMuted) {
+      setIsMuted(false);
+    }
+  }, [volume]);
+
+  const handleLyricsToggle = useCallback(() => {
+    if (!pathname.includes('/lyrics')) {
+      router.push('/lyrics');
+    } else {
+      router.back();
+    }
+  }, [pathname, router]);
+
   return (
     <div className={twMerge(
       'song-playing z-[1000] bg-[--md-sys-color-inverse-on-surface] flex-col transition-transform duration-300',
       shouldHide && 'hidden',
     )} onClick={() => {
-      if (window.innerWidth < 768 && currentSong?.id) router.push(`/song/${currentSong.id}`)}
+      if (window.innerWidth < 768 && currentSong?.id) router.push(`/now-playing`);
+    }
     }>
       <div className="p-4 gap-1 md:gap-4 flex flex-wrap items-center justify-between">
         <div className="song-title flex items-center gap-2 w-1/2 md:w-1/4">
@@ -169,7 +231,7 @@ export default function SongControl() {
             )}
           </div>
           <div className="song-title-info text-xs md:text-base md:w-full w-2/3 md:max-w-[300px] overflow-hidden">
-            <p 
+            <p
               ref={titleRef}
               className={twMerge(
                 "song-title-text block whitespace-nowrap text-nowrap",
@@ -185,14 +247,14 @@ export default function SongControl() {
                 {currentSong?.title || "No song selected"}
               </Link>
             </p>
-            {currentSong?.artists && currentSong.artists.length > 0 && (
+            {filteredArtists.length > 0 && (
               <p
-               ref={subRef}
-               className={twMerge(
-                "text-xs md:text-sm text-[--md-sys-color-outline] whitespace-nowrap text-nowrap",
-                isSubOverflowing && "animate-marquee"
+                ref={subRef}
+                className={twMerge(
+                  "text-xs md:text-sm text-[--md-sys-color-outline] whitespace-nowrap text-nowrap",
+                  isSubOverflowing && "animate-marquee"
                 )}>
-                {[...currentSong.artists].map((artist, index, array) => (
+                {filteredArtists.map((artist, index, array) => (
                   <span key={artist.artist.id}>
                     <Link
                       href={`/artist/${artist.artist.id}`}
@@ -213,14 +275,13 @@ export default function SongControl() {
         </div>
         <div className="song-controls-container flex-col w-1/3">
           <div className="song-controls flex items-center justify-end md:justify-center gap-0 md:gap-4">
-            <IconSmallButton disabled={isDisabled} onClick={(e: React.MouseEvent)=>{
+            <IconSmallButton disabled={isDisabled} onClick={(e: React.MouseEvent) => {
               e.preventDefault()
               playPreviousSong()
             }}>
-              <span className={twMerge(
-                "material-symbols-outlined-filled",
+              <OutlinedFilledIcon icon="skip_previous" className={twMerge(
                 isDisabled && "opacity-50"
-              )}>skip_previous</span>
+              )} />
             </IconSmallButton>
             <PlayButton
               className={twMerge(
@@ -229,7 +290,7 @@ export default function SongControl() {
               )}
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
-                if (isPlaying) 
+                if (isPlaying)
                   pauseSong()
                 else resumeSong();
               }}
@@ -238,14 +299,13 @@ export default function SongControl() {
               songId={currentSong?.id}
             />
             <IconSmallButton disabled={isDisabled} onClick={
-              (e: React.MouseEvent)=>{
+              (e: React.MouseEvent) => {
                 e.stopPropagation()
                 playNextSong()
               }}>
-              <span className={twMerge(
-                "material-symbols-outlined-filled",
+              <OutlinedFilledIcon icon="skip_next" className={twMerge(
                 isDisabled && "opacity-50"
-              )}>skip_next</span>
+              )} />
             </IconSmallButton>
           </div>
           <div className="song-progress md:flex items-center gap-4 hidden">
@@ -275,28 +335,17 @@ export default function SongControl() {
           </div>
         </div>
         <div className="right-controls w-1/4 items-end justify-end hidden md:flex">
-          <ToggleIconButtonDotted>
-            <span className={isDisabled ? "opacity-50" : ""}>lyrics</span>
+          <ToggleIconButtonDotted onClick={handleLyricsToggle} active={pathname.includes('/lyrics')}>
+            <OutlinedIcon icon="lyrics" className={isDisabled ? "opacity-50" : ""} />
           </ToggleIconButtonDotted>
           <ToggleIconButtonDotted onClick={toggleQueue} active={isQueueVisible}>
-            <span className={twMerge(
-              "material-symbols-outlined",
-            )}>queue_music</span>
+            <OutlinedIcon icon="queue_music" />
           </ToggleIconButtonDotted>
           <div className="volume flex items-center">
-            <IconSmallButton disabled={isDisabled}>
-              <span className={twMerge(
-                "material-symbols-outlined",
+            <IconSmallButton disabled={isDisabled} onClick={handleMuteToggle} >
+              <OutlinedIcon icon={isMuted ? "volume_off" : "volume_up"} className={twMerge(
                 isDisabled && "opacity-50"
-              )} onClick={() => {
-                if (volume === 0) {
-                  setVolume(volumeBeforeMute);
-                  setIsMuted(false);
-                } else {
-                  setVolume(0);
-                  setIsMuted(true);
-                }
-              }}>{isMuted ? "volume_off" : "volume_up"}</span>
+              )} />
             </IconSmallButton>
             <input
               className={twMerge(
@@ -308,11 +357,7 @@ export default function SongControl() {
               value={volume * 100}
               min={0}
               max={100}
-              onChange={(e) => {
-                setVolume(Number.parseInt(e.target.value) / 100);
-                setIsMuted(false);
-                setVolumeBeforeMute(volume);
-              }}
+              onChange={(e) => handleVolumeChange(Number(e.target.value))}
               disabled={isDisabled}
             />
           </div>

@@ -7,6 +7,7 @@ import LoginForm from '@/app/(auth)/login/login-form';
 import { getCookie, hasCookie } from 'cookies-next';
 import { Suspense } from 'react';
 import { useRouter } from 'next/navigation';
+import DOMPurify from 'dompurify';
 // import {useTranslation} from 'next/translation';
 
 /**
@@ -66,6 +67,7 @@ export default function LoginPage() {
             // fetch the user credentials
 
             const returnUrl = new URLSearchParams(window.location.search).get('returnUrl') || '/';
+            const sanitizedReturnUrl = DOMPurify.sanitize(returnUrl);
             const isValidUrl = (url) => {
                 try {
                     const parsedUrl = new URL(url, window.location.origin);
@@ -74,7 +76,10 @@ export default function LoginPage() {
                     return false;
                 }
             };
-            window.location.href = isValidUrl(returnUrl) ? returnUrl : '/';
+            const isRelativeUrl = (url) => {
+                return url.startsWith('/');
+            };
+            window.location.href = isValidUrl(sanitizedReturnUrl) && isRelativeUrl(sanitizedReturnUrl) ? sanitizedReturnUrl : '/';
 
             return { success: true };
         } catch (error) {

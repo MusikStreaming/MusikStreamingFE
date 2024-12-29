@@ -1,16 +1,20 @@
 import axios from "axios";
 
 export default async function updateHistory(songId: string): Promise<void> {
+  console.log(songId);
   try {
-    await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/v1/user/me/history`, {
-      song_id: songId,
-    }, {
+    const request = {
+      method: 'post',
+      url: "/api/user/history",
       headers: {
-        'Accept': 'application/json',
         'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + localStorage.getItem('session_token'),
       },
-    });
+      data: {
+        songid: songId,
+      },
+    }
+    console.log(request)
+    await axios.request(request);
   } catch (e) {
     console.error(e);
   }

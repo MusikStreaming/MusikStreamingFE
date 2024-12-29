@@ -2,29 +2,36 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 interface UserResponse {
-  role: string;
-  avatarurl?: string;
+  data: {
+    role: string;
+    avatarurl?: string;
+  }
 }
 
+const DEFAULT_RESPONSE = {
+  authenticated: false,
+  admin: false,
+  artistManager: false,
+  avatarUrl: '/assets/default-avatar.png',
+  role: null
+};
+
 export async function GET() {
+  console.group('🔐 User Info Request');
   try {
     const cookieStore = await cookies();
     const sessionToken = cookieStore.get("session_token");
-    const user_id = cookieStore.get("user_id");
 
-    if (!sessionToken?.value || !user_id?.value) {
-      return NextResponse.json(
-        { 
-          admin: false, 
-          artistManager: false,
-          avatarUrl: '/assets/default-avatar.png',
-          role: null 
-        }, 
-        { status: 401 }
-      );
+    if (!sessionToken?.value) {
+      console.warn('⚠️ No session token found');
+      console.groupEnd();
+      return NextResponse.json(DEFAULT_RESPONSE, { status: 401 });
     }
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/user/${user_id.value}`, {
+    console.log('🌐 API URL:', process.env.NEXT_PUBLIC_API_URL);
+    console.log('🎫 Token Present:', !!sessionToken.value);
+    
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/user/me`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${sessionToken.value}`,
@@ -33,46 +40,43 @@ export async function GET() {
       cache: 'no-store'
     });
 
+    console.log('📥 API Response Status:', response.status);
+    
     if (!response.ok) {
-      return NextResponse.json(
-        { 
-          admin: false, 
-          artistManager: false,
-          avatarUrl: '/assets/default-avatar.png',
-          role: null 
-        }, 
-        { status: response.status }
-      );
+      const errorText = await response.text();
+      console.error('❌ API Error:', errorText);
+      console.groupEnd();
+      return NextResponse.json(DEFAULT_RESPONSE, { status: response.status });
     }
 
     const userData: UserResponse = await response.json();
+    console.log('👤 User Data:', JSON.stringify(userData, null, 2));
 
-    const defaultHeaders = {
-      'Cache-Control': 'no-store, no-cache, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0'
-    };
+    // Handle the nested data structure
+    const userInfo = userData.data || userData;
 
+    console.log('✅ Request completed successfully');
+    console.groupEnd();
     return NextResponse.json({
-      admin: userData.role === 'Admin',
-      artistManager: userData.role === 'Artist Manager',
-      avatarUrl: userData.avatarurl || '/assets/default-avatar.png',
-      role: userData.role
+      authenticated: true,
+      admin: userInfo.role === 'Admin',
+      artistManager: userInfo.role === 'Artist Manager',
+      avatarUrl: userInfo.avatarurl || '/assets/default-avatar.png',
+      role: userInfo.role
     }, {
       status: 200,
-      headers: defaultHeaders
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Pragma': 'no-cache'
+      }
     });
 
   } catch (error) {
-    console.error("Error in user-info route:", error);
-    return NextResponse.json(
-      { 
-        admin: false, 
-        artistManager: false,
-        avatarUrl: '/assets/default-avatar.png',
-        role: null 
-      }, 
-      { status: 500 }
-    );
+    console.error('❌ Error in user-info route:', error);
+    console.groupEnd();
+    return NextResponse.json({
+      ...DEFAULT_RESPONSE,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }

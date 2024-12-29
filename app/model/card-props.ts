@@ -1,6 +1,6 @@
 import { ImageProps } from "./image-props";
 
-export type CardType = 'song' | 'album' | 'artist';
+export type CardType = 'song' | 'album' | 'artist' | 'playlist';
 
 export type CardProps = {
     title: string;
