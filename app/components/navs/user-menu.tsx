@@ -15,63 +15,60 @@ interface User {
 }
 
 interface UserMenuProps {
+  username: string;
   onLogout: () => void;
 }
 
-export default function UserMenu({ onLogout }: UserMenuProps) {
+export default function UserMenu({ username, onLogout }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isValid, setIsValid] = useState(true);
   const [isManagerPath, setIsManagerPath] = useState(false);
   const [isManager, setIsManager] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAdminPath, setIsAdminPath] = useState(false);
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string>('/assets/default-avatar.png');
 
   useEffect(() => {
-    const checkUserStatus = async () => {
+    const validateSession = async () => {
       try {
         const response = await fetch('/api/auth/user-info', {
           credentials: 'include'
         });
+        
         if (!response.ok) {
-          throw new Error('Failed to check user status');
+          setIsValid(false);
+          onLogout();
+          return;
         }
-        const { artistManager, avatarUrl } = await response.json();
-        setIsManager(artistManager);
-        setAvatarUrl(avatarUrl);
+
+        const userInfo = await response.json();
+        
+        if (!userInfo.authenticated) {
+          setIsValid(false);
+          onLogout();
+          return;
+        }
+
+        setIsValid(true);
+        setIsManager(userInfo.artistManager);
+        setIsAdmin(userInfo.admin);
+        setAvatarUrl(userInfo.avatarUrl);
       } catch (error) {
-        console.error('Error checking user status:', error);
-        setIsManager(false);
+        console.error('Session validation error:', error);
+        setIsValid(false);
+        onLogout();
       }
     };
 
-    checkUserStatus();
-    setIsManagerPath(pathname?.startsWith('/manager'));
-    // setIsAdminPath(pathname?.startsWith('/admin'));
-  }, [pathname]);
-
-  useEffect(() => {
-    const checkAdmin = async () => {
-      try {
-        const response = await fetch('/api/auth/admin', {
-          credentials: 'include'
-        });
-        if (!response.ok) {
-          throw new Error('Failed to check admin status');
-        }
-        const { admin, artistManager } = await response.json();
-        setIsManager(artistManager);
-        setIsAdmin(admin);
-      } catch (error) {
-        console.error('Error checking admin status:', error);
-        setIsManager(false);
-        setIsAdmin(false);
-      }
-    };
-    checkAdmin();
-    setIsAdminPath(pathname?.startsWith('/admin'));
-  }, [pathname]);
+    validateSession();
+    
+    // Validate session periodically
+    const validationInterval = setInterval(validateSession, 60000);
+    
+    return () => clearInterval(validationInterval);
+  }, [onLogout]);
 
   const handleLogout = async () => {
     try {
@@ -111,6 +108,11 @@ export default function UserMenu({ onLogout }: UserMenuProps) {
     setAvatar();
   }, [avatarUrl]);
 
+  // Don't render menu if session is invalid
+  if (!isValid) {
+    return null;
+  }
+
   return (
     <div className="relative">
       <button
@@ -120,10 +122,11 @@ export default function UserMenu({ onLogout }: UserMenuProps) {
         aria-label="Open user menu"
       >
         <Image
-          src={avatarUrl!}
-          alt="User avatar"
+          src={avatarUrl}
+          alt={`${username}'s avatar`}
           width={40}
           height={40}
+          onError={() => setAvatarUrl('/assets/default-avatar.png')}
         />
       </button>
 

@@ -25,7 +25,7 @@ export default function BottomNavBarItem(
                         <span className={`material-symbols-outlined${pathname === props.href ? "-filled" : ""}`}>{props.icon}</span>
                     </div>
                 </div>
-                <div className={`label transition-all duration-300 ease-in-out font-bold block ${pathname == props.href ? "font-bold text-[--md-sys-color-primary]" : "text-[--md-sys-color-on-surface]"}`}>
+                <div className={`label text-center transition-all duration-300 ease-in-out font-bold block ${pathname == props.href ? "font-bold text-[--md-sys-color-primary]" : "text-[--md-sys-color-on-surface]"}`}>
                     <p>{props.text}</p>
                 </div>
             </Link>

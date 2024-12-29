@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { getCookie, hasCookie } from 'cookies-next';
+import { useQuery } from '@tanstack/react-query';
 import UserMenu from '@/app/components/navs/user-menu';
 import IconSmallButton from '../buttons/icon-small-button';
 import FilledButton from '@/app/components/buttons/filled-button';
@@ -10,54 +11,47 @@ import { useRouter, usePathname } from 'next/navigation';
 import { redirectToLogin } from '@/app/services/auth.service';
 import Image from 'next/image';
 import { useSearch } from '@/app/hooks/useSearch';
+import OutlinedIcon from '../icons/outlined-icon';
+import Link from 'next/link';
+
+const fetchUserInfo = async () => {
+  const hasSession = hasCookie('session');
+  const sessionValue = getCookie('session');
+  const isAuthenticated = hasSession && sessionValue === 'true';
+
+  if (!isAuthenticated) {
+    return { authenticated: false, username: null, role: null };
+  }
+
+  const response = await fetch('/api/auth/user-info', {
+    credentials: 'include'
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch user info');
+  }
+
+  return response.json();
+};
 
 export default function NavBar() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userData, setUserData] = useState<{
-    username: string;
-    role?: string;
-  } | null>(null);
   const router = useRouter();
   const pathname = usePathname();
   const searchFocus = useRef<HTMLInputElement>(null);
   const { searchQuery, handleSearchChange } = useSearch();
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const hasSession = hasCookie('session');
-        const sessionValue = getCookie('session');
-        const isAuthenticated = hasSession && sessionValue === 'true';
-        
-        setIsLoggedIn(isAuthenticated);
+  const { data: userInfo, isLoading } = useQuery({
+    queryKey: ['userInfo'],
+    queryFn: fetchUserInfo,
+    refetchInterval: 60000 * 60, // Refetch every minute
+    retry: false
+  });
 
-        if (isAuthenticated) {
-          // Fetch user data from our API
-          const response = await fetch('/api/user/profile', {
-            credentials: 'include'
-          });
-          const userData = await response.json();
-          setUserData({
-            username: userData.username || '',
-            role: userData.role
-          });
-        } else {
-          setUserData(null);
-        }
-      } catch (error) {
-        console.error('Auth check error:', error);
-        setIsLoggedIn(false);
-        setUserData(null);
-      }
-    };
-
-    checkAuth();
-    window.addEventListener('storage', checkAuth);
-    
-    return () => {
-      window.removeEventListener('storage', checkAuth);
-    };
-  }, []);
+  const isLoggedIn = userInfo?.authenticated ?? false;
+  const userData = isLoggedIn ? {
+    username: userInfo.username,
+    role: userInfo.role
+  } : null;
 
   useEffect(() => {
     if ((pathname == "/search" || pathname == "/manager/discography") && searchFocus.current && window.innerWidth > 768) {
@@ -82,23 +76,21 @@ export default function NavBar() {
             <IconSmallButton className="app-bar-button" onClick={() => {
               router.back();
             }}>
-              <span className="material-symbols-outlined">
-                arrow_back
-              </span>
+              <OutlinedIcon icon='arrow_back'/>
             </IconSmallButton>
             <IconSmallButton onClick={() => {
               router.forward();
             }}>
-              <span className="material-symbols-outlined">
-                arrow_forward
-              </span>
+              <OutlinedIcon icon='arrow_forward'/>
             </IconSmallButton>
           </div>
           <div className="nav-bar-title-container flex items-center gap-3">
-            <Image width={64} height={64} src={"/assets/rounded-logo.png"} priority alt="logo" />
-            <h1 className="hidden lg:block nav-bar-title text-lg font-bold">
-              {"MusikStreaming"}
-            </h1>
+            <Link href="/" className='flex items-center gap-3'>
+              <Image width={64} height={64} src={"/assets/rounded-logo.png"} priority alt="logo" />
+              <h1 className="hidden lg:block nav-bar-title text-lg font-bold">
+                MusikStreaming
+              </h1>
+            </Link>
           </div>
         </div>
         <div className="search-and-browse-container flex justify-center gap-4 flex-grow">
@@ -113,19 +105,21 @@ export default function NavBar() {
           </div>
         </div>
         <div className="nav-bar-button-container flex p-3 gap-3 items-center">
-          {isLoggedIn && userData ? (
+          {!isLoading && (isLoggedIn && userData ? (
             <>
               <span className="text-sm font-medium">{userData.username}</span>
-              <UserMenu onLogout={() => {
-                setIsLoggedIn(false);
-                setUserData(null);
-              }} />
+              <UserMenu 
+                username={userData.username}
+                onLogout={() => {
+                  // The query will automatically refetch when auth state changes
+                }} 
+              />
             </>
           ) : (
             <FilledButton onClick={handleLoginClick}>
               {"Đăng nhập/Đăng ký"}
             </FilledButton>
-          )}
+          ))}
         </div>
       </div>
     </Suspense>

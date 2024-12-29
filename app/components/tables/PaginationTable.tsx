@@ -24,6 +24,7 @@ import {
 } from "@/app/components/tables/table";
 import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
 import TableSkeleton from './TableSkeleton';
+import OutlinedIcon from '../icons/outlined-icon';
 
 export interface Column<T> {
   header: string;
@@ -78,13 +79,13 @@ const FilterInput = React.memo(function FilterInput<T>({
   );
 });
 
-const PaginationControls = React.memo(({ 
-  page, 
-  totalPages, 
+const PaginationControls = React.memo(({
+  page,
+  totalPages,
   onPageChange,
   showPageInput = false,
   disabled = false
-}: { 
+}: {
   page: number;
   totalPages?: number;
   onPageChange: (page: number) => void;
@@ -122,13 +123,14 @@ const PaginationControls = React.memo(({
   };
 
   return (
-    <div className="mt-4 flex justify-between items-center">
+    <div className="page-table mt-4 flex justify-between items-center">
       <button
         onClick={handlePreviousPage}
         disabled={disabled || page === 1}
-        className="px-4 py-2 bg-[--md-sys-color-surface-variant] rounded-md disabled:opacity-50"
+        className="px-4 py-2 bg-[--md-sys-color-surface-variant] rounded-md disabled:opacity-50 flex"
+        aria-label='Previous page'
       >
-        Previous
+        <OutlinedIcon icon='arrow_back' />
       </button>
       {showPageInput && (
         <div className="flex items-center gap-2">
@@ -150,9 +152,10 @@ const PaginationControls = React.memo(({
       <button
         onClick={handleNextPage}
         disabled={disabled || (totalPages ? page >= totalPages : false)}
-        className="px-4 py-2 bg-[--md-sys-color-surface-variant] rounded-md disabled:opacity-50"
+        className="px-4 py-2 bg-[--md-sys-color-surface-variant] rounded-md disabled:opacity-50 flex"
+        aria-label='Next page'
       >
-        Next
+        <OutlinedIcon icon="arrow_forward" />
       </button>
     </div>
   );
@@ -299,11 +302,40 @@ export default function PaginationTable<T>({
   return (
     <div className="flex flex-col">
       <div className="flex-1 flex flex-col">
-        <div className="flex-1 overflow-auto min-h-[300px] relative">
+        <div className="flex-1 overflow-auto min-h-[300px] relative scrollbar-hide hover:scrollbar-default">
+          <style jsx global>{`
+            .scrollbar-hide::-webkit-scrollbar {
+              width: 4px;
+              height: 4px;
+              display: none;
+            }
+            
+            .scrollbar-hide:hover::-webkit-scrollbar {
+              display: block;
+            }
+
+            .scrollbar-hide::-webkit-scrollbar-track {
+              background: transparent;
+            }
+
+            .scrollbar-hide::-webkit-scrollbar-thumb {
+              background: var(--md-sys-color-outline-variant);
+              border-radius: 2px;
+            }
+
+            .scrollbar-hide::-webkit-scrollbar-button {
+              display: none;
+            }
+
+            .scrollbar-hide {
+              scrollbar-width: thin;
+              scrollbar-color: var(--md-sys-color-outline-variant) transparent;
+            }
+          `}</style>
           {isLoading && (
             <div className="absolute inset-0 bg-[--md-sys-color-surface] bg-opacity-50 z-20">
-              <TableSkeleton 
-                columns={table.getAllColumns().length} 
+              <TableSkeleton
+                columns={table.getAllColumns().length}
                 rows={data.length || 10}
               />
             </div>
@@ -318,7 +350,7 @@ export default function PaginationTable<T>({
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
-                      <TableHead 
+                      <TableHead
                         key={header.id}
                         className="first:pl-2 last:pr-2"
                       >
@@ -343,7 +375,7 @@ export default function PaginationTable<T>({
                       `}
                     >
                       {row.getVisibleCells().map((cell) => (
-                        <TableCell 
+                        <TableCell
                           key={cell.id}
                           className="first:pl-2 last:pr-2"
                         >
@@ -364,7 +396,7 @@ export default function PaginationTable<T>({
           )}
         </div>
       </div>
-      <PaginationControls 
+      <PaginationControls
         page={page}
         totalPages={totalPages}
         onPageChange={onPageChange}

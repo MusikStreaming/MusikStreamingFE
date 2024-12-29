@@ -1,46 +1,93 @@
-import React, { useState } from 'react';
+import React from 'react';
+import Select from 'react-select';
+import { components } from 'react-select';
+import OutlinedIcon from '../icons/outlined-icon';
+import "@material/web/elevation/elevation"
+
+const customStyles = {
+  control: (provided) => ({
+    ...provided,
+    backgroundColor: 'var(--md-sys-color-surface)',
+    borderColor: 'var(--md-sys-color-outline)',
+    borderRadius: '4px',
+    boxShadow: 'none',
+    '&:hover': {
+      borderColor: 'var(--md-sys-color-outline)',
+    },
+  }),
+  menu: (provided) => ({
+    ...provided,
+    backgroundColor: 'var(--md-sys-color-surface-container)',
+    borderRadius: '4px',
+    boxShadow: 'var(--md-sys-elevation-level2)',
+    zIndex: 50,
+  }),
+  option: (provided, state) => ({
+    ...provided,
+    backgroundColor: state.isSelected
+      ? 'var(--md-sys-color-primary-container)'
+      : state.isFocused
+      ? 'var(--md-sys-color-surface-variant)'
+      : 'var(--md-sys-color-surface-container)',
+    color: state.isSelected
+      ? 'var(--md-sys-color-on-primary-container)'
+      : 'var(--md-sys-color-on-surface)',
+    '&:hover': {
+      backgroundColor: 'var(--md-sys-color-surface-variant)',
+    },
+  }),
+  singleValue: (provided) => ({
+    ...provided,
+    color: 'var(--md-sys-color-on-surface)',
+  }),
+  placeholder: (provided) => ({
+    ...provided,
+    color: 'var(--md-sys-color-on-surface-variant)',
+  }),
+  input: (provided) => ({
+    ...provided,
+    color: 'var(--md-sys-color-on-surface)',
+  }),
+};
+
+const DropdownIndicator = (props) => {
+  return (
+    <components.DropdownIndicator {...props}>
+      <OutlinedIcon icon='arrow_drop_down'/>
+    </components.DropdownIndicator>
+  );
+};
+
+const Menu = (props) => {
+  return (
+    <components.Menu {...props}>
+      <div 
+      className="md-elevation relative" 
+      style={{ 
+        borderRadius: '4px',
+        '--md-elevation-level': 3
+      }}>
+        <md-elevation level="2" />
+        {props.children}
+      </div>
+    </components.Menu>
+  );
+};
 
 const Dropdown = ({ options, defaultValue, onChange }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedOption, setSelectedOption] = useState(defaultValue || options[0]);
-
-  const handleSelect = (option) => {
-    setSelectedOption(option);
-    setIsOpen(false);
-    if (onChange) onChange(option);
+  const handleChange = (selectedOption) => {
+    if (onChange) onChange(selectedOption);
   };
 
   return (
-    <div className="relative border border-[--md-sys-color-outline] rounded-md focus-within:border-[--md-sys-color-primary]">
-      <button
-        className="w-full px-4 py-2 text-left bg-[--md-sys-color-surface] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[--md-sys-color-primary] text-[--md-sys-color-on-surface]"
-        onClick={() => setIsOpen(!isOpen)}
-        type="button"
-      >
-        <md-ripple />
-        {selectedOption.label || selectedOption}
-        <span className="absolute inset-y-0 right-0 flex items-center pr-2">
-          <span className="material-symbols-outlined">expand_more</span>
-        </span>
-      </button>
-
-      {isOpen && (
-        <div className="absolute z-10 w-full mt-1 bg-[--md-sys-color-surface] rounded-md shadow-lg">
-          <ul className="py-1">
-            {options.map((option, index) => (
-              <li
-                key={index}
-                className="px-4 py-2 cursor-pointer hover:bg-[--md-sys-color-surface-container-highest] relative"
-                onClick={() => handleSelect(option)}
-              >
-                <md-ripple />
-                {option.label || option}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
+    <Select
+      options={options}
+      defaultValue={options.find(option => option.value === defaultValue)}
+      onChange={handleChange}
+      classNamePrefix="react-select"
+      styles={customStyles}
+      components={{ DropdownIndicator, Menu }}
+    />
   );
 };
 

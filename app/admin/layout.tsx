@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-const metadata: Metadata = {
+export const metadata: Metadata = {
   title: "Admin",
   description: "Admin layout for the dashboard",
 }

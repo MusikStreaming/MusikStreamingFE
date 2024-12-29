@@ -4,16 +4,23 @@ import PropTypes from 'prop-types';
 import { type } from 'os';
 
 const Input = ({ label, value, leadingIcon, trailingIcon, ...props }) => {
+  const handleKeyDown = (e) => {
+    if (trailingIcon && trailingIcon.type === 'button' && e.key === 'Enter') {
+      e.preventDefault();
+    }
+  };
+
   return (
     <div className="input-wrapper w-full flex items-center">
       <md-outlined-text-field
         label={label}
         value={value}
         type={type}
+        onKeyDown={handleKeyDown}
         {...props}
       >
-        {leadingIcon && <span slot="leading-icon">{leadingIcon}</span>}
-        {trailingIcon && <span slot="trailing-icon">{trailingIcon}</span>}
+        {leadingIcon && <div slot="leading-icon">{leadingIcon}</div>}
+        {trailingIcon && <div slot="trailing-icon">{trailingIcon}</div>}
       </md-outlined-text-field>
     </div>
   );

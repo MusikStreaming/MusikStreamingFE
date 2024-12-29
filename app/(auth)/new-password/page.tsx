@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Input from '@/app/components/inputs/outlined-input';
 import { Suspense } from 'react';
+import OutlinedIcon from '@/app/components/icons/outlined-icon';
 
 export default function NewPassword() {
     const [password, setPassword] = useState('');
@@ -85,9 +86,8 @@ export default function NewPassword() {
                         </form>
                     ) : (
                         <div className="text-center">
-                            <span className="material-symbols-outlined text-5xl text-[--md-sys-color-primary] mb-4">
-                                check_circle
-                            </span>
+                            <OutlinedIcon icon={"check_circle"}/>
+
                             <h2 className="text-xl font-semibold mb-2 text-[--md-sys-color-on-surface]">
                                 Password Reset Successfully
                             </h2>
