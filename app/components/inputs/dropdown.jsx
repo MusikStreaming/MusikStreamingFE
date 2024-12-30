@@ -74,7 +74,7 @@ const Menu = (props) => {
   );
 };
 
-const Dropdown = ({ options, defaultValue, onChange }) => {
+const Dropdown = ({ options, defaultValue, value, onChange }) => {
   const handleChange = (selectedOption) => {
     if (onChange) onChange(selectedOption);
   };
@@ -82,7 +82,8 @@ const Dropdown = ({ options, defaultValue, onChange }) => {
   return (
     <Select
       options={options}
-      defaultValue={options.find(option => option.value === defaultValue)}
+      value={value}
+      defaultValue={defaultValue}
       onChange={handleChange}
       classNamePrefix="react-select"
       styles={customStyles}

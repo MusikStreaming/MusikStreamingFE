@@ -1,8 +1,36 @@
-import { useState, useEffect } from 'react';
+'use client';
+
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import Dropdown from '../components/inputs/dropdown';
+import DragNDropZone from '../components/inputs/dragndropzone';
+import countryList from 'react-select-country-list';
+import Input from '../components/inputs/outlined-input';
+import OutlinedButton from '../components/buttons/outlined-button';
+import FilledButton from '../components/buttons/filled-button';
+import OutlinedIcon from '../components/icons/outlined-icon';
+
+interface FormData {
+    username: string;
+    country: string;
+    file: File | null;
+}
+
+interface User {
+    username: string;
+    country: string;
+    avatarurl: string;
+}
 
 export default function AccountSettingsPage() {
-    const { data: user, isLoading, error } = useQuery({
+    const countries = useMemo(() => countryList().getData(), []);
+    const [selectedCountry, setSelectedCountry] = useState<{ value: string; label: string; } | null>(null);
+    const [updateStatus, setUpdateStatus] = useState<{
+        type: 'success' | 'error' | null;
+        message: string;
+    }>({ type: null, message: '' });
+
+    const { data: user, isLoading, error } = useQuery<User>({
         queryKey: ['user'],
         queryFn: async () => {
             const response = await fetch(`/api/user/profile`);
@@ -11,51 +39,66 @@ export default function AccountSettingsPage() {
         },
     });
 
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<FormData>({
         username: '',
         country: '',
         file: null,
-        avatarUrl: '',
     });
 
     useEffect(() => {
-        if (user) {
-            setFormData({
-                username: user.username || '',
-                country: user.country || '',
-                file: null,
-                avatarUrl: user.avatarurl || '',
-            });
-        }
-    }, [user]);
+        if (user && countries.length > 0) {
+            // Find the country object that matches the user's country code
+            const userCountry = countries.find(c => c.value === user.country) || countries[0];
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-        const { name, value, type, files } = e.target;
-        setFormData({
-            ...formData,
-            [name]: type === 'file' ? files?.[0] : value,
-        });
+            setFormData(prev => ({
+                ...prev,
+                username: user.username || '',
+                country: userCountry.value,
+                avatarPreview: user.avatarurl || '',
+            }));
+
+            setSelectedCountry(userCountry);
+        }
+    }, [user, countries]);
+
+    const handleDrop = (acceptedFiles: File[]) => {
+        const file = acceptedFiles[0];
+        setFormData(prev => ({
+            ...prev,
+            file,
+            avatarPreview: URL.createObjectURL(file)
+        }));
     };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        setUpdateStatus({ type: null, message: '' });
         const data = new FormData();
         data.append('username', formData.username);
         data.append('country', formData.country);
         if (formData.file) {
             data.append('file', formData.file);
         }
-        data.append('avatarUrl', formData.avatarUrl);
 
-        const response = await fetch('/api/user/settings', {
-            method: 'POST',
-            body: data,
-        });
+        try {
+            const response = await fetch('/api/user/settings', {
+                method: 'POST',
+                body: data,
+            });
 
-        if (!response.ok) {
-            console.error('Failed to update settings');
-        } else {
-            console.log('Settings updated successfully');
+            if (!response.ok) {
+                throw new Error('Failed to update settings');
+            }
+            setUpdateStatus({ 
+                type: 'success', 
+                message: 'Settings updated successfully!' 
+            });
+        } catch (error) {
+            console.error('Error updating settings:', error);
+            setUpdateStatus({ 
+                type: 'error', 
+                message: 'Failed to update settings. Please try again.' 
+            });
         }
     };
 
@@ -63,32 +106,60 @@ export default function AccountSettingsPage() {
     if (error) return <div>Error loading user data</div>;
 
     return (
-        <form onSubmit={handleSubmit} className="max-w-2xl mx-auto">
-            <section className="mb-8">
-                <h2 className="text-2xl font-semibold mb-4">Profile Information</h2>
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Username</label>
-                        <input type="text" name="username" value={formData.username} onChange={handleChange} className="w-full p-2 border rounded" aria-label="Username" />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Country</label>
-                        <input type="text" name="country" value={formData.country} onChange={handleChange} className="w-full p-2 border rounded" aria-label="Country" />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Profile Picture</label>
-                        <input type="file" name="file" onChange={handleChange} className="w-full p-2 border rounded" aria-label="Profile Picture" />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Avatar URL</label>
-                        <input type="text" name="avatarUrl" value={formData.avatarUrl} onChange={handleChange} className="w-full p-2 border rounded" aria-label="Avatar URL" />
-                    </div>
-                </div>
-            </section>
+        <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-8">
+            <div className="flex justify-center">
+                <DragNDropZone
+                    onDrop={handleDrop}
+                    avatarPreview={formData.file ? URL.createObjectURL(formData.file) : user?.avatarurl}
+                    supportText="Drop your profile picture here or click to select"
+                    supportedTypes={{ 'image/*': ['.jpeg', '.png'] }}
+                />
+            </div>
 
-            <div className="flex justify-end space-x-4">
-                <button type="button" className="px-4 py-2 border rounded" aria-label="Cancel">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-primary text-white rounded" aria-label="Save Changes">Save Changes</button>
+            <div className="space-y-4">
+                <div>
+                    <Input
+                        label="Username"
+                        value={formData.username}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            setFormData(prev => ({ ...prev, username: e.target.value }))}
+                        className="w-full"
+                        leadingIcon={null}
+                        trailingIcon={null}
+                    />
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium mb-2">Country</label>
+                    <Dropdown
+                        options={countries}
+                        value={selectedCountry}
+                        defaultValue={selectedCountry}
+                        onChange={(option: { value: string; label: string }) => {
+                            setSelectedCountry(option);
+                            setFormData(prev => ({ ...prev, country: option.value }));
+                        }}
+                    />
+                </div>
+            </div>
+
+            {updateStatus.type && (
+                <div className={`p-4 rounded-lg ${
+                    updateStatus.type === 'success' 
+                        ? 'bg-green-100 text-green-700 border-green-200' 
+                        : 'bg-[--md-sys-color-error-container] text-[--md-sys-color-on-error-container]'
+                } flex items-center gap-2`}>
+                    {updateStatus.type === 'success' ? <OutlinedIcon icon={"check"}/> : <OutlinedIcon icon={"error"}/>} {updateStatus.type === 'success' ? 'Thay đổi thông tin thành công' : 'Lỗi khi thay đổi, có thể do trục trặc kết nối hoặc tên người dùng đã tồn tại.'}
+                </div>
+            )}
+
+            <div className="flex justify-end gap-4">
+                <OutlinedButton type="button" onClick={() => window.history.back()}>
+                    Cancel
+                </OutlinedButton>
+                <FilledButton type="submit" onClick={handleSubmit}>
+                    Save Changes
+                </FilledButton>
             </div>
         </form>
     );

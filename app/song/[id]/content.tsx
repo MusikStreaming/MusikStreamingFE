@@ -139,11 +139,6 @@ export default function SongContent(params: { id: string; initialData: SongDetai
   const [error, setError] = useState<string | null>(null);
   const [shareTooltip, setShareTooltip] = useState("Chia sẻ");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { data: playlists, refetch } = useQuery({
-    queryKey: ['playlists'],
-    queryFn: fetchPlaylists,
-    select: (data) => Array.isArray(data) ? data : []
-  });
   const router = useRouter();
   const {
     playSong,
@@ -237,6 +232,7 @@ export default function SongContent(params: { id: string; initialData: SongDetai
 
   const handleModalClose = () => {
     setIsModalOpen(false);
+    // Optionally show a success toast or notification here
   };
 
   if (error) {
@@ -364,7 +360,7 @@ export default function SongContent(params: { id: string; initialData: SongDetai
           }
         </div>
         {isModalOpen && <DialogFrame onClose={handleModalClose}>
-            <PlaylistSelector playlists={playlists ?? []} songId={song?.id} onClose={handleModalClose} />
+            <PlaylistSelector songId={song?.id} onClose={handleModalClose} />
         </DialogFrame>}
       </div>
     );

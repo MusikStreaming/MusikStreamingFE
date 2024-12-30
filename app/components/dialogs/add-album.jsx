@@ -47,6 +47,7 @@ export default function AddAlbum() {
   const [artistSearch, setArtistSearch] = useState('');
   const [artistResults, setArtistResults] = useState([]);
   const [selectedArtists, setSelectedArtists] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   const onDropAlbumCover = useCallback((acceptedFiles) => {
     if (!Array.isArray(acceptedFiles) || acceptedFiles.length === 0) {
@@ -96,33 +97,50 @@ export default function AddAlbum() {
   //   }
   // }, [artistsData]);
 
-  useEffect(() => {
-    const searchArtists = async () => {
-      if (!artistSearch) {
-        setArtistResults([]);
-        return;
-      }
+  const searchArtists = async (searchTerm) => {
+    if (!searchTerm) {
+      setArtistResults([]);
+      return;
+    }
 
-      const token = getCookie('session_token');
-      try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/v1/search/${artistSearch}/artists`,
-          {
-            headers: { 'Authorization': `Bearer ${token}` }
-          }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setArtistResults(data.data.artists);
+    setIsSearching(true);
+    const token = getCookie('session_token');
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/v1/search/${searchTerm}/artists`,
+        {
+          headers: { 'Authorization': `Bearer ${token}` }
         }
-      } catch (error) {
-        console.error('Error searching artists:', error);
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setArtistResults(data.data.artists);
       }
-    };
+    } catch (error) {
+      console.error('Error searching artists:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
-    const debounce = setTimeout(searchArtists, 300);
-    return () => clearTimeout(debounce);
-  }, [artistSearch]);
+  // Create debounced version of search
+  const debouncedSearch = useCallback(
+    debounce((searchTerm) => searchArtists(searchTerm), 300),
+    []
+  );
+
+  // Clean up debounced function
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
+
+  const handleSearchChange = (e) => {
+    const searchTerm = e.target.value;
+    setArtistSearch(searchTerm);
+    debouncedSearch(searchTerm);
+  };
 
   const handleArtistAdd = (artist) => {
     if (!selectedArtists.find(a => a.id === artist.id)) {
@@ -253,20 +271,33 @@ export default function AddAlbum() {
         label="Search Artists"
         value={artistSearch}
         tabIndex="0"
-        onChange={(e) => setArtistSearch(e.target.value)}
+        onChange={handleSearchChange}
       />
-      {artistResults.length > 0 && (
+      {artistSearch && (
         <div className="mt-2 max-h-40 overflow-y-auto border border-[--md-sys-color-outline] rounded-md">
-          {artistResults.map((artist) => (
-            <div
-              key={artist.id}
-              onClick={() => handleArtistAdd(artist)}
-              onKeyDown={() => handleArtistAdd(artist)}
-              className="px-4 py-2 cursor-pointer hover:bg-[--md-sys-color-surface-container]"
-            >
-              {artist.name}
+          {isSearching ? (
+            <div className="px-4 py-2 flex items-center gap-2 text-[--md-sys-color-on-surface-variant]">
+              <OutlinedIcon icon="sync" className="animate-spin" />
+              Searching...
             </div>
-          ))}
+          ) : (
+            artistResults.length > 0 ? (
+              artistResults.map((artist) => (
+                <div
+                  key={artist.id}
+                  onClick={() => handleArtistAdd(artist)}
+                  onKeyDown={() => handleArtistAdd(artist)}
+                  className="px-4 py-2 cursor-pointer hover:bg-[--md-sys-color-surface-container]"
+                >
+                  {artist.name}
+                </div>
+              ))
+            ) : (
+              <div className="px-4 py-2 text-[--md-sys-color-on-surface-variant]">
+                No artists found
+              </div>
+            )
+          )}
         </div>
       )}
       <FilledButton type="submit" className="" tabIndex="0">

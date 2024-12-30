@@ -3,7 +3,7 @@
 
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import {useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import fetchAlbumById from '@/app/api-fetch/album-by-id';
 import ErrorComponent from '@/app/components/api-fetch-container/fetch-error';
 import Skeleton from '@/app/components/loading/skeleton';
@@ -13,10 +13,14 @@ import ArtistLinks from '@/app/components/info-links/artist-link';
 import ToggleButtonFilled from '@/app/components/buttons/toggle-button';
 import SongTable from '@/app/components/tables/song-table';
 import { processCloudinaryUrl } from "@/app/api-fetch/cloudinary-url-processing";
-// import { formatDuration } from '@/app/utils/time';
+import { useState, useCallback } from 'react';
 import { calculateAlbumDuration, countAlbumSongs, formatSongCount } from '@/app/utils/album';
 import { useMedia } from '@/app/contexts/media-context';
 import TextButton from '@/app/components/buttons/text-button';
+import PlaylistSelector from '@/app/components/playlist-selector';
+import DialogFrame from '@/app/components/dialogs/dialog-frame';
+import PlaylistForm from '../playlist/playlist-form';
+import { getCookie } from 'cookies-next';
 
 function formatDuration(duration: number) {
   const hours = Math.floor(duration / 3600);
@@ -34,18 +38,58 @@ export default function PlaylistContent(params: { id: string }) {
   });
   const { playList } = useMedia();
   const router = useRouter();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedSongId, setSelectedSongId] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+
+  const isOwner = album?.profiles && album.profiles[0] === getCookie("user_id"); // Replace with actual user ID check
+
+  const handleAddToPlaylist = useCallback((songId: string) => {
+    if (!songId) {
+      console.error('No song ID provided');
+      return;
+    }
+    setSelectedSongId(songId);
+    setIsModalOpen(true);
+  }, []);
+
+  const handleModalClose = useCallback(() => {
+    setIsModalOpen(false);
+    setSelectedSongId(null);
+  }, []);
+
+  const handleEditSuccess = useCallback(() => {
+    setIsEditing(false);
+    refetch();
+  }, [refetch]);
+
+  if (isEditing && album) {
+    return (
+      <div className='w-full md:p-4'>
+        <PlaylistForm
+          id={params.id}
+          initialData={{
+            title: album.title,
+            description: album.description ?? undefined,
+            coverImage: album.thumbnailurl
+          }}
+          onSuccess={handleEditSuccess}
+          onCancel={() => setIsEditing(false)}
+        />
+      </div>
+    );
+  }
 
   if (error) {
     return <ErrorComponent onReloadClick={refetch} />;
   }
 
-  try {
-    return (
-      <div className='flex flex-col w-full gap-8 md:p-4'>
-        <TextButton className='flex md:hidden text-[--md-sys-color-primary]' onClick={() => router.back()}>
-          <span className='material-symbols-outlined'>arrow_back</span>
-          Quay lại
-        </TextButton>
+  return (
+    <div className='flex flex-col w-full gap-8 md:p-4'>
+      <TextButton className='flex md:hidden text-[--md-sys-color-primary]' onClick={() => router.back()}>
+        <span className='material-symbols-outlined'>arrow_back</span>
+        Quay lại
+      </TextButton>
         {/* Hero Section */}
         <div className='flex flex-col md:flex-row items-center gap-6'>
           {album ? 
@@ -68,6 +112,9 @@ export default function PlaylistContent(params: { id: string }) {
             {album ? 
               <h1 className='font-bold text-2xl md:text-3xl'>{album.title}</h1> : 
               <Skeleton className='h-8 w-full' />
+            }
+            {album &&
+              <p className=''>{album.description}</p>
             }
             {
               album?.profiles && album.profiles.length > 0 &&
@@ -115,6 +162,11 @@ export default function PlaylistContent(params: { id: string }) {
               <ToggleButtonFilled>
                 favorite
               </ToggleButtonFilled>
+              {isOwner && (
+                <IconSmallButton onClick={() => setIsEditing(true)}>
+                  <span className="material-symbols-outlined">edit</span>
+                </IconSmallButton>
+              )}
               <IconSmallButton>
                 <span className="material-symbols-outlined">more_vert</span>
               </IconSmallButton>
@@ -124,33 +176,33 @@ export default function PlaylistContent(params: { id: string }) {
 
         {
           album?.songs && album.songs.length > 0 &&
-          <SongTable songs={album.songs.map((song) => ({
-            song: {
-              id: song.song.id,
-              title: song.song.title,
-              duration: song.song.duration,
-              views: song.song.views,
-              thumbnailurl: song.song.thumbnailurl,
-              artists: song.song.artists?.map(a => ({ name: a.name })) || []
-            }
-          }))} />
+          <SongTable 
+            songs={album.songs.map((song) => ({
+              song: {
+                id: song.song.id,
+                title: song.song.title,
+                duration: song.song.duration,
+                views: song.song.views,
+                thumbnailurl: song.song.thumbnailurl,
+                artists: song.song.artists?.map(a => ({ name: a.name })) || []
+              }
+            }))}
+            onAddToPlaylist={handleAddToPlaylist}
+            showPlaylistOptions={true}
+          />
         }
 
-        {/* Additional Info */}
-        <div className="flex flex-col gap-3 w-full pt-6">
-          {/* {album ?
-            <p className="">Release Date: {processDatetime(album.releasedate)}</p> :
-            <Skeleton className='h-4 w-48' />
-          } */}
-          {/* {album ?
-            <p className="">Total Views: {album.views.toLocaleString()}</p> :
-            <Skeleton className='h-4 w-32' />
-          } */}
-        </div>
-      </div>
-    );
-  } catch (e) {
-    console.error(e);
-    return <ErrorComponent onReloadClick={refetch} />;
-  }
+        {isModalOpen && selectedSongId && (
+          <DialogFrame onClose={handleModalClose}>
+            <PlaylistSelector 
+              songId={selectedSongId}
+              currentPlaylistId={params.id}
+              onClose={handleModalClose}
+            />
+          </DialogFrame>
+        )}
+          <div className="flex flex-col gap-3 w-full pt-6">
+          </div>
+    </div>
+  );
 }

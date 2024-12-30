@@ -70,6 +70,14 @@ export default function UserMenu({ username, onLogout }: UserMenuProps) {
     return () => clearInterval(validationInterval);
   }, [onLogout]);
 
+  useEffect(() => {
+    setIsAdminPath(pathname === '/admin');
+  }, [pathname]);
+
+  useEffect(() => {
+    setIsManagerPath(pathname === '/manager');
+  }, [pathname]);
+
   const handleLogout = async () => {
     try {
       setIsOpen(false);

@@ -3,6 +3,8 @@
 import './nav-rail.css';
 import '@material/material-color-utilities';
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 /**
  * @fileoverview Navigation rail item component for use in navigation interfaces.
@@ -87,8 +89,27 @@ export default function NavRailCommonItem(
     if (props.href === undefined) {
         props.href = '#';
     }
+    const { pathname } = useRouter();
+    const [prevPathname, setPrevPathname] = useState(pathname);
+    const [animationDirection, setAnimationDirection] = useState('slide-left');
+    useEffect(() => {
+        if (prevPathname !== pathname) {
+            // Determine animation direction based on navigation order
+            const prevIndex = Object.values(items).findIndex(item => item.href === prevPathname);
+            const currentIndex = Object.values(items).findIndex(item => item.href === pathname);
+
+            if (prevIndex < currentIndex) {
+                setAnimationDirection('slide-left');
+            } else {
+                setAnimationDirection('slide-right');
+            }
+
+            setPrevPathname(pathname);
+        }
+    }, [pathname, prevPathname]);
+    
     return (
-        <div className={`nav-item w-full rounded-full cursor-pointer font-medium selected-${props.selected} transition-all duration-300 ease-in-out`} role='link'>
+        <div className={`nav-item w-full rounded-full cursor-pointer font-medium selected-${props.selected} transition-all duration-300 ease-in-out ${animationDirection}`} role='link'>
             <Link className={`state-layer w-full relative flex extended-gap-${props.extended} items-center justify-between rounded-full padding-${props.extended ? "extended" : "collapsed"} transition-all duration-300 ease-in-out`} href={props.href}>
                 <md-ripple></md-ripple>
                 <div className={`nav-item-content flex  w-full extended-gap-${props.extended} items-center`}>

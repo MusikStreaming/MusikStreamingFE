@@ -8,39 +8,28 @@ import PaginationTable from '@/app/components/tables/PaginationTable';
 // import EditPlaylistDialog from '@/app/components/dialogs/EditPlaylistDialog';
 import TextButton from '@/app/components/buttons/text-button';
 import OutlinedIcon from "@/app/components/icons/outlined-icon";
+import type {Playlist, PlaylistsResponse} from '@/app/model/playlist';
+import ErrorComponent from '@/app/components/api-fetch-container/fetch-error';
 
-interface Playlist {
-  id: string;
-  title: string;
-  type: string;
-  owner: {
-    id: string;
-    username: string;
-  };
-  thumbnailurl: string;
-}
-
-interface PlaylistsResponse {
-  data: Playlist[];
-  total: number;
-}
 
 export default function PlaylistsTable() {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
+  const [search, setSearch] = useState(''); // Add search state
   const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: playlists, isLoading, isError, refetch } = useQuery<PlaylistsResponse>({
-    queryKey: ['playlists', page, limit],
+    queryKey: ['playlists', page, limit, search], // Add search to query key
     queryFn: async () => {
       const token = getCookie('session_token');
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/v1/collection?page=${page}&limit=${limit}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/v1/collection?page=${page}&limit=${limit}${search ? `&search=${search}` : ''}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
+            'cache-control': 'no-cache',
           }
         }
       );
@@ -84,11 +73,18 @@ export default function PlaylistsTable() {
     refetch();
   };
 
-  if (!playlists?.data) return <div>No playlists available.</div>;
+  if (!playlists?.data) return <ErrorComponent onReloadClick={refetch}/>;
 
   return (
-    <div className="overflow-x-auto">
+    <div>
       <div className="mb-4 flex justify-between items-center">
+        <input
+          type="text"
+          placeholder="Search playlists..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="px-4 py-2 rounded-md bg-[--md-sys-color-surface-container-highest] text-[--md-sys-color-on-surface]"
+        />
         <div className='flex gap-2'>
           <TextButton 
             className='bg-[--md-sys-color-surface-container-high] rounded-md'
@@ -106,8 +102,9 @@ export default function PlaylistsTable() {
           </button>
         </div>
       </div>
+
       <PaginationTable
-        data={playlists?.data || []}
+        data={playlists?.data.filter(playlist => playlist.type === "Playlist") || []}
         columns={[
           { header: 'Name', accessor: 'title' },
           { header: 'Owner', accessor: (playlist: Playlist) => playlist.owner.username },

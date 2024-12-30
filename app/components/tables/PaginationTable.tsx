@@ -31,6 +31,7 @@ export interface Column<T> {
   accessor: keyof T | ((item: T) => React.ReactNode);
   enableSorting?: boolean;
   enableFiltering?: boolean;
+  defaultValue?: string | number; // Add default value option
 }
 
 interface PaginationTableProps<T> {
@@ -215,16 +216,38 @@ export default function PaginationTable<T>({
           </div>
         ),
         accessorFn: (row) => {
-          const value = typeof col.accessor === "function"
-            ? col.accessor(row)
-            : row[col.accessor as keyof T];
-          return String(value);
+          try {
+            const value = typeof col.accessor === "function"
+              ? col.accessor(row)
+              : row[col.accessor as keyof T];
+            
+            // Handle null/undefined values
+            if (value === null || value === undefined) {
+              return col.defaultValue || '';
+            }
+            
+            return String(value);
+          } catch (error) {
+            console.warn(`Error accessing property ${String(col.accessor)}:`, error);
+            return col.defaultValue || '';
+          }
         },
         cell: ({ row }) => {
-          const value = typeof col.accessor === "function"
-            ? col.accessor(row.original)
-            : row.original[col.accessor as keyof T];
-          return <div className="px-2">{String(value)}</div>;
+          try {
+            const value = typeof col.accessor === "function"
+              ? col.accessor(row.original)
+              : row.original[col.accessor as keyof T];
+            
+            // Handle null/undefined values
+            if (value === null || value === undefined) {
+              return <div className="px-2">{col.defaultValue || ''}</div>;
+            }
+            
+            return <div className="px-2">{String(value)}</div>;
+          } catch (error) {
+            console.warn(`Error rendering cell for ${String(col.accessor)}:`, error);
+            return <div className="px-2">{col.defaultValue || ''}</div>;
+          }
         },
         enableSorting: col.enableSorting !== false,
         enableColumnFilter: col.enableFiltering !== false,

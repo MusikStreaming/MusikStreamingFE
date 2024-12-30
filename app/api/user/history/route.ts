@@ -151,7 +151,6 @@ export async function POST(req: NextRequest) {
 
     let data;
     try {
-      data = await response.json();
       console.log('✅ History updated successfully');
     } catch (error) {
       console.error('❌ Failed to parse response:', error);

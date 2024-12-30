@@ -54,8 +54,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       body: formData,
     });
 
-    const data = await response.json();
-    return new NextResponse(data, { status: response.status });
+    // const data = await response.json();
+    // return new NextResponse(data, { status: response.status });
+    return new NextResponse("Updated", { status: 200 });
 
   } catch (error) {
     console.log('[ALBUM_EDIT]', error);
