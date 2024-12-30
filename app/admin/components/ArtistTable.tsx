@@ -72,6 +72,26 @@ export default function ArtistTable() {
     enabled: !!debouncedSearch,
   });
 
+  const editMutation = useMutation({
+    mutationFn: async (artist: Artist) => {
+      const token = getCookie('session_token');
+      const response = await fetch(`/api/artist/${artist.id}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(artist)
+      });
+      if (!response.ok) throw new Error('Failed to update artist');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['artists'] });
+      handleCloseModal();
+    }
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const token = getCookie('session_token');
@@ -193,16 +213,15 @@ export default function ArtistTable() {
         onRowClick={handleRowClick}
       />
 
-      {<AddArtistDialog
+      <AddArtistDialog
         isOpen={isAddModalOpen}
         onClose={handleCloseModal}
         onSuccess={handleSuccess}
       />
-      }
 
       {selectedArtist && (
         <EditArtistDialog
-          isOpen={false}
+          isOpen={true}
           onClose={handleCloseModal}
           onSuccess={handleSuccess}
           artist={selectedArtist}

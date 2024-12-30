@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCookie } from 'cookies-next';
 import { formatDuration } from '@/app/utils/time';
-import { Song } from '@/app/model/song';
+// import { Song } from '@/app/model/song';
 import PaginationTable from '@/app/components/tables/PaginationTable';
 import AddSongDialog from '@/app/components/dialogs/AddSongDialog';
 import EditSongDialog from '@/app/components/dialogs/EditSongDialog';
@@ -12,11 +12,16 @@ import TextButton from '@/app/components/buttons/text-button';
 import OutlinedIcon from "@/app/components/icons/outlined-icon";
 import { useDebounce } from '@/app/hooks/useDebounce';
 
-interface Artist {
-  artist: {
-    id: string;
-    name: string;
-  };
+interface Song {
+  id: string;
+  title: string;
+  duration: number | null;
+  thumbnailurl: string;
+  artists: { id: string; name: string }[];
+  releasedate?: string;
+  genre?: string;
+  views?: number;
+  url?: string;
 }
 
 interface SongsResponse {
@@ -85,6 +90,7 @@ export default function SongsTable() {
       );
       if (!response.ok) throw new Error('Failed to search songs');
       const data = await response.json() as SearchResponse;
+      console.log(data);
       return data;
     },
     enabled: !!debouncedSearch,
@@ -168,12 +174,14 @@ export default function SongsTable() {
       </div>
 
       <PaginationTable
-        data={searchResults?.data?.songs || songs?.data || []}
+        data={debouncedSearch ? searchResults?.data?.songs || [] : songs?.data || []}
         columns={[
+          {header: 'ID', accessor: 'id'},
           { header: 'Title', accessor: 'title' },
+          
           {
             header: 'Artist',
-            accessor: (song: Song) => song.artists.map(a => a.artist.name).join(', ')
+            accessor: (song: Song) => song.artists.map(a => a.name).join(', ')
           },
           {
             header: 'Duration',
@@ -188,7 +196,7 @@ export default function SongsTable() {
             accessor: (song: Song) => song.releasedate || 'N/A'
           }
         ]}
-        page={page}
+        page={debouncedSearch ? 1 : page}
         onPageChange={setPage}
         rowActions={(song: Song) => (
           <div className="flex gap-2">
@@ -209,11 +217,11 @@ export default function SongsTable() {
           </div>
         )}
         onRowClick={handleRowClick}
-        showPageInput={true}
+        showPageInput={!debouncedSearch}
         isLoading={isLoading || deleteMutation.isPending}
         isError={isError}
         errorMessage="Failed to load songs."
-        totalPages={songs?.count ? Math.ceil(songs.count / limit) : undefined}
+        totalPages={debouncedSearch ? undefined : (songs?.count ? Math.ceil(songs.count / limit) : undefined)}
       />
 
       <AddSongDialog
@@ -227,7 +235,15 @@ export default function SongsTable() {
           isOpen={true}
           onClose={handleCloseModal}
           onSuccess={handleSuccess}
-          song={selectedSong}
+          song={{
+            id: selectedSong.id,
+            title: selectedSong.title,
+            artists: selectedSong.artists.map(a => ({ artist: { id: a.id, name: a.name } })),
+            releasedate: selectedSong.releasedate,
+            genre: selectedSong.genre,
+            duration: selectedSong.duration,
+            thumbnailurl: selectedSong.thumbnailurl,
+          }}
         />
       )}
     </div>
