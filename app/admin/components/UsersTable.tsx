@@ -88,7 +88,7 @@ export default function UsersTable() {
         <div className="flex justify-between w-full">
         <input
           type="text"
-          placeholder="Search songs..."
+          placeholder="Search users..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="px-4 py-2 rounded-md bg-[--md-sys-color-surface-container-highest] text-[--md-sys-color-on-surface]"
