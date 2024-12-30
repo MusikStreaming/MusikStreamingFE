@@ -47,6 +47,7 @@ export default function EditAlbumDialog({ isOpen, onClose, onSuccess, album }: E
     title: string
     artists: { id: string; name: string }[];
   }[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const queryClient = useQueryClient();
 
   const [initialState, setInitialState] = useState({
@@ -127,7 +128,7 @@ export default function EditAlbumDialog({ isOpen, onClose, onSuccess, album }: E
           formData.append('title', title);
           formData.append('type', type);
           formData.append('visibility', visibility);
-          if (thumbnail) formData.append('thumbnail', thumbnail);
+          if (thumbnail) formData.append('file', thumbnail);
 
           const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/collection/${album.id}`, {
             method: 'POST',
@@ -205,9 +206,22 @@ export default function EditAlbumDialog({ isOpen, onClose, onSuccess, album }: E
   };
 
   const handleSearch = async () => {
-    const processedQuery = searchTerm.trim().replace(/\s+/g, '+');
-    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/v1/search/${encodeURIComponent(processedQuery)}/songs?page=1&limit=10`);
-    setSearchResults(response.data.songs || []);
+    if (!searchTerm.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    
+    setIsSearching(true);
+    try {
+      const processedQuery = searchTerm.trim().replace(/\s+/g, '+');
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/v1/search/${encodeURIComponent(processedQuery)}/songs?page=1&limit=10`);
+      setSearchResults(response.data.songs || []);
+    } catch (error) {
+      console.error('Search failed:', error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const handleAddSong = (song: { id: string; title: string, artists: { id: string; name: string }[] }) => {
@@ -369,17 +383,25 @@ export default function EditAlbumDialog({ isOpen, onClose, onSuccess, album }: E
             </div>
           </div>
           <ul className='mt-2'>
-            {searchTerm != "" && Array.isArray(searchResults) && searchResults.map(song => (
-              <li key={song.id} className='flex justify-between items-center'>
-                <div className='flex flex-col'>
-                  <span>{song.title}</span>
-                  {song.artists && <span className='text-sm text-[--md-sys-color-on-surface-variant]'>{song.artists.map(a => a.name).join(', ')}</span>}
-                </div>
-                <button type='button' onClick={() => handleAddSong(song)} className='px-2 py-1 bg-[--md-sys-color-secondary] text-[--md-sys-color-on-secondary] rounded-md'>
-                  Add
-                </button>
-              </li>
-            ))}
+            {searchTerm !== "" && (
+              isSearching ? (
+                <li className='text-center p-2'>Searching...</li>
+              ) : Array.isArray(searchResults) && searchResults.length > 0 ? (
+                searchResults.map(song => (
+                  <li key={song.id} className='flex justify-between items-center'>
+                    <div className='flex flex-col'>
+                      <span>{song.title}</span>
+                      {song.artists && <span className='text-sm text-[--md-sys-color-on-surface-variant]'>{song.artists.map(a => a.name).join(', ')}</span>}
+                    </div>
+                    <button type='button' onClick={() => handleAddSong(song)} className='px-2 py-1 bg-[--md-sys-color-secondary] text-[--md-sys-color-on-secondary] rounded-md'>
+                      Add
+                    </button>
+                  </li>
+                ))
+              ) : (
+                <li className='text-center p-2'>No results found</li>
+              )
+            )}
           </ul>
           <table className='mt-2 w-full'>
             <thead>

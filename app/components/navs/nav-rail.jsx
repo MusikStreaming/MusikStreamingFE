@@ -101,8 +101,8 @@ export default function NavRail({ className, items: customItems }) {
     const [isResizing, setIsResizing] = useState(false);
     const navRef = useRef(null);
     const pathname = usePathname();
-    const [prevPathname, setPrevPathname] = useState(pathname);
-    const [animationDirection, setAnimationDirection] = useState('slide-left');
+    
+    
 
     const handleResize = useCallback(() => {
         if (typeof window !== 'undefined') {
@@ -116,21 +116,7 @@ export default function NavRail({ className, items: customItems }) {
     }, []);
 
     // Handle tab transitions
-    useEffect(() => {
-        if (prevPathname !== pathname) {
-            // Determine animation direction based on navigation order
-            const prevIndex = Object.values(items).findIndex(item => item.href === prevPathname);
-            const currentIndex = Object.values(items).findIndex(item => item.href === pathname);
-            
-            if (prevIndex < currentIndex) {
-                setAnimationDirection('slide-left');
-            } else {
-                setAnimationDirection('slide-right');
-            }
-            
-            setPrevPathname(pathname);
-        }
-    }, [pathname, prevPathname]);
+    
 
     useEffect(() => {
         const checkAuth = () => {
@@ -283,7 +269,7 @@ export default function NavRail({ className, items: customItems }) {
                     'min-w-[280px] max-w-[600px] w-[20vw]' : 
                     'w-[80px] min-w-[80px] max-w-[80px]'
                 }
-                ${animationDirection}
+                
                 ${shouldHide ? 'hidden' : ''}
             `}
         >

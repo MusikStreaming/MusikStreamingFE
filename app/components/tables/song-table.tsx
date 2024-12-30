@@ -8,8 +8,10 @@ import PlayButton from "../buttons/play-button-main";
 import getSong from "@/app/api-fetch/get-song";
 import { twMerge } from "tailwind-merge";
 import Image from "next/image";
+import IconSmallButton from "../buttons/icon-small-button";
+import OutlinedIcon from "../icons/outlined-icon";
 
-export default function SongTable({ songs, className, showImage }: {
+interface SongTableProps {
   songs: {
     song: {
       title: string;
@@ -26,7 +28,17 @@ export default function SongTable({ songs, className, showImage }: {
   }[];
   className?: string;
   showImage?: boolean;
-}) {
+  onAddToPlaylist?: (songId: string) => void;
+  showPlaylistOptions?: boolean;
+}
+
+export default function SongTable({ 
+  songs, 
+  className, 
+  showImage, 
+  onAddToPlaylist,
+  showPlaylistOptions = true
+}: SongTableProps) {
   const { currentSong, isPlaying, playSong, pauseSong, addToQueue, clearQueue, playList } = useMedia();
 
   const getSongUrl = async (id: string) => {
@@ -86,9 +98,8 @@ export default function SongTable({ songs, className, showImage }: {
         <tbody>
           {songs.map((song, index) => (
             <tr
-              className="hover:bg-[--md-sys-color-surface-container-highest] group cursor-pointer rounded-lg"
               key={`${song.song.id}-${index}`}
-              onClick={() => handlePlayClick(song.song, index)}
+              className="hover:bg-[--md-sys-color-surface-container-highest] group"
             >
               <td className="px-4 py-4 hidden text-center md:table-cell rounded-l-lg w-16">
                 <span className="group-hover:hidden">
@@ -140,6 +151,19 @@ export default function SongTable({ songs, className, showImage }: {
                   <Skeleton className='h-4 w-full' />
                 }
               </td>
+              {showPlaylistOptions && onAddToPlaylist && (
+                <td className="px-4 py-4">
+                  <IconSmallButton
+                    onClick={(e: React.ChangeEvent) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onAddToPlaylist(song.song.id);
+                    }}
+                  >
+                    <OutlinedIcon icon="playlist_add" />
+                  </IconSmallButton>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

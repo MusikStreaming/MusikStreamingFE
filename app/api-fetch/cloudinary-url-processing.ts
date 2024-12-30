@@ -13,5 +13,5 @@ export function processCloudinaryUrl(url: string, width: number, height: number,
   const splitUrl = sanitizedUrl.split("/");
   const lastSegment = splitUrl[splitUrl.length - 1];
   const publicId = lastSegment.split(".")[0].replace(/[^a-zA-Z0-9_-]/g, '');
-  return `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/w_${width},h_${height},c_fill/${type}/${publicId}.jpg`;
+  return `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/d_misc:default-playlist.jpg/w_${width},h_${height},c_fill/${type}/${publicId}.jpg`;
 }
