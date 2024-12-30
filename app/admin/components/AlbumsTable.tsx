@@ -10,6 +10,7 @@ import EditAlbumDialog from '@/app/components/dialogs/EditAlbumDialog';
 import TextButton from '@/app/components/buttons/text-button';
 import IconSmallButton from '@/app/components/buttons/icon-small-button';
 import OutlinedIcon from '@/app/components/icons/outlined-icon';
+import { useDebounce } from '@/app/hooks/useDebounce';
 
 interface Album {
   id: string;
@@ -27,11 +28,19 @@ interface AlbumsResponse {
   count: number;
 }
 
+interface SearchResponse {
+  data: {
+    albums: Album[];
+  }
+}
+
 export default function AlbumsTable() {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [selectedAlbum, setSelectedAlbum] = useState<Album | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 200);
   const queryClient = useQueryClient();
 
   const { data: albums, isLoading, isError, refetch } = useQuery<AlbumsResponse>({
@@ -49,6 +58,26 @@ export default function AlbumsTable() {
       return response.json();
     },
     staleTime: 2000,
+  });
+
+  const { data: searchResults } = useQuery<SearchResponse>({
+    queryKey: ['albumsSearch', debouncedSearch],
+    queryFn: async () => {
+      if (!debouncedSearch) return { data: { albums: [] } };
+      const token = getCookie('session_token');
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/v1/search/${debouncedSearch}/albums`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        }
+      );
+      if (!response.ok) throw new Error('Failed to search albums');
+      const data = await response.json() as SearchResponse;
+      return data;
+    },
+    enabled: !!debouncedSearch,
   });
 
   const deleteMutation = useMutation({
@@ -111,6 +140,8 @@ export default function AlbumsTable() {
           type="text"
           placeholder='Search albums...'
           className='p-2 rounded-md bg-[--md-sys-color-surface-container-highest] text-[--md-sys-color-on-surface]'
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
         />
         <div className='flex gap-2'>
           <TextButton
@@ -131,11 +162,9 @@ export default function AlbumsTable() {
         </div>
       </div>
       <PaginationTable
-        data={albums?.data || []}
+        data={searchResults?.data?.albums || albums?.data || []}
         columns={[
           { header: 'Title', accessor: 'title' },
-          { header: 'Artist', accessor: 'artist' },
-          { header: 'Release Date', accessor: 'releaseDate' }
         ]}
         isLoading={isLoading || deleteMutation.isPending}
         isError={isError}

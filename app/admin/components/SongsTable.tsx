@@ -10,6 +10,7 @@ import AddSongDialog from '@/app/components/dialogs/AddSongDialog';
 import EditSongDialog from '@/app/components/dialogs/EditSongDialog';
 import TextButton from '@/app/components/buttons/text-button';
 import OutlinedIcon from "@/app/components/icons/outlined-icon";
+import { useDebounce } from '@/app/hooks/useDebounce';
 
 interface Artist {
   artist: {
@@ -21,6 +22,12 @@ interface Artist {
 interface SongsResponse {
   count: number;
   data: Song[];
+}
+
+interface SearchResponse {
+  data: {
+    songs: Song[];
+  }
 }
 
 interface SongDialogData {
@@ -43,6 +50,7 @@ export default function SongsTable() {
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const queryClient = useQueryClient();
+  const debouncedSearch = useDebounce(search, 200);
 
   const { data: songs, isLoading, isError, refetch } = useQuery<SongsResponse>({
     queryKey: ['songs', page, limit, search],
@@ -60,6 +68,26 @@ export default function SongsTable() {
       if (!response.ok) throw new Error('Failed to fetch songs');
       return response.json();
     },
+  });
+
+  const { data: searchResults } = useQuery<SearchResponse>({
+    queryKey: ['songsSearch', debouncedSearch],
+    queryFn: async () => {
+      if (!debouncedSearch) return { data: { songs: [] } };
+      const token = getCookie('session_token');
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/v1/search/${debouncedSearch}/songs`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        }
+      );
+      if (!response.ok) throw new Error('Failed to search songs');
+      const data = await response.json() as SearchResponse;
+      return data;
+    },
+    enabled: !!debouncedSearch,
   });
 
   const deleteMutation = useMutation({
@@ -140,7 +168,7 @@ export default function SongsTable() {
       </div>
 
       <PaginationTable
-        data={songs?.data || []}
+        data={searchResults?.data?.songs || songs?.data || []}
         columns={[
           { header: 'Title', accessor: 'title' },
           {
