@@ -18,6 +18,7 @@ import OutlinedIcon from "../components/icons/outlined-icon";
 import OutlinedFilledIcon from "../components/icons/outlined-filled-icon";
 import { useState, useEffect, useRef, TouchEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
+import fetchSongById from "../api-fetch/song-by-id";
 
 export default function NowPlayingPage() {
   const router = useRouter();
@@ -42,7 +43,13 @@ export default function NowPlayingPage() {
   const [isSwiping, setIsSwiping] = useState(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
-  // const 
+  const { data: details } = useQuery({
+    queryKey: ['songDetails'],
+    queryFn: async () => {
+      if (!currentSong) return null;
+      return fetchSongById(currentSong.id);
+    }
+  });
 
   const handleTouchStart = (e: TouchEvent) => {
     setTouchStart(e.targetTouches[0].clientX);
@@ -51,10 +58,10 @@ export default function NowPlayingPage() {
 
   const handleTouchMove = (e: TouchEvent) => {
     if (!isSwiping) return;
-    
+
     const currentTouch = e.targetTouches[0].clientX;
     const offset = currentTouch - touchStart;
-    
+
     if (Math.abs(offset) < window.innerWidth * 0.5) {
       setSwipeOffset(offset);
     }
@@ -127,7 +134,7 @@ export default function NowPlayingPage() {
         Quay lại
       </TextButton>
 
-      <div 
+      <div
         ref={contentRef}
         className={twMerge(
           "song-info flex flex-col gap-[60px] w-full pt-6 items-center",
@@ -150,12 +157,11 @@ export default function NowPlayingPage() {
               className="rounded-full shadow-lg"
             />
           </div>
-          <div className="flex justify-between items-center w-full pt-6">
-            <div className="flex flex-col gap-3 w-full">
+
+          <div className="flex flex-col gap-3 w-full">
+            <div className="flex justify-between items-center w-full pt-6">
               <h1 className='font-bold text-2xl md:text-3xl'>{currentSong.title}</h1>
-              <ArtistLinks artists={currentSong.artists?.map(a => ({ id: a.artist.id, name: a.artist.name, avatarurl: null })) || []} />
-            </div>
-            <ToggleButtonFilled
+              <ToggleButtonFilled
               active={likedSongs.some(s => s.id === currentSong.id)}
               onClick={() => likedSongs.some(s => s.id === currentSong.id)
                 ? removeLikedSong(currentSong as Song)
@@ -163,6 +169,10 @@ export default function NowPlayingPage() {
               }>
               favorite
             </ToggleButtonFilled>
+            </div>
+            <ArtistLinks artists={(details?.artists?.map(
+              (a) => ({ id: a.id, name: a.name, avatarurl: a.avatarurl })
+            )) || []} />
           </div>
         </div>
 
@@ -175,7 +185,7 @@ export default function NowPlayingPage() {
               value={progress}
               min={0}
               max={currentSong.duration || 100}
-              onChange={(e) => seekTo(parseInt(e.target.value))}
+              onChange={(e) => seekTo(Number.parseInt(e.target.value))}
             />
             <div className="flex justify-between gap-3 w-full items-center">
               <p>{formatDuration(progress, true)}</p>
@@ -184,11 +194,11 @@ export default function NowPlayingPage() {
           </div>
 
           <div className="flex justify-between items-center gap-4 w-full">
-            <IconSmallButton onClick={()=>{}}>
-              <OutlinedIcon icon='shuffle'/>
+            <IconSmallButton onClick={() => { }}>
+              <OutlinedIcon icon='shuffle' />
             </IconSmallButton>
             <IconSmallButton onClick={playPreviousSong}>
-              <OutlinedFilledIcon icon='skip_previous'/>
+              <OutlinedFilledIcon icon='skip_previous' />
             </IconSmallButton>
             <PlayButton
               className="bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary] w-12 h-12"
@@ -197,10 +207,10 @@ export default function NowPlayingPage() {
               songId={currentSong.id}
             />
             <IconSmallButton onClick={playNextSong}>
-              <OutlinedFilledIcon icon='skip_next'/>
+              <OutlinedFilledIcon icon='skip_next' />
             </IconSmallButton>
-            <IconSmallButton onClick={()=>{}}>
-              <OutlinedIcon icon='repeat'/>
+            <IconSmallButton onClick={() => { }}>
+              <OutlinedIcon icon='repeat' />
             </IconSmallButton>
           </div>
 

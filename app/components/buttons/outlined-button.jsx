@@ -7,6 +7,7 @@ import Image from 'next/image';
  * 
  * @param {Object} props - The properties object.
  * @param {string} [props.className] - Additional class names for the button.
+ * @param {string} [props.type] - Button type.
  * @param {function} props.onClick - Click event handler for the button.
  * @param {string} [props.icon] - Icon name to be displayed.
  * @param {boolean} [props.showIcon] - Flag to show or hide the icon.
@@ -27,7 +28,7 @@ export default function OutlinedButton(props) {
         showIcon = false;
     }
     return(
-        <button className={`text-btn flex border-2 rounded-full border-[--md-sys-color-outline] items-center justify-stretch focus:ring ${props.className}`} role='button' onClick={props.onClick}>
+        <button className={`text-btn flex border-2 rounded-full border-[--md-sys-color-outline] items-center justify-stretch focus:ring ${props.className}`} role='button' onClick={props.onClick} type={props.type}>
             <div className={`state-layer p-4 relative ${showIcon?"":"pr-6"} gap-3 rounded-full flex items-center justify-center text-[--md-sys-color-primary] flex-grow`}>
                 <md-ripple className="ripple"/>
                 {

@@ -103,6 +103,7 @@ const AddArtistDialog: React.FC<AddArtistDialogProps> = (
         className="w-full"
       />
       <Dropdown
+        value={country ? { label: country, value: country } : null}
         options={countryList().getData() as CountryOption[]}
         defaultValue={country}
         onChange={handleCountryChange}

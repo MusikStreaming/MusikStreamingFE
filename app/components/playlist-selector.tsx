@@ -1,89 +1,127 @@
 'use client';
 
 import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import addToPlaylist from '@/app/api-fetch/add-to-playlist';
-import PlainTooltip from '@/app/components/tooltips/plain-tooltip';
-import IconSmallButton from '@/app/components/buttons/icon-small-button';
-import OutlinedIcon from '@/app/components/icons/outlined-icon';
-import Image from 'next/image';
-import AddPlaylistDialog from './add-playlist-dialog';
-
-interface Playlist {
-  id: string;
-  title: string;
-  avatarurl?: string;
-}
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import PlaylistForm from './playlist/playlist-form';
+import addSongToCollection from '@/app/api-fetch/add-song-to-collection';
+import OutlinedIcon from './icons/outlined-icon';
+import IconSmallButton from './buttons/icon-small-button';
+import type { Playlist, PlaylistsResponse } from '../model/playlist';
 
 interface PlaylistSelectorProps {
-  playlists: Playlist[];
-  songId: string | undefined;
+  songId?: string;
+  currentPlaylistId?: string;  // Add this prop
   onClose: () => void;
 }
 
-export default function PlaylistSelector({ playlists, songId, onClose }: PlaylistSelectorProps) {
-  const [selectedPlaylist, setSelectedPlaylist] = useState<string | null>(null);
-  const [isAddPlaylistDialogOpen, setIsAddPlaylistDialogOpen] = useState(false);
-  const addMutation = useMutation({
-    mutationFn: addToPlaylist,
-    onSuccess: () => {
-      onClose();
+export default function PlaylistSelector({ songId, currentPlaylistId, onClose }: PlaylistSelectorProps) {
+  const [showNewPlaylistForm, setShowNewPlaylistForm] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  const { data: playlistsData, isLoading, error: fetchError } = useQuery({
+    queryKey: ['playlists'],
+    queryFn: async () => {
+      const response = await fetch('/api/user/playlists');
+      if (!response.ok) throw new Error('Failed to fetch playlists');
+      const data = await response.json() as PlaylistsResponse;
+      return data?.data || [];
     },
   });
 
-  const handleAdd = () => {
-    if (selectedPlaylist && songId) {
-      addMutation.mutate({ playlistId: selectedPlaylist, songId });
-    }
-  };
+  const { mutate: addToPlaylist, isPending } = useMutation({
+    mutationFn: async (playlistId: string) => {
+      if (!songId) throw new Error('No song selected');
+      try {
+        await addSongToCollection(playlistId, songId);
+      } catch (err) {
+        throw new Error(err instanceof Error ? err.message : 'Failed to add song');
+      }
+    },
+    onSuccess: () => {
+      setSuccess('Song added to playlist successfully');
+      queryClient.invalidateQueries({ queryKey: ['playlists'] });
+      setTimeout(() => {
+        onClose();
+      }, 1500);
+    },
+    onError: (error) => {
+      setError(error instanceof Error ? error.message : 'Failed to add song to playlist');
+      // Clear error after 3 seconds
+      setTimeout(() => setError(null), 3000);
+    },
+  });
 
-  const handleAddPlaylistDialogClose = () => {
-    setIsAddPlaylistDialogOpen(false);
-  };
+  // Filter playlists properly
+  const playlists = Array.isArray(playlistsData) 
+    ? playlistsData.filter(p => p.type === "Playlist" && p.id !== currentPlaylistId)
+    : [];
+
+  if (showNewPlaylistForm) {
+    return (
+      <div className="w-full max-w-md">
+        <div className="flex items-center gap-2 mb-4">
+          <IconSmallButton onClick={() => setShowNewPlaylistForm(false)}>
+            <OutlinedIcon icon="arrow_back" />
+          </IconSmallButton>
+          <h2 className="text-xl font-bold">Create New Playlist</h2>
+        </div>
+        <PlaylistForm
+          onSuccess={() => {
+            setShowNewPlaylistForm(false);
+            queryClient.invalidateQueries({ queryKey: ['playlists'] });
+          }}
+          onCancel={() => setShowNewPlaylistForm(false)}
+        />
+      </div>
+    );
+  }
 
   return (
-    <div className="playlist-selector p-4 rounded-lg shadow-lg">
-      <h2 className="text-xl font-bold mb-4">Select Playlist</h2>
-      <ul className="mb-4">
-        {Array.isArray(playlists) && playlists.map((playlist) => (
-          <li key={playlist.id} className="flex items-center justify-between mb-2 p-2 rounded bg-gray-100">
-            <div className="flex items-center gap-2">
-              {playlist.avatarurl && (
-                <Image
-                  src={playlist.avatarurl}
-                  alt={playlist.title}
-                  width={40}
-                  height={40}
-                  className="rounded"
-                />
-              )}
-              <span>{playlist.title}</span>
-            </div>
-            <PlainTooltip content="Add to Playlist">
-              <IconSmallButton onClick={() => setSelectedPlaylist(playlist.id)}>
-                <OutlinedIcon icon="add" />
-              </IconSmallButton>
-            </PlainTooltip>
-          </li>
-        ))}
-      </ul>
-      <div className="flex justify-end gap-2">
-        <button
-          className="p-2 bg-[--md-sys-color-outline-variant] rounded"
-          onClick={() => setIsAddPlaylistDialogOpen(true)}
-        >
-          Add New Playlist
-        </button>
-        <button
-          className="p-2 bg-[--md-sys-color-outline-variant] rounded"
-          onClick={onClose}
-        >
-          Cancel
-        </button>
-      </div>
-      {isAddPlaylistDialogOpen && (
-        <AddPlaylistDialog onClose={handleAddPlaylistDialogClose} />
+    <div className="w-full max-w-md">
+      <h2 className="text-xl font-bold mb-4">Add to Playlist</h2>
+      {error && (
+        <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">
+          {error}
+        </div>
       )}
+      {success && (
+        <div className="mb-4 p-2 bg-green-100 text-green-700 rounded">
+          {success}
+        </div>
+      )}
+      <div className="flex flex-col gap-2">
+        <button
+          onClick={() => setShowNewPlaylistForm(true)}
+          className="w-full px-4 py-2 rounded hover:bg-[--md-sys-color-surface-container-highest] text-left flex items-center gap-2"
+        >
+          <OutlinedIcon icon="add" />
+          Create New Playlist
+        </button>
+        {playlists.length === 0 && !isLoading && (
+          <p className="text-center text-[--md-sys-color-on-surface-variant] py-4">
+            No playlists found. Create one to get started!
+          </p>
+        )}
+        {isLoading ? (
+          <div className="flex justify-center py-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[--md-sys-color-primary]"></div>
+          </div>
+        ) : (
+          playlists.map((playlist: Playlist) => (
+            <button
+              key={playlist.id}
+              onClick={() => addToPlaylist(playlist.id)}
+              disabled={isPending}
+              className="w-full px-4 py-2 rounded bg-[--md-sys-color-surface-container-high] hover:bg-[--md-sys-color-surface-container-highest] text-left disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              <OutlinedIcon icon="playlist_add" />
+              {playlist.title}
+            </button>
+          ))
+        )}
+      </div>
     </div>
   );
 }
