@@ -25,7 +25,8 @@ export async function POST(request: NextRequest, {params}: {params: Promise<{id:
       {
         method: "POST",
         headers: {
-          ...(token && { 'Authorization': `Bearer ${token}` })
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+          "cache-control": "no-cache"
         },
         body: formData // Send formData directly without JSON.stringify
       }
@@ -52,8 +53,8 @@ export async function POST(request: NextRequest, {params}: {params: Promise<{id:
   }
 }
 
-export async function DELETE(request: NextRequest, {params}: {params: {id: string}}) {
-  const {id} = params;
+export async function DELETE(request: NextRequest, {params}: {params: Promise<{id: string}>}) {
+  const {id} = await params;
   console.log(`🗑️ DELETE /api/artist/${id}`);
 
   try {
