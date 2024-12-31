@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCookie } from 'cookies-next';
 import PaginationTable from '@/app/components/tables/PaginationTable';
-// import AddPlaylistDialog from '@/app/components/dialogs/AddPlaylistDialog';
-// import EditPlaylistDialog from '@/app/components/dialogs/EditPlaylistDialog';
+import AddPlaylistDialog from '@/app/components/dialogs/AddPlaylistDialog';
+import EditPlaylistDialog from '@/app/components/dialogs/EditPlaylistDialog';
 import TextButton from '@/app/components/buttons/text-button';
 import OutlinedIcon from "@/app/components/icons/outlined-icon";
 import type {Playlist, PlaylistsResponse} from '@/app/model/playlist';
@@ -163,7 +163,7 @@ export default function PlaylistsTable() {
         totalPages={playlists?.total ? Math.ceil(playlists.total / limit) : undefined}
       />
 
-      {/* <AddPlaylistDialog
+      <AddPlaylistDialog
         isOpen={isAddModalOpen}
         onClose={handleCloseModal}
         onSuccess={handleSuccess}
@@ -176,7 +176,7 @@ export default function PlaylistsTable() {
           onSuccess={handleSuccess}
           playlist={selectedPlaylist}
         />
-      )} */}
+      )}
     </div>
   );
 }

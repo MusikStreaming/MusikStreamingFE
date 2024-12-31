@@ -59,6 +59,7 @@ const AddSongDialog: React.FC<AddSongDialogProps> = ({ isOpen, onClose, onSucces
   const [artistSearch, setArtistSearch] = useState('');
   const [artistResults, setArtistResults] = useState<SearchArtist[]>([]);
   const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [isSearchingArtists, setIsSearchingArtists] = useState(false);
 
   const searchArtists = useCallback(async (searchTerm: string) => {
     if (!searchTerm) {
@@ -66,6 +67,7 @@ const AddSongDialog: React.FC<AddSongDialogProps> = ({ isOpen, onClose, onSucces
       return;
     }
 
+    setIsSearchingArtists(true);
     const token = getCookie('session_token');
     try {
       const response = await fetch(
@@ -80,6 +82,8 @@ const AddSongDialog: React.FC<AddSongDialogProps> = ({ isOpen, onClose, onSucces
       }
     } catch (error) {
       console.error('Error searching artists:', error);
+    } finally {
+      setIsSearchingArtists(false);
     }
   }, []);
 
@@ -272,18 +276,29 @@ const AddSongDialog: React.FC<AddSongDialogProps> = ({ isOpen, onClose, onSucces
           </IconSmallButton>}
           onKeyDown={handleKeyDown}
         />
-        {artistResults.length > 0 && (
+        {artistSearch && (
           <div className="mt-2 max-h-40 overflow-y-auto border border-[--md-sys-color-outline] rounded-md">
-            {artistResults.map((artist) => (
-              <div
-                key={artist.id}
-                onClick={() => handleArtistAdd(artist)}
-                onKeyDown={() => handleArtistAdd(artist)}
-                className="px-4 py-2 cursor-pointer hover:bg-[--md-sys-color-surface-container]"
-              >
-                {artist.name}
+            {isSearchingArtists ? (
+              <div className="px-4 py-2 flex items-center gap-2">
+                <span className="animate-spin material-symbols-outlined">progress_activity</span>
+                <span>Searching...</span>
               </div>
-            ))}
+            ) : artistResults.length > 0 ? (
+              artistResults.map((artist) => (
+                <div
+                  key={artist.id}
+                  onClick={() => handleArtistAdd(artist)}
+                  onKeyDown={() => handleArtistAdd(artist)}
+                  className="px-4 py-2 cursor-pointer hover:bg-[--md-sys-color-surface-container]"
+                >
+                  {artist.name}
+                </div>
+              ))
+            ) : (
+              <div className="px-4 py-2 text-[--md-sys-color-on-surface-variant]">
+                No artists found
+              </div>
+            )}
           </div>
         )}
       </div>

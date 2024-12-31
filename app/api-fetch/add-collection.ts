@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { getCookie } from 'cookies-next';
-import { createClient } from '@supabase/supabase-js';
 
 interface Album {
   file: File,

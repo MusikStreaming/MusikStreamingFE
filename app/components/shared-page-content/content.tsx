@@ -188,7 +188,7 @@ export default function PlaylistContent(params: { id: string }) {
               }
             }))}
             onAddToPlaylist={handleAddToPlaylist}
-            showPlaylistOptions={true}
+            showPlaylistOptions={!isOwner} // Changed to false when user is owner
           />
         }
 

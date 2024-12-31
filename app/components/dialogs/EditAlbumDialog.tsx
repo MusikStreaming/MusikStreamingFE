@@ -127,7 +127,7 @@ export default function EditAlbumDialog({ isOpen, onClose, onSuccess, album }: E
           const formData = new FormData();
           formData.append('title', title);
           formData.append('type', type);
-          formData.append('visibility', visibility);
+          formData.append('visibility', visibility || 'Public'); // Add default value
           if (thumbnail) formData.append('file', thumbnail);
 
           const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/collection/${album.id}`, {
@@ -338,8 +338,9 @@ export default function EditAlbumDialog({ isOpen, onClose, onSuccess, album }: E
             required
             aria-label='type'
           >
-            <option value='album'>Album</option>
-            <option value='single'>Single</option>
+            <option value='Album'>Album</option>
+            <option value='Single'>Single</option>
+            <option value='EP'>EP</option>
           </select>
         </div>
         <div>
@@ -351,8 +352,8 @@ export default function EditAlbumDialog({ isOpen, onClose, onSuccess, album }: E
             required
             aria-label='visibility'
           >
-            <option value='public'>Public</option>
-            <option value='private'>Private</option>
+            <option value='Public'>Public</option>
+            <option value='Private'>Private</option>
           </select>
         </div>
         <div>
