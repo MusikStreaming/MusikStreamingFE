@@ -2,6 +2,8 @@
 
 Ứng dụng streaming nhạc được xây dựng với Next.js và TailwindCSS, theo thiết kế Material Design 3.
 
+Demo: open.hustmusik.live
+
 ## Tổng quan
 
 MusikStreaming là một ứng dụng web phát nhạc trực tuyến với các tính năng:
