@@ -283,6 +283,7 @@ const AddSongDialog: React.FC<AddSongDialogProps> = ({ isOpen, onClose, onSucces
                 <span className="animate-spin material-symbols-outlined">progress_activity</span>
                 <span>Searching...</span>
               </div>
+
             ) : Array.isArray(artistResults) && artistResults.length > 0 ? (
               artistResults.map((artist) => (
                 <div
