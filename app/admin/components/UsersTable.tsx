@@ -75,7 +75,7 @@ export default function UsersTable() {
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const token = getCookie('session_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/user/${id}`, {
+      const response = await fetch(`/api/user/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -25,6 +25,12 @@ export const AlternativeSongListSchema = z.object({
     data: SongListSchema
 })
 
+interface SongListResponse {
+    count: number;
+    data: Song[];
+
+}
+
 export default async function fetchAllSongs() {
     try {
         const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/v1/song?page=1&limit=30`, {
@@ -32,12 +38,10 @@ export default async function fetchAllSongs() {
                 'Cache-Control': 'max-age=3600000, stale-while-revalidate',
             }
         });
-        console.log(res.data)
         localStorage.setItem("songs", JSON.stringify(res.data));
         localStorage.setItem("songsTime", Date.now().toString());
-        console.log(res.data);
         try {
-            const data = AlternativeSongListSchema.parse(res.data);
+            const data = res.data as SongListResponse;
             return data.data as Song[];
         }
         catch {
