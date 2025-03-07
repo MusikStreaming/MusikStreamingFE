@@ -163,11 +163,12 @@ export default function PlaylistsTable() {
         totalPages={playlists?.total ? Math.ceil(playlists.total / limit) : undefined}
       />
 
-      <AddPlaylistDialog
+      {isAddModalOpen && <AddPlaylistDialog
         isOpen={isAddModalOpen}
         onClose={handleCloseModal}
         onSuccess={handleSuccess}
       />
+      }
 
       {selectedPlaylist && (
         <EditPlaylistDialog

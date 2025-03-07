@@ -39,7 +39,7 @@ export default function SongTable({
   onAddToPlaylist,
   showPlaylistOptions = true
 }: SongTableProps) {
-  const { currentSong, isPlaying, playSong, pauseSong, addToQueue, clearQueue, playList } = useMedia();
+  const { currentSong, isPlaying, pauseSong, clearQueue, playList } = useMedia();
 
   const getSongUrl = async (id: string) => {
     const song = await getSong(id);

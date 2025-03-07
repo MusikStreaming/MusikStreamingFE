@@ -4,23 +4,27 @@ import fetchSongByIdServer from "@/app/api-fetch/song-id-server";
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const id = (await params).id;
   const song = await fetchSongByIdServer(id);
-  if (song) {
-    return {
-      title: `${song.title} - ${song.artists.map((artist: { name: string }) => artist.name).join(", ")} | MusikStreaming`,
-      description: `${song.title} by ${song.artists.map((artist: { name: string }) => artist.name).join(", ")} - Listen to the latest music on MusikStreaming`,
-      openGraph: {
-        title: `${song.title} - ${song.artists.map((artist: { name: string }) => artist.name).join(", ")} | MusikStreaming`,
-        description: `${song.title} by ${song.artists.map((artist: { name: string }) => artist.name).join(", ")} - Listen to the latest music on MusikStreaming`,
-        type: "website"
-      }
-    };
-  }
-  else {
+
+  if (!song || !song.artists) {
     return {
       title: 'Song not found',
       description: 'The song you are looking for is not found',
-    }
+    };
   }
+
+  const artistNames = song.artists.map((artist: { name: string }) => artist.name).join(", ");
+  const title = `${song.title} - ${artistNames} | MusikStreaming`;
+  const description = `${song.title} by ${artistNames} - Listen to the latest music on MusikStreaming`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website"
+    }
+  };
 }
 
 export default async function SongPage({ params }: { params: Promise<{ id: string }> }) {

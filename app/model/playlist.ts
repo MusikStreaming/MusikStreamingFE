@@ -8,6 +8,7 @@ export interface Playlist {
     username: string;
   };
   thumbnailurl: string;
+  visibility?: 'Public' | 'Private';
 }
 
 export interface PlaylistsResponse {

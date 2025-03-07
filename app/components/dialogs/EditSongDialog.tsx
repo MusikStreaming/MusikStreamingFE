@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { getCookie } from 'cookies-next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Input from '../inputs/outlined-input';
 import { Song } from '@/app/model/song';
 import DialogFrame from './dialog-frame';
 import DragNDropZone from '../inputs/dragndropzone';
+import { debounce } from 'lodash';
 
 interface SearchArtist {
   id: string;
@@ -75,6 +76,12 @@ const EditSongDialog: React.FC<EditSongDialogProps> = ({ isOpen, onClose, onSucc
     enabled: artistSearch.length > 0,
     staleTime: 10000
   });
+
+  useEffect(() => {
+    debounce(() => {
+      queryClient.invalidateQueries({ queryKey: ['artistSearch'] });
+    });
+  })
 
   // Mutation for updating song
   const updateSongMutation = useMutation({
@@ -192,7 +199,7 @@ const EditSongDialog: React.FC<EditSongDialogProps> = ({ isOpen, onClose, onSucc
           leadingIcon={null}
           trailingIcon={null}
         />
-        {artistResults.length > 0 && (
+        {Array.isArray(artistResults) && artistResults.length > 0 && (
           <div className="mt-2 max-h-40 overflow-y-auto border border-[--md-sys-color-outline] rounded-md">
             {artistResults.map((artist) => (
               <div
