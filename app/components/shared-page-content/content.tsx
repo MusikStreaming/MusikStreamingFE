@@ -184,11 +184,11 @@ export default function PlaylistContent(params: { id: string }) {
                 duration: song.song.duration,
                 views: song.song.views,
                 thumbnailurl: song.song.thumbnailurl,
-                artists: song.song.artists?.map(a => ({ name: a.name })) || []
+                artists: song.song.artists?.map(a => ({ name: a.name, id: a.id })) || []
               }
             }))}
             onAddToPlaylist={handleAddToPlaylist}
-            showPlaylistOptions={true}
+            showPlaylistOptions={!isOwner} // Changed to false when user is owner
           />
         }
 

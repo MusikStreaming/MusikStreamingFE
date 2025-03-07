@@ -230,7 +230,7 @@ export default function AddAlbum() {
       <div role="group" aria-label="Album visibility selection">
         <label className="text-[--md-sys-color-on-surface-variant]" id="visibility-label">Visibility</label>
         <Dropdown
-          options={["Public", "Unreleased"].map(visibility => ({ value: visibility, label: visibility }))}
+          options={["Public", "Private"].map(visibility => ({ value: visibility, label: visibility }))}
           defaultValue={{ value: "Public", label: "Public" }}
           onChange={(selectedOption) => {
             formDispatch({ type: 'SET_VISIBILITY', payload: selectedOption.value });

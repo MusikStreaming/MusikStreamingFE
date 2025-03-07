@@ -1,4 +1,5 @@
 'use client'
+import OutlinedIcon from "../icons/outlined-icon"
 /**
  * IconSmallButton component
  * 
@@ -15,7 +16,7 @@ export default function ToggleIconButtonDotted(props) {
           <div className={`state-layer relative h-8 w-8 md:p-3 md:h-12 md:w-12 rounded-full m-auto items-center justify-center ${props.className}`}>
               <md-ripple></md-ripple>
               <div className="flex w-fit gap-3">
-                <span className={`material-symbols-outlined${props.active ? "-filled" : ""}`}>
+                <span className={`${props.active ? "material-symbols-outlined-filled" : "material-symbols-outlined"}`}>
                   {props.children}
                 </span>
               </div>

@@ -19,7 +19,7 @@ export default function AdminPage() {
   useEffect(() => {
     async function checkAdmin() {
       try {
-        console.group('🔒 Admin Page Access Check');
+        // console.group('🔒 Admin Page Access Check');
         setIsLoading(true);
         setError(null);
 
@@ -29,21 +29,21 @@ export default function AdminPage() {
         });
         
         if (!userResponse.ok) {
-          console.error('❌ User info check failed:', userResponse.status);
+          // console.error('❌ User info check failed:', userResponse.status);
           throw new Error('Failed to verify user');
         }
 
         const userData = await userResponse.json();
-        console.log('👤 User data:', userData);
+        // console.log('👤 User data:', userData);
 
         if (!userData.authenticated) {
-          console.warn('⚠️ User not authenticated');
+          // console.warn('⚠️ User not authenticated');
           router.replace('/login');
           return;
         }
 
         if (!userData.admin) {
-          console.warn('⚠️ User not admin:', userData.role);
+          // console.warn('⚠️ User not admin:', userData.role);
           router.replace('/');
           return;
         }
@@ -54,12 +54,12 @@ export default function AdminPage() {
         });
 
         if (!adminResponse.ok) {
-          console.error('❌ Admin check failed:', adminResponse.status);
+          // console.error('❌ Admin check failed:', adminResponse.status);
           throw new Error('Failed to verify admin status');
         }
 
         const adminData = await adminResponse.json();
-        console.log('👑 Admin check result:', adminData);
+        // console.log('👑 Admin check result:', adminData);
 
         if (!adminData.isAdmin) {
           console.warn('⚠️ Not an admin');
@@ -70,7 +70,7 @@ export default function AdminPage() {
         console.log('✅ Admin access granted');
         setIsAdmin(true);
       } catch (err) {
-        console.error('❌ Admin verification error:', err);
+        // console.error('❌ Admin verification error:', err);
         setError(err instanceof Error ? err.message : 'Failed to verify admin status');
         router.replace('/');
       } finally {

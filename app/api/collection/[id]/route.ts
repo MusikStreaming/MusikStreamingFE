@@ -25,7 +25,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     if (!response.ok) throw new Error('Failed to delete album/collection');
 
-    return new NextResponse("Deleted", { status: 204 });
+    return new NextResponse("Deleted", { status: 200 });
 
   } catch (error) {
     console.log('[ALBUM_DELETE]', error);

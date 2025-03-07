@@ -10,6 +10,7 @@ import TextButton from '../buttons/text-button';
 import Skeleton from '../loading/skeleton';
 import { useQuery } from '@tanstack/react-query';
 import fetchSongById from '@/app/api-fetch/song-by-id';
+import PlayButton from '../buttons/play-button-main';
 
 export default function HorizontalCard({
   img,
@@ -18,7 +19,7 @@ export default function HorizontalCard({
   songID = undefined,
 }: CardProps) {
   const router = useRouter();
-  const { currentSong, isPlaying, playSong } = useMedia();
+  const { currentSong, isPlaying, playSong, pauseSong, resumeSong } = useMedia();
   
   router.prefetch(href);
 
@@ -60,21 +61,24 @@ export default function HorizontalCard({
       </div>
       <div className="play-button-container">
         <div className="play-button w-12 h-12 bg-[--md-sys-color-primary] rounded-full overflow-hidden">
-          <TextButton 
-            className="w-full h-full flex items-center justify-center bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary]" 
-            onClick={async (e: React.MouseEvent<HTMLButtonElement>) => {
+          <PlayButton className='w-12 h-12 bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary]' songId={songData?.id} onClick={
+            (e: React.MouseEvent<HTMLButtonElement>) => {
               e.stopPropagation();
-              if (songData && songData.thumbnailurl) {
+              if (songData?.id === currentSong?.id) {
+                if (isPlaying) {
+                  pauseSong();
+                } else {
+                  resumeSong();
+                }
+              } else if (songData) {
                 playSong({
                   ...songData,
-                  thumbnailurl: songData.thumbnailurl,
+                  thumbnailurl: songData.thumbnailurl || '',
                   artists: songData.artists.map(a => ({ artist: { id: a.id, name: a.name } }))
                 });
               }
-            }}
-          >
-            <span className="material-symbols-outlined-filled">{songID && songID === currentSong?.id ? (isPlaying ? 'pause' : 'play_arrow') : 'play_arrow'}</span>
-          </TextButton>
+            }
+          } isPlaying={isPlaying}/>
         </div>
       </div>
     </div>

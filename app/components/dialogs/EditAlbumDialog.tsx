@@ -127,7 +127,7 @@ export default function EditAlbumDialog({ isOpen, onClose, onSuccess, album }: E
           const formData = new FormData();
           formData.append('title', title);
           formData.append('type', type);
-          formData.append('visibility', visibility);
+          formData.append('visibility', visibility || 'Public'); // Add default value
           if (thumbnail) formData.append('file', thumbnail);
 
           const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/collection/${album.id}`, {
@@ -236,80 +236,6 @@ export default function EditAlbumDialog({ isOpen, onClose, onSuccess, album }: E
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // if (!hasMetadataChanges() && !hasSongsChanges()) {
-    //   alert('No changes detected');
-    //   return;
-    // }
-
-    // const token = getCookie('session_token');
-
-    // try {
-    //   // Update metadata
-    //   if (hasMetadataChanges()) {
-    //     const formData = new FormData();
-    //     formData.append('title', title);
-    //     formData.append('type', type);
-    //     formData.append('visibility', visibility);
-    //     if (thumbnail) formData.append('thumbnail', thumbnail);
-
-    //     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/collection/${album.id}`, {
-    //       method: 'POST',
-    //       headers: {
-    //         'Authorization': `Bearer ${token}`,
-    //       },
-    //       body: formData,
-    //     });
-    //     if (!response.ok) {
-    //       console.error(response);
-    //       throw new Error('Failed to update album metadata');
-    //     }
-    //   }
-
-    //   const initialSongIds = initialState.songs.map(song => song.song.id);
-    //   const currentSongIds = songs.map(song => song.song.id);
-
-    //   console.log('Initial song IDs:', initialSongIds);
-    //   console.log('Current song IDs:', currentSongIds);
-
-    //   const added = currentSongIds.filter(id => !initialSongIds.includes(id));
-    //   const removed = initialSongIds.filter(id => !currentSongIds.includes(id));
-
-    //   console.log('Added song IDs:', added);
-    //   console.log('Removed song IDs:', removed);
-
-    //   // Add songs
-    //   for (const songId of added) {
-    //     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/collection/${album.id}/songs/${songId}`, {
-    //       method: 'POST',
-    //       headers: {
-    //         'Authorization': `Bearer ${token}`,
-    //       },
-    //     });
-    //     if (!response.ok) throw new Error(`Failed to add song with ID ${songId}`);
-    //   }
-
-    //   // Remove songs
-    //   for (const songId of removed) {
-    //     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/collection/${album.id}/songs/${songId}`, {
-    //       method: 'DELETE',
-    //       headers: {
-    //         'Authorization': `Bearer ${token}`,
-    //       },
-    //     });
-    //     if (!response.ok) throw new Error(`Failed to remove song with ID ${songId}`);
-    //   }
-
-    //   queryClient.invalidateQueries({ queryKey: ['albums'] });
-    //   localStorage.removeItem(`playlist-${album.id}`);
-    //   onSuccess();
-    //   onClose();
-    // } catch (error) {
-    //   if (error instanceof Error) {
-    //     alert(error.message);
-    //   } else {
-    //     alert('An unexpected error occurred');
-    //   }
-    // }
     editMutation.mutate(e);
   };
 
@@ -338,8 +264,9 @@ export default function EditAlbumDialog({ isOpen, onClose, onSuccess, album }: E
             required
             aria-label='type'
           >
-            <option value='album'>Album</option>
-            <option value='single'>Single</option>
+            <option value='Album'>Album</option>
+            <option value='Single'>Single</option>
+            <option value='EP'>EP</option>
           </select>
         </div>
         <div>
@@ -351,8 +278,8 @@ export default function EditAlbumDialog({ isOpen, onClose, onSuccess, album }: E
             required
             aria-label='visibility'
           >
-            <option value='public'>Public</option>
-            <option value='private'>Private</option>
+            <option value='Public'>Public</option>
+            <option value='Private'>Private</option>
           </select>
         </div>
         <div>

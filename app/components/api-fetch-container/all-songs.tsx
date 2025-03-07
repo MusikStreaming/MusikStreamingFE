@@ -6,16 +6,17 @@ import { processCloudinaryUrl } from "@/app/api-fetch/cloudinary-url-processing"
 import { SongCard } from "@/app/components/info-cards/song-card"
 import Skeleton from "../loading/skeleton"
 import { useQuery } from "@tanstack/react-query"
+import ErrorComponent from "./fetch-error"
 
 export default function Songs() {
-    const { data: songs, error, isLoading: loading } = useQuery({
+    const { data: songs, error, isLoading: loading, refetch } = useQuery({
         queryKey: ["songs"], 
         queryFn:fetchAllSongs,
         staleTime: 5000 * 60
     });
 
     if (error) {
-        return <div className="text-error">{error.message}</div>;
+        return <ErrorComponent onReloadClick={refetch} />;
     }
 
     if (loading) {

@@ -9,6 +9,7 @@ import { Artist } from '@/app/model/artist';
 import OutlinedIcon from "@/app/components/icons/outlined-icon";
 import AddArtistDialog from '@/app/components/dialogs/add-artist-dialog';
 import EditArtistDialog from '@/app/components/dialogs/edit-artist-dialog';
+import { useDebounce } from '@/app/hooks/useDebounce';
 
 // interface Artist {
 //   id: string;
@@ -21,6 +22,12 @@ interface ArtistsResponse {
   count: number;
 }
 
+interface SearchResponse {
+  data: {
+    artists: Artist[];
+  }
+}
+
 export default function ArtistTable() {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
@@ -28,6 +35,7 @@ export default function ArtistTable() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 200);
 
   const { data: artists, isLoading, isError, refetch } = useQuery<ArtistsResponse>({
     queryKey: ['artists', page, limit],
@@ -42,6 +50,46 @@ export default function ArtistTable() {
       return response.json();
     },
     staleTime: 2000,
+  });
+
+  const { data: searchResults } = useQuery<SearchResponse>({
+    queryKey: ['artistsSearch', debouncedSearch],
+    queryFn: async () => {
+      if (!debouncedSearch) return { data: { artists: [] } };
+      const token = getCookie('session_token');
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/v1/search/${debouncedSearch}/artists`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        }
+      );
+      if (!response.ok) throw new Error('Failed to search artists');
+      const data = await response.json() as SearchResponse;
+      return data;
+    },
+    enabled: !!debouncedSearch,
+  });
+
+  const editMutation = useMutation({
+    mutationFn: async (artist: Artist) => {
+      const token = getCookie('session_token');
+      const response = await fetch(`/api/artist/${artist.id}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(artist)
+      });
+      if (!response.ok) throw new Error('Failed to update artist');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['artists'] });
+      handleCloseModal();
+    }
   });
 
   const deleteMutation = useMutation({
@@ -79,7 +127,7 @@ export default function ArtistTable() {
     refetch();
   };
 
-  const artistList = artists?.data || [];
+  const artistList = searchResults?.data?.artists || artists?.data || [];
   const totalPages = artists?.count ? Math.ceil(artists.count / limit) : undefined;
 
   return (
@@ -165,16 +213,15 @@ export default function ArtistTable() {
         onRowClick={handleRowClick}
       />
 
-      {<AddArtistDialog
+      <AddArtistDialog
         isOpen={isAddModalOpen}
         onClose={handleCloseModal}
         onSuccess={handleSuccess}
       />
-      }
 
       {selectedArtist && (
         <EditArtistDialog
-          isOpen={false}
+          isOpen={true}
           onClose={handleCloseModal}
           onSuccess={handleSuccess}
           artist={selectedArtist}

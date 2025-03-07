@@ -8,6 +8,7 @@ import OutlinedIcon from "@/app/components/icons/outlined-icon";
 // import AddUserDialog from '@/app/components/dialogs/AddUserDialog';
 // import EditUserDialog from '@/app/components/dialogs/EditUserDialog';
 import TextButton from '@/app/components/buttons/text-button';
+import { useDebounce } from '@/app/hooks/useDebounce';
 
 interface User {
   id: string;
@@ -21,6 +22,12 @@ interface UsersResponse {
   count: number;
 }
 
+interface SearchResponse {
+  data: {
+    users: User[];
+  }
+}
+
 export default function UsersTable() {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
@@ -28,6 +35,7 @@ export default function UsersTable() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 200);
 
   const { data: users, isLoading, isError, refetch } = useQuery<UsersResponse>({
     queryKey: ['users', page, limit],
@@ -44,10 +52,30 @@ export default function UsersTable() {
     staleTime: 2000,
   });
 
+  const { data: searchResults } = useQuery<SearchResponse>({
+    queryKey: ['usersSearch', debouncedSearch],
+    queryFn: async () => {
+      if (!debouncedSearch) return { data: { users: [] } };
+      const token = getCookie('session_token');
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/v1/search/${debouncedSearch}/users`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        }
+      );
+      if (!response.ok) throw new Error('Failed to search users');
+      const data = await response.json() as SearchResponse;
+      return data;
+    },
+    enabled: !!debouncedSearch,
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const token = getCookie('session_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/user/${id}`, {
+      const response = await fetch(`/api/user/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -79,7 +107,7 @@ export default function UsersTable() {
     refetch();
   };
 
-  const userList = users?.data || [];
+  const userList = searchResults?.data?.users || users?.data || [];
   const totalPages = users?.count ? Math.ceil(users.count / limit) : undefined;
 
   return (

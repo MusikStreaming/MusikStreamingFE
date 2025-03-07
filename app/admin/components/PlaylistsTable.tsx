@@ -4,13 +4,19 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCookie } from 'cookies-next';
 import PaginationTable from '@/app/components/tables/PaginationTable';
-// import AddPlaylistDialog from '@/app/components/dialogs/AddPlaylistDialog';
-// import EditPlaylistDialog from '@/app/components/dialogs/EditPlaylistDialog';
+import AddPlaylistDialog from '@/app/components/dialogs/AddPlaylistDialog';
+import EditPlaylistDialog from '@/app/components/dialogs/EditPlaylistDialog';
 import TextButton from '@/app/components/buttons/text-button';
 import OutlinedIcon from "@/app/components/icons/outlined-icon";
 import type {Playlist, PlaylistsResponse} from '@/app/model/playlist';
 import ErrorComponent from '@/app/components/api-fetch-container/fetch-error';
+import { useDebounce } from '@/app/hooks/useDebounce';
 
+interface SearchResponse {
+  data: {
+    playlists: Playlist[];
+  }
+}
 
 export default function PlaylistsTable() {
   const [page, setPage] = useState(1);
@@ -19,6 +25,7 @@ export default function PlaylistsTable() {
   const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const queryClient = useQueryClient();
+  const debouncedSearch = useDebounce(search, 200);
 
   const { data: playlists, isLoading, isError, refetch } = useQuery<PlaylistsResponse>({
     queryKey: ['playlists', page, limit, search], // Add search to query key
@@ -36,6 +43,26 @@ export default function PlaylistsTable() {
       if (!response.ok) throw new Error('Failed to fetch playlists');
       return response.json();
     }
+  });
+
+  const { data: searchResults } = useQuery<SearchResponse>({
+    queryKey: ['playlistsSearch', debouncedSearch],
+    queryFn: async () => {
+      if (!debouncedSearch) return { data: { playlists: [] } };
+      const token = getCookie('session_token');
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/v1/search/${debouncedSearch}/playlists`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        }
+      );
+      if (!response.ok) throw new Error('Failed to search playlists');
+      const data = await response.json() as SearchResponse;
+      return data;
+    },
+    enabled: !!debouncedSearch,
   });
 
   const deleteMutation = useMutation({
@@ -73,8 +100,6 @@ export default function PlaylistsTable() {
     refetch();
   };
 
-  if (!playlists?.data) return <ErrorComponent onReloadClick={refetch}/>;
-
   return (
     <div>
       <div className="mb-4 flex justify-between items-center">
@@ -104,7 +129,7 @@ export default function PlaylistsTable() {
       </div>
 
       <PaginationTable
-        data={playlists?.data.filter(playlist => playlist.type === "Playlist") || []}
+        data={searchResults?.data?.playlists.filter((p) => p.type === "Playlist") || playlists?.data.filter((p) => p.type === "Playlist") || []}
         columns={[
           { header: 'Name', accessor: 'title' },
           { header: 'Owner', accessor: (playlist: Playlist) => playlist.owner.username },
@@ -138,11 +163,12 @@ export default function PlaylistsTable() {
         totalPages={playlists?.total ? Math.ceil(playlists.total / limit) : undefined}
       />
 
-      {/* <AddPlaylistDialog
+      {isAddModalOpen && <AddPlaylistDialog
         isOpen={isAddModalOpen}
         onClose={handleCloseModal}
         onSuccess={handleSuccess}
       />
+      }
 
       {selectedPlaylist && (
         <EditPlaylistDialog
@@ -151,7 +177,7 @@ export default function PlaylistsTable() {
           onSuccess={handleSuccess}
           playlist={selectedPlaylist}
         />
-      )} */}
+      )}
     </div>
   );
 }
